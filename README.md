@@ -1,2 +1,2 @@
-# rpg_helper
-This project will be a web site with such features as battle tracker, dices, random encounters, characters name generator and more for some trpg
+# DiceDasher
+DiceDasher is an opensource project designed to give masters and players of various role-playing systems convenient tools for online and offline games
