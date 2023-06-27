@@ -1,50 +1,24 @@
 package main
 
 import (
-	"io"
 	"net/http"
-
 	rooms "dicedasher/rooms"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	r := mux.NewRouter()
+	server := gin.Default()
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		io.WriteString(w, `hello`)
+	server.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"msg" : "hello",
+		})
 	})
 
-	r.HandleFunc("/newroom", rooms.NewRoom)
+	server.GET("/newroom", rooms.NewRoom)
 
-	http.ListenAndServe(":80", r)
+	server.GET("/joinroom", rooms.JoinRoom)
+
+	server.Run()
 }
-
-/*
-
-import (
-    "math/rand"
-    "time"
-)
-
-var rooms = make(map[string]*Room)
-
-func CreateRoom () {
-	newID := GenerateUniqueId()
-
-	newRoom := &Room {
-		ID = newID
-		master = userID
-}
-
-func GenerateUniqueID () {
-	id := ""
-	seed := rand.NewSource(time.Now().UnixNano())
-	timeRand := rand.New(seed)
-	for i := 0; i < 10; i++ {
-		id += string(timeRand.Intn(58) + 65)
-	}
-}
-
-*/
