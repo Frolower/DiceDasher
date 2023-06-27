@@ -758,3 +758,7 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,windows,linux,node,react,go,visualstudio,goland
+
+.idea/
+server/.idea/
+
