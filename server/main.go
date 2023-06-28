@@ -3,7 +3,6 @@ package main
 import (
 	"net/http"
 	rooms "dicedasher/rooms"
-
 	"github.com/gin-gonic/gin"
 )
 

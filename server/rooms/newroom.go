@@ -2,13 +2,12 @@ package rooms
 
 import (
 	"fmt"
-	"net/http"
 	"math/rand"
 	"time"
 	"github.com/gin-gonic/gin"
 )
 
-var RoomStorage = make(map[string]Room)
+var RoomStorage = make(map[string]Room) // Map with all rooms
 
 func generateID () string {
 	id := ""
@@ -26,13 +25,25 @@ func NewRoom(c *gin.Context) {
 	room.master = generateID()
 	room.players = append(room.players, room.master)
 	room.isOpened = true
-	fmt.Println(room)
 
 	RoomStorage[room.ID] = room
-	fmt.Println(RoomStorage)
 
-	c.JSON(http.StatusOK, gin.H{
-		"room_id" : room.ID,
-	})
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		fmt.Println(err)
+		return 
+	}
+	clients[room.master] = ws
 
+	for { // Reading incoming messages
+		res := &Response{Room_id: room.ID, Player_id: room.master} // Default info answer
+		ws.WriteMessage(1, res.JSON())
+
+		_, message, _ := ws.ReadMessage() // TODO: Handle error 
+		
+		req := Request{}
+		req.fromJSON(message)
+		req.handleAction()
+		
+	}
 }
