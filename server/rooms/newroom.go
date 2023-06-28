@@ -14,7 +14,7 @@ func generateID() string {
 	id := ""
 	seed := rand.NewSource(time.Now().UnixNano())
 	timeRand := rand.New(seed)
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10; i++ {
 		id += string(lib[(timeRand.Intn(len(lib)))])
 	}
 	return id
