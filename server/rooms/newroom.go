@@ -2,19 +2,20 @@ package rooms
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"math/rand"
 	"time"
-	"github.com/gin-gonic/gin"
 )
 
 var RoomStorage = make(map[string]Room) // Map with all rooms
 
-func generateID () string {
+func generateID() string {
+	lib := "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
 	id := ""
 	seed := rand.NewSource(time.Now().UnixNano())
 	timeRand := rand.New(seed)
 	for i := 0; i < 10; i++ {
-		id += string(timeRand.Intn(58) + 65)
+		id += string(lib[(timeRand.Intn(len(lib)))])
 	}
 	return id
 }
@@ -31,7 +32,7 @@ func NewRoom(c *gin.Context) {
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		fmt.Println(err)
-		return 
+		return
 	}
 	clients[room.master] = ws
 
@@ -39,11 +40,11 @@ func NewRoom(c *gin.Context) {
 		res := &Response{Room_id: room.ID, Player_id: room.master} // Default info answer
 		ws.WriteMessage(1, res.JSON())
 
-		_, message, _ := ws.ReadMessage() // TODO: Handle error 
-		
+		_, message, _ := ws.ReadMessage() // TODO: Handle error
+
 		req := Request{}
 		req.fromJSON(message)
 		req.handleAction()
-		
+
 	}
 }
