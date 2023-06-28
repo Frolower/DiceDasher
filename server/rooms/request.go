@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"encoding/json"
+	"fmt"
 )
 
 type Request struct {
@@ -20,10 +21,18 @@ func (this *Request) fromJSON(JSON []byte) {
 }
 
 func (this Request) handleAction() {
-	if this.action == "ping" { // Check action type
-		players := RoomStorage[this.room_id].players // get all players in room
-		for i := 0; i < len(players); i++ {  // Send a message to each player
-			clients[players[i]].WriteMessage(1, []byte("ping"))
+	if RoomStorage[this.room_id].isPlayerConnected(this.player_id) {
+		switch this.action {
+		case "roll":
+			fmt.Println("roll action")
+		default:
+			players := RoomStorage[this.room_id].players // get all players in room
+			for i := 0; i < len(players); i++ {  // Send a message to each player
+				clients[players[i]].WriteMessage(1, []byte("ping"))
+			}
 		}
+	} else {
+		fmt.Println("Player not connected")
+		// TODO: Handle error (player not connected)
 	}
 }
