@@ -82,7 +82,7 @@ func rollD20() []int {
 	return result
 }
 
-func rollD100() []int {
+func RollD100() []int {
 	var result []int
 	seed := rand.NewSource(time.Now().UnixNano())
 	timeRand := rand.New(seed)

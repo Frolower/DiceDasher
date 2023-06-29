@@ -1,7 +1,8 @@
-package rooms 
+package rooms
 
 import (
 	"net/http"
+
 	"github.com/gorilla/websocket"
 )
 
