@@ -31,7 +31,7 @@ func (this Request) handleAction() {
 		json.Unmarshal([]byte(this.data), &dataJSON)
 		switch this.action {
 		case "roll":
-			r, _:=json.Marshal(roll.RollD100())
+			r, _:=json.Marshal(roll.RollDice(100))
 			players := RoomStorage[this.room_id].players // get all players in room
 			for i := 0; i < len(players); i++ {  // Send a message to each player
 				res := &Response{
