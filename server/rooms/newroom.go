@@ -21,13 +21,22 @@ func generateID() string {
 }
 
 func NewRoom(c *gin.Context) {
-	var room st.Room
-	room.ID = generateID()
-	room.Master = generateID()
-	room.Players = append(room.Players, room.Master)
-	room.IsOpened = true
 
-	storage.RoomStorage[room.ID] = room
-	res := &st.Response{Room_id: room.ID, Player_id: room.Master, Action: "create_room", Data: ""}
-	c.JSON(200, res)
+	var room st.Room = st.Room{
+		ID: generateID(),
+		Master: generateID(),
+		IsOpened: true,
+	} // Create Room structure
+	room.Players = append(room.Players, room.Master) // Append master id to players array
+
+	storage.RoomStorage[room.ID] = room // Store Room structure in RoomStorage
+
+	res := &st.Response{ // HTTP Response structure
+		Room_id: room.ID, 
+		Player_id: room.Master, 
+		Action: "create_room",
+		Status: "success", 
+		Data: "{}",
+	}
+	c.JSON(200, res) // Send HTTP Response
 }

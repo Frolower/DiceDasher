@@ -7,29 +7,47 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
 
 func Game(c *gin.Context) {
 
-	player_id := c.DefaultQuery("player_id", "nil")
-
-	// TODO: Handle no params error
+	player_id := c.DefaultQuery("player_id", "nil") // Get URL player_id param
+	if player_id == "nil" { // No player_id param
+		c.JSON(400, nil)
+	}
 	
-	ws, _ := upgrader.Upgrade(c.Writer, c.Request, nil) // Upgrading HTTP connection to websocket
+	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil) // Upgrading HTTP connection to websocket
+	if err != nil { // Websocket error 
+		c.JSON(500, nil)
+	}
+
 	storage.Clients[player_id] = ws
 	for {
-		fmt.Println(storage.Clients)
-		fmt.Println(storage.RoomStorage)
-		_, message, err := ws.ReadMessage()
-		if err != nil { // If connection closed
-			delete(storage.Clients, player_id) // Delete connection from clients
+		mt, message, err := ws.ReadMessage()
+
+		if err != nil || mt == websocket.CloseMessage { // error/closed conection
+			delete(storage.Clients, player_id) 
 			break
 		}
+
 		req := st.Request{}
-		req.FromJSON(message)
-		if req.Action == "roll" {
-			fmt.Println(req)
-			actions.Roll(req)
+		result := req.FromJSON(message)
+		if result == false || player_id != req.Player_id{ // bad JSON error / different ids 
+			ws.WriteMessage(1, st.Response{
+				Player_id: player_id,
+				Action: "undefined",
+				Status: "bad_request",
+			}.JSON())
+			return 
+		}
+		
+
+		switch req.Action { // Action handlers
+			case "roll":
+				go actions.Roll(req)
+			default:
+				fmt.Println(req)
 		}
 	}
 }
