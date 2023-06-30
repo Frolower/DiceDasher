@@ -28,6 +28,6 @@ func NewRoom(c *gin.Context) {
 	room.IsOpened = true
 
 	storage.RoomStorage[room.ID] = room
-	res := &st.Response{Room_id: room.ID, Player_id: room.Master, Action: "create_room", Data: make(map[string]string)}
+	res := &st.Response{Room_id: room.ID, Player_id: room.Master, Action: "create_room", Data: ""}
 	c.JSON(200, res)
 }

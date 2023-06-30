@@ -1,6 +1,9 @@
 package actions
 
 import (
+	// "dicedasher/rooms"
+	"dicedasher/st"
+	"encoding/json"
 	"math/rand"
 	"time"
 )
@@ -16,7 +19,16 @@ func RollDice(size int) []int {
 	return result
 }
 
-func Roll() {
+func Roll(request st.Request) {
+	r := RollDice(100)
+	response := st.Response{
+			Room_id: request.Room_id,
+			Player_id: request.Player_id,
+			Action: request.Action,
+	}
+	data, _ := json.Marshal(r)
+	response.Data = string(data)
+	send(response)
 	// r, _:=json.Marshal(roll.RollDice(100))
 	// players := RoomStorage[this.room_id].players // get all players in room
 	// for i := 0; i < len(players); i++ {  // Send a message to each player
@@ -27,6 +39,6 @@ func Roll() {
 	// 	}
 	// 	res.Data= make(map[string]string)
 	// 	res.Data["result"] = string(r)
-	// 	clients[players[i]].WriteMessage(1, res.JSON())
+		
 	// }
 }
