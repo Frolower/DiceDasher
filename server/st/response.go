@@ -1,4 +1,4 @@
-package rooms
+package st
 
 import (
 	"encoding/json"
@@ -12,8 +12,8 @@ type Response struct {
 }
 
 
-func (this Response) JSON() []byte {
-	res, _ := json.Marshal(this)
+func (g Response) JSON() []byte {
+	res, _ := json.Marshal(g)
 	// TODO: Handle error 
 	return res
 }

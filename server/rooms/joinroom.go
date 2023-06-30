@@ -1,6 +1,7 @@
 package rooms
 
 import (
+	"dicedasher/storage"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -9,14 +10,14 @@ import (
 func JoinRoom(c *gin.Context) {
 	room_id := c.DefaultQuery("room_id", "nil")
 	if room_id != "nil" {
-		room := RoomStorage[room_id]
+		room := storage.RoomStorage[room_id]
 
 		// TODO:
 		// Handle no room error 
 		
 		player_id := generateID()
-		room.players = append(room.players, player_id)
-		RoomStorage[room_id] = room 
+		room.Players = append(room.Players, player_id)
+		storage.RoomStorage[room_id] = room 
 		c.JSON(200, gin.H{
 			"status" : "connected",
 			"room_id" : room_id,

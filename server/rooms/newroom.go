@@ -1,13 +1,13 @@
 package rooms
 
 import (
+	"dicedasher/st"
+	"dicedasher/storage"
 	"math/rand"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
-
-var RoomStorage = make(map[string]Room) // Map with all rooms
 
 func generateID() string {
 	lib := "1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM"
@@ -21,13 +21,13 @@ func generateID() string {
 }
 
 func NewRoom(c *gin.Context) {
-	var room Room
+	var room st.Room
 	room.ID = generateID()
-	room.master = generateID()
-	room.players = append(room.players, room.master)
-	room.isOpened = true
+	room.Master = generateID()
+	room.Players = append(room.Players, room.Master)
+	room.IsOpened = true
 
-	RoomStorage[room.ID] = room
-	res := &Response{Room_id: room.ID, Player_id: room.master, Action: "create_room", Data: make(map[string]string)}
+	storage.RoomStorage[room.ID] = room
+	res := &st.Response{Room_id: room.ID, Player_id: room.Master, Action: "create_room", Data: make(map[string]string)}
 	c.JSON(200, res)
 }
