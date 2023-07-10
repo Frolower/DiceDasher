@@ -57,7 +57,7 @@ func Game(c *gin.Context) {
 	connected := false 
 
 	for {
-		fmt.Println(room)
+		fmt.Println(storage.RoomStorage[room_id])
 		if !storage.RoomStorage[room_id].IsOpened && !connected {
 			ws.WriteMessage(1, st.Response{
 				Room_id: room_id,
@@ -109,8 +109,10 @@ func Game(c *gin.Context) {
 		
 		correct := true 
 		switch req.Action { // Action handlers
-			case "start_game": 
-				correct = actions.StartGame(req)
+			case "open_room": 
+				correct = actions.Lock(req)
+			case "close_room": 
+				correct = actions.Lock(req)				
 			case "roll":
 				correct = actions.Roll(req)
 			default:
