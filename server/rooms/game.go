@@ -38,8 +38,12 @@ func Game(c *gin.Context) {
 	if player_id == "nil" {
 		player_id = generateID()
 		room.Players = append(room.Players, player_id)
+	} else {
+		if player_id != room.Master {
+			c.JSON(401, nil)
+			return 
+		}
 	}
-	
 	
 	storage.RoomStorage[room_id] = room
 	
