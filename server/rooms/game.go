@@ -4,12 +4,20 @@ import (
 	"dicedasher/actions"
 	"dicedasher/st"
 	"dicedasher/storage"
+	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
+
+func playerList(room st.Room) string {
+	data, _ := json.Marshal(map[string]string {
+		"players" : "["+strings.Join(room.Players, ", ")+"]",
+	})
+	return string(data)
+}
 
 func Game(c *gin.Context) {
 
@@ -29,9 +37,10 @@ func Game(c *gin.Context) {
 	}
 	if player_id == "nil" {
 		player_id = generateID()
+		room.Players = append(room.Players, player_id)
 	}
 	
-	room.Players = append(room.Players, player_id)
+	
 	storage.RoomStorage[room_id] = room
 	
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil) // Upgrading HTTP connection to websocket
@@ -40,14 +49,21 @@ func Game(c *gin.Context) {
 	}
 	
 	storage.Clients[player_id] = ws
-	actions.Send(st.Response{
-		Room_id: room_id,
-		Player_id: player_id,
-		Action: "player_joined",
-		Status: "success",
-		Data: "{ players: [" + strings.Join(room.Players, ", ") + "]}",
-	})
+
+	connected := false 
+
 	for {
+		if !connected {
+
+			actions.Send(st.Response{ // Send message when player is connected
+				Room_id: room_id,
+				Player_id: player_id,
+				Action: "player_connected",
+				Status: "success",
+				Data: playerList(room),
+			})
+			connected = true 
+		}
 		mt, message, err := ws.ReadMessage()
 	
 		if err != nil || mt == websocket.CloseMessage { // error/closed conection
@@ -55,6 +71,13 @@ func Game(c *gin.Context) {
 			if ok {
 				delete(storage.Clients, player_id) 
 			}
+			actions.Send(st.Response{ // Send message when player is connected
+				Room_id: room_id,
+				Player_id: player_id,
+				Action: "player_disconnected",
+				Status: "success",
+				Data: playerList(room),
+			})
 			break
 		}
 
