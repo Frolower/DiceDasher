@@ -3,6 +3,7 @@ package actions
 import (
 	"dicedasher/st"
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"time"
 )
@@ -20,6 +21,7 @@ func RollDice(size int) []int {
 
 func Roll(request st.Request) {
 	r := RollDice(100) // Generate values 
+	fmt.Println(r)
 	response := st.Response{ // Create response message
 			Room_id: request.Room_id,
 			Player_id: request.Player_id,
@@ -27,5 +29,5 @@ func Roll(request st.Request) {
 	}
 	data, _ := json.Marshal(r) // Turn values into string
 	response.Data = string(data)
-	send(response) // Send message to every player in the room
+	Send(response) // Send message to every player in the room
 }

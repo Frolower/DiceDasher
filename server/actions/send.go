@@ -13,7 +13,7 @@ func auth_error(response st.Response) { // Response with AUTH ERROR message
 	storage.Clients[response.Player_id].WriteMessage(1, response.JSON())
 }
 
-func send(response st.Response) {
+func Send(response st.Response) {
 	room, ok := storage.RoomStorage[response.Room_id]
 	if !ok { // No room error 
 		auth_error(response)
@@ -25,6 +25,9 @@ func send(response st.Response) {
 		return
 	}
 	for i := 0; i < len(players); i++ { // Send message to every client in the room 
-		storage.Clients[players[i]].WriteMessage(1, response.JSON())
+		_, exists := storage.Clients[players[i]]
+		if exists {
+			storage.Clients[players[i]].WriteMessage(1, response.JSON())
+		}
 	}
 }

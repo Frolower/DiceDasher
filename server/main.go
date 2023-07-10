@@ -13,8 +13,6 @@ func main() {
 
 	server.GET("/newroom", rooms.NewRoom)
 
-	server.GET("/joinroom", rooms.JoinRoom)
-
 	server.GET("/game", rooms.Game)
 
 	server.Run()
