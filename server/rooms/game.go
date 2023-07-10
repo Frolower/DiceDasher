@@ -57,12 +57,22 @@ func Game(c *gin.Context) {
 	connected := false 
 
 	for {
+		fmt.Println(room)
+		if !storage.RoomStorage[room_id].IsOpened && !connected {
+			ws.WriteMessage(1, st.Response{
+				Room_id: room_id,
+				Player_id: player_id,
+				Action: "connect",
+				Status: "room_closed",
+			}.JSON())
+			return
+		}
 		if !connected {
 
 			actions.Send(st.Response{ // Send message when player is connected
 				Room_id: room_id,
 				Player_id: player_id,
-				Action: "player_connected",
+				Action: "connect",
 				Status: "success",
 				Data: playerList(room),
 			})
@@ -78,7 +88,7 @@ func Game(c *gin.Context) {
 			actions.Send(st.Response{ // Send message when player is connected
 				Room_id: room_id,
 				Player_id: player_id,
-				Action: "player_disconnected",
+				Action: "disconnect",
 				Status: "success",
 				Data: playerList(room),
 			})
@@ -97,12 +107,23 @@ func Game(c *gin.Context) {
 			return 
 		}
 		
-
+		correct := true 
 		switch req.Action { // Action handlers
+			case "start_game": 
+				correct = actions.StartGame(req)
 			case "roll":
-				go actions.Roll(req)
+				correct = actions.Roll(req)
 			default:
 				fmt.Println(req)
+		}
+
+		if !correct {
+			ws.WriteMessage(1, st.Response{
+				Player_id: player_id,
+				Room_id: room_id,
+				Action: req.Action,
+				Status: "bad_request",
+			}.JSON())
 		}
 	}
 }

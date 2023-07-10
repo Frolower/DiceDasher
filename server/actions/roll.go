@@ -23,18 +23,11 @@ func rollDice(size int) []int {
 	return result
    }
 
-func Roll(request st.Request) st.Response {
+func Roll(request st.Request) bool {
 	rollTypes := []string{"1d4", "1d6", "1d8", "1d10", "1d12", "1d20", "1d100"}
 	diceType := request.Data.Get("dice").String()
 	if !slices.Contains(rollTypes, diceType) { // Check for dice type
-		response := st.Response{ // Create response message
-			Room_id: request.Room_id,
-			Player_id: request.Player_id,
-			Action: request.Action,
-			Status: "error",
-			Data: "bad_request",
-		}
-		return response	
+		return false 
 	}
 	diceMax, _ := strconv.Atoi(strings.Split(diceType, "d")[1])
 	r := rollDice(diceMax)
@@ -49,5 +42,5 @@ func Roll(request st.Request) st.Response {
 	data, _ := json.Marshal(r) // Turn values into string
 	response.Data = string(data)
 	Send(response) // Send message to every player in the room
-	return response
+	return true
 }
