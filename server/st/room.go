@@ -15,3 +15,13 @@ func (g Room) isPlayerConnected(player_id string) bool {
 	}
 	return false 
 }
+
+func (g Room) RemovePlayer (player_id string) []string {
+	var players [] string
+	for i:=0; i < len(g.Players); i++ {
+		if g.Players[i] != player_id {
+			players = append(players, g.Players[i])
+		}
+	}
+	return players
+}

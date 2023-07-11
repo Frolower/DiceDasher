@@ -35,7 +35,7 @@ func Game(c *gin.Context) {
 		c.JSON(401, nil)
 		return 
 	}
-	if player_id == "nil" {
+	if player_id == "nil" || player_id == ""{
 		player_id = generateID()
 		room.Players = append(room.Players, player_id)
 	} else {
@@ -85,6 +85,8 @@ func Game(c *gin.Context) {
 			if ok {
 				delete(storage.Clients, player_id) 
 			}
+			room.Players = room.RemovePlayer(player_id)
+			fmt.Println(room)
 			actions.Send(st.Response{ // Send message when player is connected
 				Room_id: room_id,
 				Player_id: player_id,
