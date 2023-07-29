@@ -25,7 +25,7 @@ func Game(c *gin.Context) {
 	room_id := c.DefaultQuery("room_id", "nil")
 	room, exists := storage.RoomStorage[room_id]
 
-	if room_id == "nil" { // No player_id param
+	if room_id == "nil" { // No room_id param
 		// BAD REQUEST
 		c.JSON(400, nil)
 		return 
@@ -34,7 +34,7 @@ func Game(c *gin.Context) {
 		// ACCESS DENIED
 		c.JSON(401, nil)
 		return 
-	}
+	}		
 	if player_id == "nil" || player_id == ""{
 		player_id = generateID()
 		room.Players = append(room.Players, player_id)
