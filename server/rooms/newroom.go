@@ -1,8 +1,10 @@
 package rooms
 
 import (
+	"dicedasher/auth"
 	"dicedasher/st"
 	"dicedasher/storage"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -21,10 +23,23 @@ func generateID() string {
 }
 
 func NewRoom(c *gin.Context) {
+	token, err := c.Cookie("access_token")
+	fmt.Println(token)
+	if err != nil {
+		fmt.Println(err)
+		c.JSON(401, nil)
+		return
+	}
+	user_id := auth.Auth(token)
+
+	if user_id == "" {
+		c.JSON(401, nil) 
+		return
+	}
 
 	var room st.Room = st.Room{
 		ID: generateID(),
-		Master: generateID(),
+		Master: user_id,
 		IsOpened: true,
 	} // Create Room structure
 	room.Players = append(room.Players, room.Master) // Append master id to players array

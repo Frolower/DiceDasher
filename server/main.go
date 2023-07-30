@@ -1,6 +1,7 @@
 package main
 
 import (
+	auth "dicedasher/auth"
 	rooms "dicedasher/rooms"
 
 	"github.com/gin-gonic/gin"
@@ -14,6 +15,10 @@ func main() {
 	server.GET("/newroom", rooms.NewRoom)
 
 	server.GET("/game", rooms.Game)
+
+	server.POST("/reg", auth.Reg)
+
+	server.POST("/login", auth.Login)
 
 	server.Run()
 }
