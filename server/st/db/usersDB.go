@@ -10,23 +10,25 @@ import (
 )
 
 type User struct {
-	ID       primitive.ObjectID `bson:"_id,omitempty"`
-	Username string
-	Email    string
-	Password string
+	ID            primitive.ObjectID `bson:"_id,omitempty"`
+	Username      string
+	Email         string
+	Password_hash string
 }
 
-func createUser(ctx context.Context, client *mongo.Client, user User) error {
+func CreateUser(ctx context.Context, client *mongo.Client, user User) error {
 	collection := client.Database("diceDasher").Collection("users")
 
 	_, err := collection.InsertOne(ctx, user)
+
 	if err != nil {
 		return fmt.Errorf("failed to insert user: %v", err)
 	}
+
 	return nil
 }
 
-func readUser(ctx context.Context, client *mongo.Client, filter bson.M) (*User, error) {
+func ReadUser(ctx context.Context, client *mongo.Client, filter bson.M) (*User, error) {
 	collection := client.Database("diceDasher").Collection("users")
 
 	findOptions := options.Find()
@@ -63,7 +65,7 @@ func readUser(ctx context.Context, client *mongo.Client, filter bson.M) (*User, 
 	return &users[0], nil
 }
 
-func updateUser(ctx context.Context, client *mongo.Client, userID primitive.ObjectID, updatedUser User) error {
+func UpdateUser(ctx context.Context, client *mongo.Client, userID primitive.ObjectID, updatedUser User) error {
 	collection := client.Database("diceDasher").Collection("users")
 
 	filter := bson.M{"_id": userID}
@@ -72,7 +74,7 @@ func updateUser(ctx context.Context, client *mongo.Client, userID primitive.Obje
 		"$set": bson.M{
 			"username": updatedUser.Username,
 			"email":    updatedUser.Email,
-			"password": updatedUser.Password,
+			"password": updatedUser.Password_hash,
 		},
 	}
 
@@ -84,7 +86,7 @@ func updateUser(ctx context.Context, client *mongo.Client, userID primitive.Obje
 	return nil
 }
 
-func deleteUser(ctx context.Context, client *mongo.Client, userID primitive.ObjectID) error {
+func DeleteUser(ctx context.Context, client *mongo.Client, userID primitive.ObjectID) error {
 	collection := client.Database("diceDasher").Collection("users")
 
 	filter := bson.M{"_id": userID}
