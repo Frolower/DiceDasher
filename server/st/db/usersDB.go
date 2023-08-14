@@ -9,6 +9,9 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var UserContext context.Context
+var UserClient *mongo.Client
+
 type User struct {
 	ID            primitive.ObjectID `bson:"_id,omitempty"`
 	Username      string

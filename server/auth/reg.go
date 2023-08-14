@@ -1,15 +1,11 @@
 package auth
 
 import (
-	"context"
+	"dicedasher/actions"
 	"dicedasher/st/db"
 	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"time"
 )
 
 func Reg(c *gin.Context) {
@@ -34,37 +30,19 @@ func Reg(c *gin.Context) {
 	}
 	//user.GenerateID()
 
-	clientOptions := options.Client().ApplyURI("mongodb://localhost:27017")
+	if actions.EstablishConnection() {
+		defer actions.CloseConnection(db.UserClient, db.UserContext)
 
-	// Создание стека подключений
-	client, err := mongo.NewClient(clientOptions)
-	if err != nil {
-		log.Fatal(err)
+		err = db.CreateUser(c, db.UserClient, user)
+		if err != nil {
+			fmt.Println(err)
+			fmt.Println("can't create a user")
+			c.JSON(500, nil)
+			return
+		}
+
+		c.JSON(200, nil)
+	} else {
+		c.JSON(500, nil)
 	}
-
-	// Создание контекста с таймаутом
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	// Подключение к серверу MongoDB
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(ctx)
-
-	// Проверка подключения
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = db.CreateUser(ctx, client, user)
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("can't create a user")
-	}
-	//storage.Users[user.Username] = user
-
-	c.JSON(200, nil)
 }
