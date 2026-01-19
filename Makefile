@@ -22,4 +22,6 @@ rebuild:
 
 fresh: rebuild up
 
-dev: rebuild logs
+dev:
+	docker compose build --no-cache
+	docker compose up

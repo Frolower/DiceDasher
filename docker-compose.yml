@@ -2,7 +2,7 @@ services:
     dice:
         build:
           context: .
-          dockerfile: services/dice/Dockerfile
+          dockerfile: services/resolve/Dockerfile
         ports:
           - "8080:8080"
         restart: unless-stopped
