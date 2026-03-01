@@ -1,17 +1,6 @@
-package model
+package tes
 
-type Resolve struct {
-	Number int `json:"number"`
-	Size   int `json:"size"`
-}
-
-type ResolveResponse struct {
-	Expression string `json:"expression"`
-	Rolls      []int  `json:"rolls"`
-	Sum        int    `json:"sum"`
-}
-
-type ResolveTES struct {
+type request struct {
 	Attr        int `json:"attr"`        // Main STAT attribute score
 	Assist      int `json:"assist"`      // Number of players assisting
 	Gear        int `json:"gear"`        // Modificator from the gear
@@ -19,13 +8,9 @@ type ResolveTES struct {
 	Target      int `json:"target"`      // Target number of successes
 }
 
-type ResolveTESResponse struct {
+type response struct {
 	Expression string `json:"expression"`
 	Rolls      []int  `json:"rolls"`
 	Successes  int    `json:"successes"`
 	Success    bool   `json:"success"`
 }
-
-//type ResolveVtMV5 {}
-
-//type ResolveVtMV5Response struct {}

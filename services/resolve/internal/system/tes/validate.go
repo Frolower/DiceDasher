@@ -1,24 +1,10 @@
-package validation
+package tes
 
 import (
-	"diceDasher/services/resolve/internal/model"
 	"errors"
 )
 
-func ValidateResolve(r model.Resolve) error {
-	var errs []error
-
-	if r.Number < 1 {
-		errs = append(errs, errors.New("number of dice must be at least 1"))
-	}
-	if r.Size < 2 {
-		errs = append(errs, errors.New("size of dice must be at least 2"))
-	}
-
-	return errors.Join(errs...)
-}
-
-func ValidateResolveTES(r model.ResolveTES) error {
+func validate(r request) error {
 	var errs []error
 
 	if r.Attr < 1 {
@@ -43,5 +29,3 @@ func ValidateResolveTES(r model.ResolveTES) error {
 
 	return errors.Join(errs...)
 }
-
-//func ValidateResolveVtMV5 (r model.ResolveVtMV5) error {}

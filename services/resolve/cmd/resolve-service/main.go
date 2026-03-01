@@ -2,6 +2,9 @@ package main
 
 import (
 	"diceDasher/services/resolve/internal/config"
+	"diceDasher/services/resolve/internal/system"
+	"diceDasher/services/resolve/internal/system/generic"
+	"diceDasher/services/resolve/internal/system/tes"
 	"log"
 	"net/http"
 
@@ -14,6 +17,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// register resolvers
+	system.Register("generic", generic.Resolver{})
+	system.Register("tes", tes.Resolver{})
+	//system.Register("vtmv5", vtmv5.Resolver{})
 
 	r := httputil.NewRouter()
 	handler.RegisterRoutes(r)

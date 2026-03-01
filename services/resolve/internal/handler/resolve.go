@@ -1,70 +1,45 @@
 package handler
 
 import (
-	"diceDasher/services/resolve/internal/validation"
-	"fmt"
+	"encoding/json"
+	"errors"
 	"net/http"
 
 	"diceDasher/pkg/httputil"
-	"diceDasher/services/resolve/internal/model"
-	"diceDasher/services/resolve/internal/service"
+	"diceDasher/services/resolve/internal/system"
 )
 
-func ResolveRoll(w http.ResponseWriter, r *http.Request) {
-	var resolve model.Resolve
-
-	if err := httputil.UnpackJSON(r, &resolve); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	if err := validation.ValidateResolve(resolve); err != nil {
-		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-		return
-	}
-
-	response := service.ResolveRoll(resolve)
-
-	if err := httputil.PackJSON(w, http.StatusOK, response); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-}
-
-func ResolveSystem(w http.ResponseWriter, r *http.Request) {
+func Resolve(w http.ResponseWriter, r *http.Request) {
 	sys := r.URL.Query().Get("system")
 	if sys == "" {
 		http.Error(w, "missing query param: system", http.StatusBadRequest)
 		return
 	}
 
-	switch sys {
-	case "tes":
-		resolve := model.ResolveTES{}
-
-		if err := httputil.UnpackJSON(r, &resolve); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+	resolver, err := system.Get(sys)
+	if err != nil {
+		if errors.Is(err, system.ErrUnknownSystem) {
+			http.Error(w, "unknown system", http.StatusNotFound)
 			return
 		}
-
-		if err := validation.ValidateResolveTES(resolve); err != nil {
-			http.Error(w, err.Error(), http.StatusUnprocessableEntity)
-			return
-		}
-
-		response := service.ResolveTES(resolve)
-
-		if err := httputil.PackJSON(w, http.StatusOK, response); err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
+	}
 
-	case "vtmV5":
-		fmt.Println("WIP")
+	var raw json.RawMessage
+	if err := httputil.UnpackJSON(r, &raw); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	default:
-		http.Error(w, "this system is not implemented", http.StatusNotFound)
+	}
+
+	resp, status, err := resolver.Resolve(r.Context(), raw)
+	if err != nil {
+		http.Error(w, err.Error(), status)
+		return
+	}
+
+	if err := httputil.PackJSON(w, status, resp); err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 }
