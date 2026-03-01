@@ -4,14 +4,19 @@ import (
 	"context"
 	"diceDasher/pkg/dice"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 )
 
 type Resolver struct{}
 
-func (Resolver) Resolve(ctx context.Context, raw json.RawMessage) (any, int, error) {
+func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
 	var req request
+
+	if action != "roll" {
+		return nil, http.StatusBadRequest, errors.New("invalid action")
+	}
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return nil, http.StatusBadRequest, err
 	}
@@ -20,7 +25,10 @@ func (Resolver) Resolve(ctx context.Context, raw json.RawMessage) (any, int, err
 	}
 
 	expression := fmt.Sprintf("%dd%d", req.Number, req.Size)
-	rolls := dice.RollDice(req.Number, req.Size)
+	rolls, err := dice.RollDice(req.Number, req.Size)
+	if err != nil {
+		return response{}, http.StatusInternalServerError, errors.New("internal error")
+	}
 	sum := dice.Sum(rolls)
 
 	return response{

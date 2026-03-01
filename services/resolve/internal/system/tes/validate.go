@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-func validate(r request) error {
+func validateRoll(r rollRequest) error {
 	var errs []error
 
 	if r.Attr < 1 {
@@ -24,6 +24,20 @@ func validate(r request) error {
 	}
 
 	if r.Target < 0 || r.Target > r.Attr+r.Assist+r.Gear {
+		errs = append(errs, errors.New("target score must be between 0 and total dice number"))
+	}
+
+	return errors.Join(errs...)
+}
+
+func validatePush(req pushRequest) error {
+	var errs []error
+
+	if len(req.AttributeRolls) < 1 {
+		errs = append(errs, errors.New("attribute rolls must be at least 1"))
+	}
+
+	if req.Target < 0 || req.Target > len(req.AttributeRolls) {
 		errs = append(errs, errors.New("target score must be between 0 and total dice number"))
 	}
 

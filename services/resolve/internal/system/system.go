@@ -6,5 +6,5 @@ import (
 )
 
 type Resolver interface {
-	Resolve(ctx context.Context, raw json.RawMessage) (any, int, error)
+	Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error)
 }

@@ -16,6 +16,11 @@ func Resolve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	action := r.URL.Query().Get("action")
+	if action == "" {
+		action = "roll" // default action
+	}
+
 	resolver, err := system.Get(sys)
 	if err != nil {
 		if errors.Is(err, system.ErrUnknownSystem) {
@@ -32,7 +37,7 @@ func Resolve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, status, err := resolver.Resolve(r.Context(), raw)
+	resp, status, err := resolver.Resolve(r.Context(), action, raw)
 	if err != nil {
 		http.Error(w, err.Error(), status)
 		return
