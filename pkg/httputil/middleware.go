@@ -25,6 +25,16 @@ const (
 	bgYellow = "\033[43m"
 	bgRed    = "\033[41m"
 	bgGray   = "\033[100m"
+
+	// background bright
+	bgBrightBlack   = "\033[100m"
+	bgBrightRed     = "\033[101m"
+	bgBrightGreen   = "\033[102m"
+	bgBrightYellow  = "\033[103m"
+	bgBrightBlue    = "\033[104m"
+	bgBrightMagenta = "\033[105m"
+	bgBrightCyan    = "\033[106m"
+	bgBrightWhite   = "\033[107m"
 )
 
 type statusWriter struct {
@@ -81,35 +91,71 @@ func clientIP(r *http.Request) string {
 	return host
 }
 
-func styleForStatus(code int) string {
+func styleForStatus(code int, mode string) string {
+	bg200, bg300, bg400, bg500 := bgGreen, bgCyan, bgYellow, bgRed
+
+	switch mode {
+	case "contrast":
+		bg200, bg300, bg400, bg500 = bgBrightGreen, bgBrightCyan, bgBrightYellow, bgBrightRed
+	case "default", "":
+		// keep defaults
+	default:
+		// unknown mode -> default palette
+	}
+
 	switch {
 	case code >= 200 && code < 300:
-		return bgGreen + cWhite
+		return bg200 + cWhite
 	case code >= 300 && code < 400:
-		return bgCyan + cWhite
+		return bg300 + cWhite
 	case code >= 400 && code < 500:
-		return bgYellow + cWhite
+		return bg400 + cWhite
 	default:
-		return bgRed + cWhite
+		return bg500 + cWhite
 	}
 }
 
-func styleForMethod(method string) string {
+func styleForMethod(method, mode string) string {
+	// Pick palette based on mode
+	getBg, postBg, putBg, delBg, defBg := bgBlue, bgCyan, bgYellow, bgRed, bgGray
+
+	switch mode {
+	case "contrast":
+		getBg, postBg, putBg, delBg = bgBrightBlue, bgBrightCyan, bgBrightYellow, bgBrightRed
+	case "default", "":
+		// keep defaults
+	default:
+		// unknown mode -> default palette
+	}
+
 	switch strings.ToUpper(method) {
 	case http.MethodGet:
-		return bgBlue + cWhite
+		return getBg + cWhite
 	case http.MethodPost:
-		return bgCyan + cWhite
+		return postBg + cWhite
 	case http.MethodPut:
-		return bgYellow + cWhite
+		return putBg + cWhite
 	case http.MethodDelete:
-		return bgRed + cWhite
+		return delBg + cWhite
 	default:
-		return bgGray + cWhite
+		return defBg + cWhite
 	}
 }
 
 func RequestLogger(next http.Handler) http.Handler {
+	return RequestLoggerWithMode(next, "normal")
+}
+
+func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
+	switch mode {
+	case "", "default", "contrast":
+		if mode == "" {
+			mode = "default"
+		}
+	default:
+		mode = "default"
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := nextReqID()
 
@@ -119,7 +165,7 @@ func RequestLogger(next http.Handler) http.Handler {
 		sw := &statusWriter{ResponseWriter: w}
 		start := time.Now()
 
-		ms := styleForMethod(r.Method)
+		ms := styleForMethod(r.Method, mode)
 		ip := clientIP(r)
 		ct := r.Header.Get("Content-Type")
 		if ct == "" {
@@ -139,7 +185,7 @@ func RequestLogger(next http.Handler) http.Handler {
 			sw.status = http.StatusOK
 		}
 
-		ss := styleForStatus(sw.status)
+		ss := styleForStatus(sw.status, mode)
 
 		// Log on response
 		log.Printf("|%s %3d %s| %22s | %60s | id=%06d |%s%-6s%s| \"%s\"%s bytes=%d",

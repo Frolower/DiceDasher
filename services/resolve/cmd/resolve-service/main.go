@@ -30,7 +30,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,
-		Handler: httputil.RequestLogger(r),
+		Handler: httputil.RequestLoggerWithMode(r, "default"),
 	}
 
 	ln, err := net.Listen("tcp", cfg.HTTPAddr)
