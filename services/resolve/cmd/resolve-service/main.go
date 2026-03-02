@@ -29,7 +29,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,
-		Handler: r,
+		Handler: httputil.RequestLogger(r),
 	}
 
 	log.Fatal(srv.ListenAndServe())
