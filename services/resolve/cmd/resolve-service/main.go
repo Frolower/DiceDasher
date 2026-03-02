@@ -7,6 +7,7 @@ import (
 	"diceDasher/services/resolve/internal/system/tes"
 	"diceDasher/services/resolve/internal/system/vtmv5"
 	"log"
+	"net"
 	"net/http"
 
 	"diceDasher/pkg/httputil"
@@ -32,5 +33,11 @@ func main() {
 		Handler: httputil.RequestLogger(r),
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	ln, err := net.Listen("tcp", cfg.HTTPAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Printf("resolver service READY on %s", cfg.HTTPAddr)
+	log.Fatal(srv.Serve(ln))
 }
