@@ -123,7 +123,7 @@ func RequestLogger(next http.Handler) http.Handler {
 		ip := clientIP(r)
 		ct := r.Header.Get("Content-Type")
 		if ct == "" {
-			ct = "-"
+			ct = "none"
 		}
 		cl := r.ContentLength // can be -1
 

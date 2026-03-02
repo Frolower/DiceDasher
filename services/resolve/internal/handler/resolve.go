@@ -40,6 +40,7 @@ func Resolve(w http.ResponseWriter, r *http.Request) {
 	resp, status, err := resolver.Resolve(r.Context(), action, raw)
 	if err != nil {
 		http.Error(w, err.Error(), status)
+		httputil.Logf(r.Context(), "ERROR: %s", err)
 		return
 	}
 

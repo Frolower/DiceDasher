@@ -3,6 +3,7 @@ package tes
 import (
 	"context"
 	"diceDasher/pkg/dice"
+	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/util"
 	"encoding/json"
 	"errors"
@@ -15,6 +16,8 @@ const dieSize = 6
 type Resolver struct{}
 
 func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
+	httputil.Logf(ctx, "RUN: resolver=tes action=%s", action)
+
 	switch action {
 	case "roll":
 		return resolveRoll(raw)

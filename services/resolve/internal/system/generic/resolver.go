@@ -3,6 +3,7 @@ package generic
 import (
 	"context"
 	"diceDasher/pkg/dice"
+	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/util"
 	"encoding/json"
 	"errors"
@@ -13,6 +14,7 @@ import (
 type Resolver struct{}
 
 func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
+	httputil.Logf(ctx, "RUN: resolver=generic action=%s", action)
 	var req request
 
 	if action != "roll" {
