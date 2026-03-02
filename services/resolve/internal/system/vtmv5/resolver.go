@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"diceDasher/pkg/dice"
-	"diceDasher/pkg/httputil"
+	"diceDasher/pkg/logger"
 	"diceDasher/pkg/util"
 	"encoding/json"
 	"errors"
@@ -17,7 +17,7 @@ const dieSize = 10
 type Resolver struct{}
 
 func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
-	httputil.Logf(ctx, "RUN: resolver=vtmv5 action=%s", action)
+	logger.Logf(ctx, "RUN: resolver=vtmv5 action=%s", action)
 
 	switch action {
 	case "roll":
