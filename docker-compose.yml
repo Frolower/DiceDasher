@@ -1,5 +1,5 @@
 services:
-    dice:
+    resolver:
         build:
           context: .
           dockerfile: services/resolve/Dockerfile
