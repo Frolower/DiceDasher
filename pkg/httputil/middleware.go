@@ -1,7 +1,7 @@
 package httputil
 
 import (
-	"context"
+	"diceDasher/pkg/logger"
 	"log"
 	"net"
 	"net/http"
@@ -43,20 +43,10 @@ type statusWriter struct {
 	bytes  int
 }
 
-type ctxKey string
-
-const reqIDKey ctxKey = "req_id"
-
 var reqCounter uint64
 
 func nextReqID() uint64 {
 	return atomic.AddUint64(&reqCounter, 1)
-}
-
-func ReqIDFromContext(ctx context.Context) (uint64, bool) {
-	v := ctx.Value(reqIDKey)
-	id, ok := v.(uint64)
-	return id, ok
 }
 
 func (w *statusWriter) WriteHeader(code int) {
@@ -100,6 +90,7 @@ func styleForStatus(code int, mode string) string {
 	case "default", "":
 		// keep defaults
 	default:
+		logger.LogWarningf("unexpected mode for status style: %s", mode)
 		// unknown mode -> default palette
 	}
 
@@ -125,6 +116,7 @@ func styleForMethod(method, mode string) string {
 	case "default", "":
 		// keep defaults
 	default:
+		logger.LogWarningf("unexpected mode for method style: %s", mode)
 		// unknown mode -> default palette
 	}
 
@@ -153,6 +145,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 			mode = "default"
 		}
 	default:
+		logger.LogWarningf("unexpected mode for request logger: %s", mode)
 		mode = "default"
 	}
 
@@ -160,7 +153,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		id := nextReqID()
 
 		// Put id into context so handlers can use it if they want
-		r = r.WithContext(context.WithValue(r.Context(), reqIDKey, id))
+		r = r.WithContext(logger.WithReqID(r.Context(), id))
 
 		sw := &statusWriter{ResponseWriter: w}
 		start := time.Now()
