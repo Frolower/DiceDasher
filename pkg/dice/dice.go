@@ -51,3 +51,29 @@ func RerollKeepingValues(previous []int, except []int, sides int) ([]int, error)
 
 	return out, nil
 }
+
+func RerollSpecificValues(previous []int, index []int, sides int) ([]int, error) {
+	if sides < 2 {
+		return nil, fmt.Errorf("sides must be >= 2")
+	}
+
+	indexSet := make(map[int]struct{}, len(index))
+	for _, idx := range index {
+		indexSet[idx] = struct{}{}
+	}
+
+	out := make([]int, len(previous))
+	copy(out, previous)
+
+	for i := range out {
+		if _, ok := indexSet[i]; ok {
+			d, err := RollDie(sides)
+			if err != nil {
+				return nil, err
+			}
+			out[i] = d
+		}
+	}
+
+	return out, nil
+}

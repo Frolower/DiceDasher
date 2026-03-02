@@ -3,6 +3,7 @@ package generic
 import (
 	"context"
 	"diceDasher/pkg/dice"
+	"diceDasher/pkg/util"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,7 +30,7 @@ func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage)
 	if err != nil {
 		return response{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	sum := dice.Sum(rolls)
+	sum := util.Sum(rolls)
 
 	return response{
 		Expression: expression,

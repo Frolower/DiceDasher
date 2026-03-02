@@ -3,6 +3,7 @@ package tes
 import (
 	"context"
 	"diceDasher/pkg/dice"
+	"diceDasher/pkg/util"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -41,7 +42,7 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	if err != nil {
 		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	successes := dice.CountInt(attributeRolls, 6) + dice.CountInt(gearRolls, 6)
+	successes := util.CountInt(attributeRolls, 6) + util.CountInt(gearRolls, 6)
 	success := successes >= req.Target
 
 	return rollResponse{
@@ -72,10 +73,10 @@ func resolvePush(raw json.RawMessage) (pushResponse, int, error) {
 	if err != nil {
 		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	successes := dice.CountInt(attributeRolls, 6) + dice.CountInt(gearRolls, 6)
+	successes := util.CountInt(attributeRolls, 6) + util.CountInt(gearRolls, 6)
 	success := successes >= req.Target
-	hopeLosses := dice.CountInt(attributeRolls, 1)
-	gearDamage := dice.CountInt(gearRolls, 1)
+	hopeLosses := util.CountInt(attributeRolls, 1)
+	gearDamage := util.CountInt(gearRolls, 1)
 
 	return pushResponse{
 		Expression:     expression,
