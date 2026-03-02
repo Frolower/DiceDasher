@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+const dieSize = 6
+
 type Resolver struct{}
 
 func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
@@ -33,12 +35,12 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 		return rollResponse{}, http.StatusUnprocessableEntity, err
 	}
 
-	expression := fmt.Sprintf("%dd6", req.Attr+req.Assist+req.Gear+req.Modificator)
-	attributeRolls, err := dice.RollDice(req.Attr+req.Assist+req.Modificator, 6)
+	expression := fmt.Sprintf("%dd%d", req.Attr+req.Assist+req.Gear+req.Modificator, dieSize)
+	attributeRolls, err := dice.RollDice(req.Attr+req.Assist+req.Modificator, dieSize)
 	if err != nil {
 		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	gearRolls, err := dice.RollDice(req.Gear, 6)
+	gearRolls, err := dice.RollDice(req.Gear, dieSize)
 	if err != nil {
 		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
@@ -64,12 +66,14 @@ func resolvePush(raw json.RawMessage) (pushResponse, int, error) {
 		return pushResponse{}, http.StatusUnprocessableEntity, err
 	}
 
-	expression := fmt.Sprintf("%dd6", len(req.AttributeRolls)+len(req.GearRolls))
-	attributeRolls, err := dice.RerollKeepingValues(req.AttributeRolls, []int{1, 6}, 6)
+	expression := fmt.Sprintf("%dd%d", len(req.AttributeRolls)+len(req.GearRolls), dieSize)
+	rerollDiceNumber := util.CountBetween(req.AttributeRolls, 2, 5) + util.CountBetween(req.GearRolls, 2, 5)
+	pushExpression := fmt.Sprintf("%dd%d", rerollDiceNumber, dieSize)
+	attributeRolls, err := dice.RerollKeepingValues(req.AttributeRolls, []int{1, 6}, dieSize)
 	if err != nil {
 		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	gearRolls, err := dice.RerollKeepingValues(req.GearRolls, []int{1, 6}, 6)
+	gearRolls, err := dice.RerollKeepingValues(req.GearRolls, []int{1, 6}, dieSize)
 	if err != nil {
 		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
@@ -80,6 +84,7 @@ func resolvePush(raw json.RawMessage) (pushResponse, int, error) {
 
 	return pushResponse{
 		Expression:     expression,
+		PushExpression: pushExpression,
 		AttributeRolls: attributeRolls,
 		GearRolls:      gearRolls,
 		Successes:      successes,

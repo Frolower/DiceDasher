@@ -8,6 +8,7 @@ type pushRequest struct {
 
 type pushResponse struct {
 	Expression     string `json:"expression"`
+	PushExpression string `json:"push_expression"`
 	AttributeRolls []int  `json:"attribute_rolls"`
 	GearRolls      []int  `json:"gear_rolls"`
 	Successes      int    `json:"successes"`
