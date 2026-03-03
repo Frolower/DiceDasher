@@ -17,7 +17,7 @@ const (
 
 func Logf(ctx context.Context, format string, args ...any) {
 	if id, ok := ReqIDFromContext(ctx); ok {
-		log.Printf("id=%s "+format, append([]any{id.String()}, args...)...)
+		log.Printf("| id=%s | "+format, append([]any{id.String()}, args...)...)
 		return
 	}
 	log.Printf(format, args...)

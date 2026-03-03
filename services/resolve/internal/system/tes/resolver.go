@@ -16,7 +16,7 @@ const dieSize = 6
 type Resolver struct{}
 
 func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
-	logger.Logf(ctx, "RUN: resolver=tes action=%s", action)
+	logger.Logf(ctx, "RUN: resolver=tes action=%s |", action)
 
 	switch action {
 	case "roll":

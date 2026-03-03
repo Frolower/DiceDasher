@@ -14,7 +14,7 @@ import (
 type Resolver struct{}
 
 func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
-	logger.Logf(ctx, "RUN: resolver=generic action=%s", action)
+	logger.Logf(ctx, "RUN: resolver=generic action=%s |", action)
 	var req request
 
 	if action != "roll" {
