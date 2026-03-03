@@ -1,6 +1,6 @@
 # VTM v5 System
 
-Vampire: The Masquerade 5th Edition by Renegade Studious
+Vampire: The Masquerade 5th Edition by White Wolf
 
 - Uses d10 dice pools
 - Successes on 6+
