@@ -14,4 +14,4 @@ COPY . .
 RUN go build -o /app/resolver-service ./services/resolver/cmd/resolver-service
 
 EXPOSE 8080
-CMD ["/app/resolve-service"]
+CMD ["/app/resolver-service"]
