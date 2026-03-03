@@ -73,7 +73,8 @@ This project is designed to use microservice architecture.
 ├── database/                     Database initialization scripts
 │
 ├── docs/
-│   ├── resolve-service/          Documentation about resolve service
+│   ├── service/
+│   │   └──resolve/               Documentation about resolve service
 │   ├── CODE_OF_CONDUCT.md
 │   ├── CONTRIBUTING.md
 │   ├── ENDPOINTS.md              Implemented API endpoints
@@ -89,6 +90,7 @@ This project is designed to use microservice architecture.
 │   └── go.mod
 │
 ├── services/                       Backend services
+│   ├── api/                        Existing API endpoints overview
 │   └── resolve-service/            Resolve service
 │       ├── cmd/resolve-service     Entrypoint
 │       ├── internal/
