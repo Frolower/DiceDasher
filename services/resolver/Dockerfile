@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY go.work ./
 COPY pkg/go.mod ./pkg/
-COPY services/resolve/go.mod ./services/resolve/
+COPY services/resolver/go.mod ./services/resolver/
 
 RUN go work sync
 RUN go mod download
