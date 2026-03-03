@@ -34,15 +34,15 @@ services/resolve/
 ### Locally
 
 ```bash
-cd services/resolve
-go run cmd/resolve-service/main.go
+cd services/resolver
+go run cmd/resolver-service/main.go
 ```
 
 ### Docker
 
 ```bash
-docker build -t resolve-service -f services/resolve/Dockerfile .
-docker run -p 8080:8080 resolve-service
+docker build -t resolver-service -f services/resolver/Dockerfile .
+docker run -p 8080:8080 resolver-service
 ```
 
 ## Configuration

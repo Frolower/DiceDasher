@@ -1,8 +1,34 @@
 services:
-    resolver:
-        build:
-          context: .
-          dockerfile: services/resolve/Dockerfile
-        ports:
-          - "8080:8080"
-        restart: unless-stopped
+  postgres:
+    image: postgres:16-alpine
+    container_name: dicedasher-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  resolver:
+    build:
+      context: .
+      dockerfile: services/resolver/Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://resolver_service:resolver_password@postgres:5432/resolve_db?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

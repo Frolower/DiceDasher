@@ -11,7 +11,7 @@ RUN go mod download
 
 COPY . .
 
-RUN go build -o /app/resolve-service ./services/resolve/cmd/resolve-service
+RUN go build -o /app/resolver-service ./services/resolver/cmd/resolver-service
 
 EXPOSE 8080
 CMD ["/app/resolve-service"]
