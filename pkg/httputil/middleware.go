@@ -1,13 +1,13 @@
 package httputil
 
 import (
-	"diceDasher/pkg/logger"
 	"log"
 	"net"
 	"net/http"
 	"strings"
-	"sync/atomic"
 	"time"
+
+	"diceDasher/pkg/logger"
 )
 
 const (
@@ -41,12 +41,6 @@ type statusWriter struct {
 	http.ResponseWriter
 	status int
 	bytes  int
-}
-
-var reqCounter uint64
-
-func nextReqID() uint64 {
-	return atomic.AddUint64(&reqCounter, 1)
 }
 
 func (w *statusWriter) WriteHeader(code int) {
@@ -150,7 +144,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		id := nextReqID()
+		id := logger.NewReqID()
 
 		// Put id into context so handlers can use it if they want
 		r = r.WithContext(logger.WithReqID(r.Context(), id))
@@ -160,15 +154,10 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 
 		ms := styleForMethod(r.Method, mode)
 		ip := clientIP(r)
-		ct := r.Header.Get("Content-Type")
-		if ct == "" {
-			ct = "none"
-		}
-		cl := r.ContentLength // can be -1
 
 		// Log on request
-		log.Printf("| %-39s | ct=%-32s cl=%-10d | id=%06d |%s%-6s%s| \"%s\"",
-			ip, ct, cl, id, ms, r.Method,
+		log.Printf("| %-71s | id=%s |%s%-6s%s| \"%s\"",
+			ip, id.String(), ms, r.Method,
 			cReset, r.URL.RequestURI())
 
 		next.ServeHTTP(sw, r)
@@ -181,9 +170,9 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		ss := styleForStatus(sw.status, mode)
 
 		// Log on response
-		log.Printf("|%s %3d %s| %22s | %60s | id=%06d |%s%-6s%s| \"%s\"%s bytes=%d",
+		log.Printf("|%s %3d %s| %22s | %40s | id=%s |%s%-6s%s| \"%s\"%s bytes=%d",
 			ss, sw.status, cReset,
-			dur, r.UserAgent(), id,
+			dur, r.UserAgent(), id.String(),
 			ms, r.Method, cReset,
 			r.URL.RequestURI(), cGray,
 			sw.bytes)
