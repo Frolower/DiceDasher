@@ -6,14 +6,14 @@ This document provides a general list of all API endpoints across DiceDasher ser
 
 Base URL: `http://localhost:8080`
 
-Full documentation: [/docs/services/resolve/](../services/resolve/)
+Full documentation: [/docs/services/resolver/](../services/resolver/)
 
 ### Endpoints
 
 | Method | Endpoint   | Description       | Details                                            |
 |--------|------------|-------------------|----------------------------------------------------|
-| GET    | `/health`  | Health check      | [→](../services/resolve/endpoints.md#get-health)   |
-| POST   | `/resolve` | Resolve dice roll | [→](../services/resolve/endpoints.md#post-resolve) |
+| GET    | `/health`  | Health check      | [→](../services/resolver/endpoints.md#get-health)   |
+| POST   | `/resolve` | Resolve dice roll | [→](../services/resolver/endpoints.md#post-resolve) |
 
 ### Supported Systems
 
