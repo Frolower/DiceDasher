@@ -12,7 +12,7 @@
 <div align="center">
 
 
-[![Project license](https://img.shields.io/github/license/Frolower/DiceDasher.svg?style=flat-square)](/LICENSE)
+[![License](https://img.shields.io/github/license/Frolower/DiceDasher?style=flat-square)](LICENSE)
 
 </div>
 
