@@ -1,11 +1,13 @@
 package config
 
 import (
+	"errors"
 	"os"
 )
 
 type Config struct {
-	HTTPAddr string
+	HTTPAddr    string
+	DatabaseURL string
 }
 
 func Load() (*Config, error) {
@@ -14,7 +16,13 @@ func Load() (*Config, error) {
 		addr = ":8080"
 	}
 
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return nil, errors.New("DATABASE_URL is not set")
+	}
+
 	return &Config{
-		HTTPAddr: addr,
+		HTTPAddr:    addr,
+		DatabaseURL: databaseURL,
 	}, nil
 }

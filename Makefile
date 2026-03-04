@@ -1,4 +1,4 @@
-.PHONY: build up down logs restart clean rebuild fresh dev
+.PHONY: build up down logs restart clean rebuild nuke fresh dev
 
 build:
 	docker compose build
@@ -19,6 +19,9 @@ clean:
 
 rebuild:
 	docker compose build --no-cache
+
+nuke:
+	docker compose down --volumes --remove-orphans
 
 fresh: rebuild up
 
