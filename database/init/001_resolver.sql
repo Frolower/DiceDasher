@@ -27,6 +27,7 @@ END $$;
 -- Roll history table
 CREATE TABLE IF NOT EXISTS public.roll_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    request_id UUID NOT NULL,
     system_name ttrpg_system NOT NULL,
     action_type roll_action NOT NULL,
     request_payload JSONB,

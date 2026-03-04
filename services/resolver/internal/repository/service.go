@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -10,23 +9,23 @@ import (
 func (r *Repository) InsertRollHistory(ctx context.Context, rec RollHistory) (uuid.UUID, error) {
 	const q = `
 INSERT INTO public.roll_history
-(system_name, action_type, request_payload, response_payload, campaign_id, character_id)
-VALUES ($1, $2, $3::jsonb, $4::jsonb, $5, $6)
-RETURNING id, created_at;
+(request_id, system_name, action_type, request_payload, response_payload, campaign_id, character_id)
+VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7)
+RETURNING id;
 `
 	var id uuid.UUID
-	var createdAt time.Time
 
 	err := r.pool.QueryRow(
 		ctx,
 		q,
+		rec.RequestID,
 		rec.SystemName,
 		rec.ActionType,
 		rec.RequestPayload,
 		rec.ResponsePayload,
 		rec.CampaignID,
 		rec.CharacterID,
-	).Scan(&id, &createdAt)
+	).Scan(&id)
 
 	return id, err
 }

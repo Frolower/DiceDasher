@@ -35,11 +35,15 @@ func main() {
 	system.Register("vtmv5", vtmv5.Resolver{})
 
 	r := httputil.NewRouter()
-	handler.RegisterRoutes(r, repo)
+	handler.RegisterRoutes(r)
+
+	// Wrap with middlewares
+	wrapped := handler.WithRepository(repo)(r)
+	wrapped = httputil.RequestLoggerWithMode(wrapped, "default")
 
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,
-		Handler: httputil.RequestLoggerWithMode(r, "default"),
+		Handler: wrapped,
 	}
 
 	ln, err := net.Listen("tcp", cfg.HTTPAddr)

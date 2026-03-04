@@ -10,59 +10,88 @@ import (
 	"diceDasher/pkg/logger"
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
+
+	"github.com/google/uuid"
 )
 
-func ResolveHandler(repo *repository.Repository) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		sys := r.URL.Query().Get("system")
-		if sys == "" {
-			http.Error(w, "missing query param: system", http.StatusBadRequest)
+type resolveEnvelope struct {
+	Data     any        `json:"data"`
+	RecordID *uuid.UUID `json:"record_id,omitempty"`
+}
+
+func ResolveHandler(w http.ResponseWriter, r *http.Request) {
+	sys := r.URL.Query().Get("system")
+	if sys == "" {
+		http.Error(w, "missing query param: system", http.StatusBadRequest)
+		log.Println("request arrived without system")
+		return
+	}
+
+	action := r.URL.Query().Get("action")
+	if action == "" {
+		action = "roll" // default action
+		log.Println("request arrived without action")
+	}
+
+	resolver, err := system.Get(sys)
+	if err != nil {
+		if errors.Is(err, system.ErrUnknownSystem) {
+			http.Error(w, "unknown system", http.StatusNotFound)
 			return
 		}
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 
-		action := r.URL.Query().Get("action")
-		if action == "" {
-			action = "roll" // default action
-			log.Println("request arrived without action")
-		}
+	var raw json.RawMessage
+	if err := httputil.UnpackJSON(r, &raw); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		logger.Logf(r.Context(), "ERROR: %s", err)
+		return
+	}
 
-		resolver, err := system.Get(sys)
+	resp, status, err := resolver.Resolve(r.Context(), action, raw)
+	if err != nil {
+		http.Error(w, err.Error(), status)
+		logger.Logf(r.Context(), "ERROR: %s", err)
+		return
+	}
+
+	// Save roll history to database
+	var recordID *uuid.UUID
+
+	repo, err := repository.FromContext(r.Context())
+	if err != nil {
+		logger.Logf(r.Context(), "ERROR: repository not in context: %s", err)
+	} else {
+		respJSON, err := json.Marshal(resp)
 		if err != nil {
-			if errors.Is(err, system.ErrUnknownSystem) {
-				http.Error(w, "unknown system", http.StatusNotFound)
-				return
+			logger.Logf(r.Context(), "ERROR marshaling response: %s", err)
+		} else {
+			requestID, exists := logger.ReqIDFromContext(r.Context())
+			if exists != true {
+				logger.Logf(r.Context(), "ERROR getting request ID")
+			} else {
+				id, err := repo.InsertRollHistory(r.Context(), repository.RollHistory{
+					RequestID:       requestID,
+					SystemName:      sys,
+					ActionType:      action,
+					RequestPayload:  raw,
+					ResponsePayload: respJSON,
+				})
+				if err != nil {
+					logger.Logf(r.Context(), "ERROR saving roll history: %s", err)
+				} else {
+					recordID = &id
+				}
 			}
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
 		}
+	}
 
-		var raw json.RawMessage
-		if err := httputil.UnpackJSON(r, &raw); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	out := resolveEnvelope{Data: resp, RecordID: recordID}
 
-		resp, status, err := resolver.Resolve(r.Context(), action, raw)
-		if err != nil {
-			http.Error(w, err.Error(), status)
-			logger.Logf(r.Context(), "ERROR: %s", err)
-			return
-		}
-
-		// Save roll history to database
-		_, err = repo.InsertRollHistory(r.Context(), repository.RollHistory{
-			SystemName:      sys,
-			ActionType:      action,
-			RequestPayload:  raw,
-			ResponsePayload: resp,
-		})
-		if err != nil {
-			logger.Logf(r.Context(), "ERROR saving roll history: %s", err)
-		}
-
-		if err := httputil.PackJSON(w, status, resp); err != nil {
-			http.Error(w, "internal error", http.StatusInternalServerError)
-			return
-		}
+	if err := httputil.PackJSON(w, status, out); err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
 	}
 }

@@ -8,7 +8,30 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-var ErrNotFound = errors.New("not found")
+type ctxKey struct{}
+
+// WithRepo adds repository to context
+func WithRepo(ctx context.Context, repo *Repository) context.Context {
+	return context.WithValue(ctx, ctxKey{}, repo)
+}
+
+// FromContext extracts repository from context
+func FromContext(ctx context.Context) (*Repository, error) {
+	repo, ok := ctx.Value(ctxKey{}).(*Repository)
+	if !ok || repo == nil {
+		return nil, errors.New("repository not found in context")
+	}
+	return repo, nil
+}
+
+// MustFromContext extracts repository from context or panics
+func MustFromContext(ctx context.Context) *Repository {
+	repo, err := FromContext(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return repo
+}
 
 type Repository struct {
 	pool *pgxpool.Pool
