@@ -1,6 +1,12 @@
 package vtmv5
 
+import "github.com/google/uuid"
+
 type rerollRequest struct {
+	RecordID    uuid.UUID `json:"record_id"`
+	RerollIndex []int     `json:"reroll_index"`
+}
+type rerollRecord struct {
 	MainRoll    []int `json:"main_roll"`
 	HungerRoll  []int `json:"hunger_roll"`
 	RerollIndex []int `json:"reroll_index"`

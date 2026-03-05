@@ -5,6 +5,7 @@ import (
 	"diceDasher/pkg/dice"
 	"diceDasher/pkg/logger"
 	"diceDasher/pkg/util"
+	"diceDasher/services/resolve/internal/repository"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,7 +23,7 @@ func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage)
 	case "roll":
 		return resolveRoll(raw)
 	case "push":
-		return resolvePush(raw)
+		return resolvePush(ctx, raw)
 	default:
 		return nil, http.StatusBadRequest, errors.New("invalid action")
 	}
@@ -59,8 +60,9 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	}, http.StatusOK, nil
 }
 
-func resolvePush(raw json.RawMessage) (pushResponse, int, error) {
+func resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, error) {
 	var req pushRequest
+	var rec pushRecord
 
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return pushResponse{}, http.StatusBadRequest, err
@@ -69,19 +71,44 @@ func resolvePush(raw json.RawMessage) (pushResponse, int, error) {
 		return pushResponse{}, http.StatusUnprocessableEntity, err
 	}
 
-	expression := fmt.Sprintf("%dd%d", len(req.AttributeRolls)+len(req.GearRolls), dieSize)
-	rerollDiceNumber := util.CountBetween(req.AttributeRolls, 2, 5) + util.CountBetween(req.GearRolls, 2, 5)
+	repo, err := repository.FromContext(ctx)
+	if err != nil {
+		logger.Logf(ctx, "ERROR: repository not in context: %s", err)
+		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	}
+
+	extractedData, err := repo.GetRollHistoryByID(ctx, req.RecordID)
+	if err != nil {
+		return pushResponse{}, http.StatusInternalServerError, err
+	}
+
+	// Extracting results from thr db
+	if err = json.Unmarshal(extractedData.ResponsePayload, &rec); err != nil {
+		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	}
+
+	// Extracting target from the request
+	if err = json.Unmarshal(extractedData.RequestPayload, &rec); err != nil {
+		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	}
+
+	if err := validatePushRecord(rec); err != nil {
+		return pushResponse{}, http.StatusInternalServerError, err
+	}
+
+	expression := fmt.Sprintf("%dd%d", len(rec.AttributeRolls)+len(rec.GearRolls), dieSize)
+	rerollDiceNumber := util.CountBetween(rec.AttributeRolls, 2, 5) + util.CountBetween(rec.GearRolls, 2, 5)
 	pushExpression := fmt.Sprintf("%dd%d", rerollDiceNumber, dieSize)
-	attributeRolls, err := dice.RerollKeepingValues(req.AttributeRolls, []int{1, 6}, dieSize)
+	attributeRolls, err := dice.RerollKeepingValues(rec.AttributeRolls, []int{1, 6}, dieSize)
 	if err != nil {
 		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	gearRolls, err := dice.RerollKeepingValues(req.GearRolls, []int{1, 6}, dieSize)
+	gearRolls, err := dice.RerollKeepingValues(rec.GearRolls, []int{1, 6}, dieSize)
 	if err != nil {
 		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
 	successes := util.CountInt(attributeRolls, 6) + util.CountInt(gearRolls, 6)
-	success := successes >= req.Target
+	success := successes >= rec.Target
 	hopeLosses := util.CountInt(attributeRolls, 1)
 	gearDamage := util.CountInt(gearRolls, 1)
 

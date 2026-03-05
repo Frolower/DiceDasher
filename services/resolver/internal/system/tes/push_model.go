@@ -1,9 +1,14 @@
 package tes
 
+import "github.com/google/uuid"
+
 type pushRequest struct {
+	RecordID uuid.UUID `json:"record_id"`
+}
+type pushRecord struct {
 	AttributeRolls []int `json:"attribute_rolls"`
 	GearRolls      []int `json:"gear_rolls"`
-	Target         int   `json:"target"` // Target number of successes
+	Target         int   `json:"target"`
 }
 
 type pushResponse struct {

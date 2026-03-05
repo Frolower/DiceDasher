@@ -15,8 +15,8 @@ import (
 )
 
 type resolveEnvelope struct {
-	Data     any        `json:"data"`
 	RecordID *uuid.UUID `json:"record_id,omitempty"`
+	Data     any        `json:"data"`
 }
 
 func ResolveHandler(w http.ResponseWriter, r *http.Request) {

@@ -6,9 +6,11 @@ import (
 	"diceDasher/pkg/dice"
 	"diceDasher/pkg/logger"
 	"diceDasher/pkg/util"
+	"diceDasher/services/resolve/internal/repository"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 )
 
@@ -23,7 +25,7 @@ func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage)
 	case "roll":
 		return resolveRoll(raw)
 	case "reroll":
-		return resolveReroll(raw)
+		return resolveReroll(ctx, raw)
 	case "check":
 		return resolveCheck(raw)
 	default:
@@ -32,7 +34,7 @@ func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage)
 }
 
 func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
-	req := rollRequest{}
+	var req rollRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return rollResponse{}, http.StatusBadRequest, err
@@ -85,8 +87,9 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	}, http.StatusOK, nil
 }
 
-func resolveReroll(raw json.RawMessage) (rerollResponse, int, error) {
-	req := rerollRequest{}
+func resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, int, error) {
+	var req rerollRequest
+	var rec rerollRecord
 
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return rerollResponse{}, http.StatusBadRequest, err
@@ -95,19 +98,46 @@ func resolveReroll(raw json.RawMessage) (rerollResponse, int, error) {
 		return rerollResponse{}, http.StatusUnprocessableEntity, err
 	}
 
-	expression := fmt.Sprintf("%dd%d", len(req.MainRoll)+len(req.HungerRoll), dieSize)
-	rerollExpression := fmt.Sprintf("%dd%d", len(req.RerollIndex), dieSize)
-	mainRoll, err := dice.RerollSpecificValues(req.MainRoll, req.RerollIndex, dieSize)
+	repo, err := repository.FromContext(ctx)
+	if err != nil {
+		logger.Logf(ctx, "ERROR: repository not in context: %s", err)
+		return rerollResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	}
+
+	extractedData, err := repo.GetRollHistoryByID(ctx, req.RecordID)
+	if err != nil {
+		return rerollResponse{}, http.StatusInternalServerError, err
+	}
+
+	// Extracting roll results
+	if err = json.Unmarshal(extractedData.ResponsePayload, &rec); err != nil {
+		return rerollResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	}
+
+	// Extracting target from request
+	if err = json.Unmarshal(extractedData.RequestPayload, &rec); err != nil {
+		return rerollResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	}
+
+	log.Print(rec.Target)
+
+	if err := validateRerollRecord(rec, req.RerollIndex); err != nil {
+		return rerollResponse{}, http.StatusInternalServerError, err
+	}
+
+	expression := fmt.Sprintf("%dd%d", len(rec.MainRoll)+len(rec.HungerRoll), dieSize)
+	rerollExpression := fmt.Sprintf("%dd%d", len(rec.RerollIndex), dieSize)
+	mainRoll, err := dice.RerollSpecificValues(rec.MainRoll, rec.RerollIndex, dieSize)
 	if err != nil {
 		return rerollResponse{}, http.StatusBadRequest, errors.New("interal error")
 	}
-	hungerRoll := req.HungerRoll
+	hungerRoll := rec.HungerRoll
 	regular10s := util.CountInt(mainRoll, 10)
 	hunger10s := util.CountInt(hungerRoll, 10)
 	successes := util.CountBetween(mainRoll, 6, 10) + util.CountBetween(hungerRoll, 6, 10)
 	pairsOf10s := (regular10s + hunger10s) / 2
 	successes += pairsOf10s * 2 // Adds 2 extra successes for each pair of 10's
-	success := successes >= req.Target
+	success := successes >= rec.Target
 	hungerFails := util.CountInt(hungerRoll, 1)
 	isCritical := false
 	critType := "none"

@@ -3,6 +3,8 @@ package vtmv5
 import (
 	"diceDasher/pkg/util"
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 func validateRoll(req rollRequest) error {
@@ -27,13 +29,23 @@ func validateRoll(req rollRequest) error {
 func validateReroll(req rerollRequest) error {
 	var errs []error
 
-	if len(req.MainRoll)+len(req.HungerRoll) == 0 {
-		errs = append(errs, errors.New("no dice in a roll"))
+	if req.RecordID == uuid.Nil {
+		errs = append(errs, errors.New("record_id is required"))
 	}
 	if len(req.RerollIndex) == 0 {
 		errs = append(errs, errors.New("no dice to reroll"))
 	}
-	if util.CountAbove(req.RerollIndex, len(req.MainRoll)-1) > 0 {
+
+	return errors.Join(errs...)
+}
+
+func validateRerollRecord(req rerollRecord, rerollIndex []int) error {
+	var errs []error
+
+	if len(req.MainRoll)+len(req.HungerRoll) == 0 {
+		errs = append(errs, errors.New("no dice in a roll"))
+	}
+	if util.CountAbove(rerollIndex, len(req.MainRoll)-1) > 0 {
 		errs = append(errs, errors.New("reroll index out of range"))
 	}
 	if req.Target < 1 {

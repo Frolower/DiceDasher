@@ -2,6 +2,8 @@ package tes
 
 import (
 	"errors"
+
+	"github.com/google/uuid"
 )
 
 func validateRoll(r rollRequest) error {
@@ -29,11 +31,21 @@ func validateRoll(r rollRequest) error {
 func validatePush(req pushRequest) error {
 	var errs []error
 
+	if req.RecordID == uuid.Nil {
+		errs = append(errs, errors.New("record_id is required"))
+	}
+
+	return errors.Join(errs...)
+}
+
+func validatePushRecord(req pushRecord) error {
+	var errs []error
+
 	if len(req.AttributeRolls) < 1 {
 		errs = append(errs, errors.New("attribute rolls must be at least 1"))
 	}
-	if req.Target < 0 || req.Target > len(req.AttributeRolls) {
-		errs = append(errs, errors.New("target score must be between 0 and total dice number"))
+	if req.Target < 1 || req.Target > len(req.AttributeRolls) {
+		errs = append(errs, errors.New("target score must be between 1 and total dice number"))
 	}
 
 	return errors.Join(errs...)
