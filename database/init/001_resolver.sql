@@ -1,12 +1,11 @@
 -- Initializing resolver db
-
 \connect resolver_db
 
 -- gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Allow the service role to connect to this DB
-GRANT CONNECT, TEMP ON DATABASE resolver_db TO resolver_service;
+GRANT CONNECT ON DATABASE resolver_db TO resolver_service;
 
 -- Allow the role to use objects in public schema
 GRANT USAGE ON SCHEMA public TO resolver_service;
