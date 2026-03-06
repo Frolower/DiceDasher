@@ -69,11 +69,13 @@ This project is designed to use microservice architecture.
 ### Repo Map
 ```
 .
-├── database/                     Database initialization scripts
+├── database/                     
+│   └── init/                     Database initialization scripts
 │
 ├── docs/
+│   ├── api/                      Existing API endpoints overview
 │   ├── service/
-│   │   └──resolve/               Documentation about resolve service
+│   │   └── resolver/             Documentation about resolve service
 │   ├── CODE_OF_CONDUCT.md
 │   ├── CONTRIBUTING.md
 │   ├── ENDPOINTS.md              Implemented API endpoints
@@ -88,15 +90,15 @@ This project is designed to use microservice architecture.
 │   ├── util/                      Various utility functions
 │   └── go.mod
 │
-├── services/                       Backend services
-│   ├── api/                        Existing API endpoints overview
-│   └── resolve-service/            Resolve service
-│       ├── cmd/resolve-service     Entrypoint
+├── services/                      Backend services
+│   └── resolver-service/          Resolve service
+│       ├── cmd/resolver-service   Entrypoint
 │       ├── internal/
 │       │   ├── config/
 │       │   ├── handler/
 │       │   ├── repository/
-│       │   ├── system/             Per system resolvers (eg vtmv5/)
+│       │   └── system/            Per system resolvers (eg vtmv5/)
+│       ├── .env.example
 │       ├── Dockerfile
 │       └── go.mod
 │

@@ -16,7 +16,7 @@ import (
 
 type resolveEnvelope struct {
 	RecordID *uuid.UUID `json:"record_id,omitempty"`
-	Data     any        `json:"data"`
+	Payload  any        `json:"payload"`
 }
 
 func ResolveHandler(w http.ResponseWriter, r *http.Request) {
@@ -88,7 +88,7 @@ func ResolveHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	out := resolveEnvelope{Data: resp, RecordID: recordID}
+	out := resolveEnvelope{RecordID: recordID, Payload: resp}
 
 	if err := httputil.PackJSON(w, status, out); err != nil {
 		http.Error(w, "internal error", http.StatusInternalServerError)

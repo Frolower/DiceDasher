@@ -30,15 +30,16 @@ Perform a standard VTM v5 dice pool roll.
 
 ### Response
 
-| Field         | Type     | Description                                      |
-|---------------|----------|--------------------------------------------------|
-| `expression`  | string   | Dice notation (e.g., "5d10")                     |
-| `main_roll`   | int[]    | Regular dice results                             |
-| `hunger_roll` | int[]    | Hunger dice results                              |
-| `successes`   | int      | Total successes (including critical bonus)       |
-| `success`     | bool     | Whether roll met the target                      |
-| `is_critical` | bool     | Whether a critical occurred                      |
-| `crit_type`   | string   | Critical type (see below)                        |
+| Field                  | Type     | Description                                |
+|------------------------|----------|--------------------------------------------|
+| `record_id`            | string   | record id of this roll                     |
+| `payload.expression`   | string   | Dice notation (e.g., "5d10")               |
+| `payload.main_roll`    | int[]    | Regular dice results                       |
+| `payload.hunger_roll`  | int[]    | Hunger dice results                        |
+| `payload.successes`    | int      | Total successes (including critical bonus) |
+| `payload.success`      | bool     | Whether roll met the target                |
+| `payload.is_critical`  | bool     | Whether a critical occurred                |
+| `payload.crit_type`    | string   | Critical type (see below)                  |
 
 ### Critical Types
 
@@ -59,13 +60,16 @@ curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=roll" \
 
 ```json
 {
-  "expression": "5d10",
-  "main_roll": [10, 7, 3],
-  "hunger_roll": [10, 4],
-  "successes": 6,
-  "success": true,
-  "is_critical": true,
-  "crit_type": "messy critical"
+  "record_id": "923a67f6-a421-41cf-b323-f71c0e7caffc",
+  "payload": {
+    "expression": "5d10",
+    "main_roll": [7, 4, 10],
+    "hunger_roll": [10, 2],
+    "successes": 5,
+    "success": true,
+    "is_critical": true,
+    "crit_type": "messy critical"
+  }
 }
 ```
 
@@ -86,16 +90,17 @@ Reroll specific dice from a previous roll (Willpower reroll). Only main dice can
 
 ### Response
 
-| Field              | Type     | Description                          |
-|--------------------|----------|--------------------------------------|
-| `expression`       | string   | Original dice notation               |
-| `reroll_expression`| string   | Rerolled dice notation               |
-| `main_roll`        | int[]    | Updated main dice results            |
-| `hunger_roll`      | int[]    | Unchanged hunger dice results        |
-| `successes`        | int      | New total successes                  |
-| `success`          | bool     | Whether roll met the target          |
-| `is_critical`      | bool     | Whether a critical occurred          |
-| `crit_type`        | string   | Critical type (see roll action)      |
+| Field                       | Type   | Description                     |
+|-----------------------------|--------|---------------------------------|
+| `record_id`                 | string | record id of this roll          |
+| `payload.expression`        | string | Original dice notation          |
+| `payload.reroll_expression` | string | Rerolled dice notation          |
+| `payload.main_roll`         | int[]  | Updated main dice results       |
+| `payload.hunger_roll`       | int[]  | Unchanged hunger dice results   |
+| `payload.successes`         | int    | New total successes             |
+| `payload.success`           | bool   | Whether roll met the target     |
+| `payload.is_critical`       | bool   | Whether a critical occurred     |
+| `payload.crit_type`         | string | Critical type (see roll action) |
 
 ### Example
 
@@ -103,23 +108,24 @@ Reroll specific dice from a previous roll (Willpower reroll). Only main dice can
 curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=reroll" \
   -H "Content-Type: application/json" \
   -d '{
-    "main_roll": [3, 5, 7],
-    "hunger_roll": [10, 4],
-    "reroll_index": [0, 1],
-    "target": 3
+    "record_id": "923a67f6-a421-41cf-b323-f71c0e7caffc",
+    "reroll_index": [0, 1]
   }'
 ```
 
 ```json
 {
-  "expression": "5d10",
-  "reroll_expression": "2d10",
-  "main_roll": [8, 10, 7],
-  "hunger_roll": [10, 4],
-  "successes": 6,
-  "success": true,
-  "is_critical": true,
-  "crit_type": "messy critical"
+  "record_id": "17ea1c08-78f3-4ebc-b69e-ec344a5bf3f3",
+  "payload": {
+    "expression": "5d10",
+    "reroll_expression": "0d10",
+    "main_roll": [7, 4, 10],
+    "hunger_roll": [10, 2],
+    "successes": 5,
+    "success": true,
+    "is_critical": true,
+    "crit_type": "messy critical"
+  }
 }
 ```
 
@@ -135,11 +141,12 @@ Empty body required.
 
 ### Response
 
-| Field        | Type   | Description              |
-|--------------|--------|--------------------------|
-| `expression` | string | Dice notation ("1d10")   |
-| `result`     | int    | Die result               |
-| `success`    | bool   | True if result >= 6      |
+| Field                | Type   | Description           |
+|----------------------|--------|-----------------------|
+| `record_id`          | string | record id of this roll|
+| `payload.expression` | string | Dice notation ("1d10") |
+| `payload.result`     | int    | Die result            |
+| `payload.success`    | bool   | True if result >= 6   |
 
 ### Example
 
@@ -151,8 +158,11 @@ curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=check" \
 
 ```json
 {
-  "expression": "1d10",
-  "result": 7,
-  "success": true
+  "record_id": "dedd2ad9-8b72-4f58-a022-bb41be17f6dd",
+  "payload": {
+    "expression": "1d10",
+    "result": 8,
+    "success": true
+  }
 }
 ```

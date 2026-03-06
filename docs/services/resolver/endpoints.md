@@ -50,8 +50,8 @@ Dispatcher endpoint for dice resolution. The request/response body depends on `s
 
 ## Supported Systems
 
-| System    | Actions                   | Description                              | Docs |
-|-----------|---------------------------|------------------------------------------|------|
-| `generic` | `roll`                    | Universal NdM dice rolls                 | [→](systems/generic.md) |
-| `vtmv5`   | `roll`, `reroll`, `check` | Vampire: The Masquerade 5th Edition      | [→](systems/vtmv5.md) |
-| `tes`     | `roll`, `push`            | Tales from the Eternal Steppe (YZE)      | [→](systems/tes.md) |
+| System    | Actions                   | Description                         | Docs |
+|-----------|---------------------------|-------------------------------------|------|
+| `generic` | `roll`                    | Universal NdM dice rolls            | [→](systems/generic.md) |
+| `vtmv5`   | `roll`, `reroll`, `check` | Vampire: The Masquerade 5th Edition | [→](systems/vtmv5.md) |
+| `tes`     | `roll`, `push`            | The Electtric State                 | [→](systems/tes.md) |

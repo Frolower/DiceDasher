@@ -21,11 +21,12 @@ Roll N dice of size M and return individual results with sum.
 
 ### Response
 
-| Field        | Type     | Description                    |
-|--------------|----------|--------------------------------|
-| `expression` | string   | Dice notation (e.g., "2d6")    |
-| `rolls`      | int[]    | Individual roll results        |
-| `sum`        | int      | Sum of all rolls               |
+| Field                | Type   | Description                   |
+|----------------------|--------|-------------------------------|
+| `record_id`          | string | record id of this roll        |
+| `payload.expression` | string | Dice notation (e.g., "2d6")   |
+| `payload.rolls`      | int[]  | Individual roll results       |
+| `payload.sum`        | int    | Sum of all rolls              |
 
 ### Example
 
@@ -37,8 +38,11 @@ curl -X POST "http://localhost:8080/resolve?system=generic&action=roll" \
 
 ```json
 {
-  "expression": "3d6",
-  "rolls": [4, 2, 6],
-  "sum": 12
+  "record_id": "23d5205e-dd90-4c7e-8347-25f7b15605f3",
+  "payload": {
+    "expression": "3d6",
+    "rolls": [3, 1, 2],
+    "sum": 6
+  }
 }
 ```

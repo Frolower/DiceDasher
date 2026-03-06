@@ -30,13 +30,14 @@ Perform a standard TES dice pool roll.
 
 ### Response
 
-| Field            | Type     | Description                     |
-|------------------|----------|---------------------------------|
-| `expression`     | string   | Dice notation (e.g., "6d6")     |
-| `attribute_rolls`| int[]    | Attribute + assist dice results |
-| `gear_rolls`     | int[]    | Gear dice results               |
-| `successes`      | int      | Total 6s rolled                 |
-| `success`        | bool     | Whether roll met the target     |
+| Field                     | Type     | Description                     |
+|---------------------------|----------|---------------------------------|
+| `record_id`               | string   | record id of this roll          |
+| `payload.expression`      | string   | Dice notation (e.g., "6d6")     |
+| `payload.attribute_rolls` | int[]    | Attribute + assist dice results |
+| `payload.datagear_rolls`  | int[]    | Gear dice results               |
+| `payload.successes`       | int      | Total 6s rolled                 |
+| `payload.success`         | bool     | Whether roll met the target     |
 
 ### Example
 
@@ -48,11 +49,14 @@ curl -X POST "http://localhost:8080/resolve?system=tes&action=roll" \
 
 ```json
 {
-  "expression": "7d6",
-  "attribute_rolls": [3, 6, 2, 5, 6],
-  "gear_rolls": [4, 1],
-  "successes": 2,
-  "success": true
+  "record_id": "90e8e1f0-c213-4fa3-9a64-7d7ce3115e04",
+  "payload": {
+    "expression": "7d6",
+    "attribute_rolls": [6, 6, 1, 6, 3],
+    "gear_rolls": [2, 4],
+    "successes": 3,
+    "success": true
+  }
 }
 ```
 
@@ -64,46 +68,44 @@ Push a previous roll. Re-rolls all dice that aren't 1 or 6. Tracks hope loss and
 
 ### Request
 
-| Field            | Type  | Required | Constraints                 | Description                |
-|------------------|-------|----------|-----------------------------|----------------------------|
-| `attribute_rolls`| int[] | Yes      | length >= 1                 | Previous attribute results |
-| `gear_rolls`     | int[] | Yes      | —                           | Previous gear results      |
-| `target`         | int   | Yes      | 0 to attribute_rolls length | Required successes         |
+| Field       | Type | Required | Constraints | Description                                          |
+|-------------|------|----------|-------------|------------------------------------------------------|
+| `record_id` | uuid | Yes      | not null    | record id of the roll that is stored in the database |
 
 ### Response
 
-| Field            | Type     | Description                        |
-|------------------|----------|------------------------------------|
-| `expression`     | string   | Original dice notation             |
-| `push_expression`| string   | Pushed dice notation               |
-| `attribute_rolls`| int[]    | Updated attribute dice results     |
-| `gear_rolls`     | int[]    | Updated gear dice results          |
-| `successes`      | int      | Total 6s rolled                    |
-| `success`        | bool     | Whether roll met the target        |
-| `hope_losses`    | int      | Number of 1s on attribute dice     |
-| `gear_damage`    | int      | Number of 1s on gear dice          |
+| Field                     | Type     | Description                    |
+|---------------------------|----------|--------------------------------|
+| `record_id`               | string   | record id of this roll         |
+| `payload.expression`      | string   | Original dice notation         |
+| `payload.push_expression` | string   | Pushed dice notation           |
+| `payload.attribute_rolls` | int[]    | Updated attribute dice results |
+| `payload.gear_rolls`      | int[]    | Updated gear dice results      |
+| `payload.successes`       | int      | Total 6s rolled                |
+| `payload.success`         | bool     | Whether roll met the target    |
+| `payload.hope_losses`     | int      | Number of 1s on attribute dice |
+| `payload.gear_damage`     | int      | Number of 1s on gear dice      |
 
 ### Example
 
 ```bash
 curl -X POST "http://localhost:8080/resolve?system=tes&action=push" \
   -H "Content-Type: application/json" \
-  -d '{
-    "attribute_rolls": [3, 6, 2, 5, 6],
-    "gear_rolls": [4, 1],
-    "target": 3
-  }'
+  -d '{"record_id": "90e8e1f0-c213-4fa3-9a64-7d7ce3115e04"}'
 ```
 
 ```json
 {
-  "expression": "7d6",
-  "push_expression": "4d6",
-  "attribute_rolls": [1, 6, 6, 4, 6],
-  "gear_rolls": [3, 1],
-  "successes": 3,
-  "success": true,
-  "hope_losses": 1,
-  "gear_damage": 1
+  "record_id": "704d162c-dc92-404c-bb4b-2c48e22df290",
+  "payload": {
+    "expression": "7d6",
+    "push_expression": "3d6",
+    "attribute_rolls": [6, 6, 1, 6, 1],
+    "gear_rolls": [3, 5],
+    "successes": 3,
+    "success": true,
+    "hope_losses": 2,
+    "gear_damage": 0
+  }
 }
 ```

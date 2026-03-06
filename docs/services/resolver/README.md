@@ -8,11 +8,11 @@ Resolve Service is the core component of DiceDasher responsible for processing d
 
 ## Supported Systems
 
-| System    | Description                                      | Actions                    |
-|-----------|--------------------------------------------------|----------------------------|
-| `generic` | Universal NdM dice rolls                         | `roll`                     |
-| `vtmv5`   | Vampire: The Masquerade 5th Edition              | `roll`, `reroll`, `check`  |
-| `tes`     | Tales from the Eternal Steppe (Year Zero Engine) | `roll`, `push`             |
+| System    | Description                         | Actions                    |
+|-----------|-------------------------------------|----------------------------|
+| `generic` | Universal NdM dice rolls            | `roll`                     |
+| `vtmv5`   | Vampire: The Masquerade 5th Edition | `roll`, `reroll`, `check`  |
+| `tes`     | The Electric State                  | `roll`, `push`             |
 
 ## Architecture
 
@@ -26,7 +26,7 @@ services/resolve/
 │   └── system/             # Game system resolvers
 │       ├── generic/        # Universal rolls
 │       ├── vtmv5/          # VTM v5
-│       └── tes/            # Tales from the Eternal Steppe
+│       └── tes/            # The Electric State
 ```
 
 ## Running
