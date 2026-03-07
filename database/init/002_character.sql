@@ -30,7 +30,7 @@ CREATE INDEX idx_character_types_system ON public.characters(character_type);
 -- Pregenerated characters table
 CREATE TABLE public.pregen_characters (
     id SERIAL PRIMARY KEY,
-    system_name VARCHAR(50) NOT NULL,
+    system_name ttrpg_system NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     template_data JSONB NOT NULL,
