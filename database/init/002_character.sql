@@ -1,38 +1,40 @@
--- -- Character service database schema
--- -- Connect to character_db first
--- \connect character_db
+-- Character service database schema
+\connect character_db
 
--- Needed for gen_random_uuid()
--- CREATE EXTENSION IF NOT EXISTS pgcrypto;
---
--- -- Grant schema permissions to service user
--- GRANT ALL ON SCHEMA public TO character_service;
--- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO character_service;
--- ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO character_service;
---
--- -- Characters table
--- CREATE TABLE characters (
---     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
---     user_id UUID NOT NULL,
---     system_name VARCHAR(50) NOT NULL,
---     name VARCHAR(255) NOT NULL,
---     data JSONB NOT NULL DEFAULT '{}',
---     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
---     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
--- );
---
--- CREATE INDEX idx_characters_user ON characters(user_id);
--- CREATE INDEX idx_characters_system ON characters(system_name);
---
--- -- Character templates (predefined character archetypes)
--- CREATE TABLE character_templates (
---     id SERIAL PRIMARY KEY,
---     system_name VARCHAR(50) NOT NULL,
---     name VARCHAR(255) NOT NULL,
---     description TEXT,
---     template_data JSONB NOT NULL,
---     is_official BOOLEAN DEFAULT FALSE,
---     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
--- );
---
--- CREATE INDEX idx_templates_system ON character_templates(system_name);
+-- gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+-- Allow the service role to connect to this DB
+GRANT CONNECT ON DATABASE character_db TO character_service;
+
+-- Enums
+CREATE TYPE ttrpg_system AS ENUM ('generic', 'tes', 'vtmv5');
+CREATE TYPE character_type AS ENUM ('pc', 'npc');
+
+-- Characters table
+CREATE TABLE public.characters (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    system_name ttrpg_system NOT NULL,
+    character_type character_type NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    data JSONB NOT NULL DEFAULT '{}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_characters_user ON public.characters(user_id);
+CREATE INDEX idx_characters_system ON public.characters(system_name);
+CREATE INDEX idx_character_types_system ON public.characters(character_type);
+
+-- Pregenerated characters table
+CREATE TABLE public.pregen_characters (
+    id SERIAL PRIMARY KEY,
+    system_name VARCHAR(50) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    template_data JSONB NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_templates_system ON public.pregen_characters(system_name);
