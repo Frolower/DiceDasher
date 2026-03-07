@@ -4,8 +4,27 @@ import (
 	"context"
 	"errors"
 
+	"diceDasher/pkg/dbutil"
+
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type Repository struct {
+	pool *pgxpool.Pool
+}
+
+func New(pool *pgxpool.Pool) *Repository {
+	return &Repository{pool: pool}
+}
+
+func FromContext(ctx context.Context) (*Repository, error) {
+	base, err := dbutil.FromContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return New(base.Pool()), nil
+}
 
 func (r *Repository) InsertRollHistory(ctx context.Context, rec RollHistory) (uuid.UUID, error) {
 	const q = `
