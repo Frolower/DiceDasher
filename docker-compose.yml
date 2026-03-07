@@ -17,12 +17,12 @@ services:
       retries: 5
     restart: unless-stopped
 
-  resolver:
+  resolve:
     build:
       context: .
-      dockerfile: services/resolver/Dockerfile
+      dockerfile: services/resolve/Dockerfile
     env_file:
-      - services/resolver/.env
+      - services/resolve/.env
     ports:
       - "8080:8080"
     depends_on:

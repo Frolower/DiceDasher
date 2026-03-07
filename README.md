@@ -91,8 +91,8 @@ This project is designed to use microservice architecture.
 │   └── go.mod
 │
 ├── services/                      Backend services
-│   └── resolver-service/          Resolve service
-│       ├── cmd/resolver-service   Entrypoint
+│   └── resolve-service/           Resolve service
+│       ├── cmd/resolve-service    Entrypoint
 │       ├── internal/
 │       │   ├── config/
 │       │   ├── handler/

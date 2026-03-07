@@ -1,14 +1,14 @@
 -- Initializing resolver db
-\connect resolver_db
+\connect resolve_db
 
 -- gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- Allow the service role to connect to this DB
-GRANT CONNECT ON DATABASE resolver_db TO resolver_service;
+GRANT CONNECT ON DATABASE resolve_db TO resolve_service;
 
 -- Allow the role to use objects in public schema
-GRANT USAGE ON SCHEMA public TO resolver_service;
+GRANT USAGE ON SCHEMA public TO resolve_service;
 
 -- Enums
 CREATE TYPE ttrpg_system AS ENUM ('generic', 'tes', 'vtmv5');
@@ -34,4 +34,4 @@ CREATE INDEX idx_roll_history_created ON public.roll_history(created_at);
 CREATE INDEX idx_roll_history_system ON public.roll_history(system_name);
 
 -- Table privileges
-GRANT SELECT, INSERT ON TABLE public.roll_history TO resolver_service;
+GRANT SELECT, INSERT ON TABLE public.roll_history TO resolve_service;
