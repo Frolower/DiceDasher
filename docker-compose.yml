@@ -21,10 +21,23 @@ services:
     build:
       context: .
       dockerfile: services/resolver/Dockerfile
+    env_file:
+      - services/resolver/.env
     ports:
       - "8080:8080"
-    environment:
-      DATABASE_URL: postgres://resolver_service:resolver_password@postgres:5432/resolver_db?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  character:
+    build:
+      context: .
+      dockerfile: services/character/Dockerfile
+    env_file:
+      - services/character/.env
+    ports:
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
