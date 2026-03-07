@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"diceDasher/pkg/dbutil"
 	"log"
 	"net"
 	"net/http"
@@ -9,7 +10,6 @@ import (
 	"diceDasher/pkg/httputil"
 	"diceDasher/services/resolve/internal/config"
 	"diceDasher/services/resolve/internal/handler"
-	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
 	"diceDasher/services/resolve/internal/system/generic"
 	"diceDasher/services/resolve/internal/system/tes"
@@ -23,7 +23,7 @@ func main() {
 	}
 
 	// Initialize repository
-	repo, err := repository.New(context.Background(), cfg.DatabaseURL)
+	repo, err := dbutil.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
 	}
