@@ -58,7 +58,7 @@ It is designed to have both system agnostic and system specific tools for variou
 
 ### Built With
 
-- Backend: Go 1.25, net/http
+- Backend: Go 1.26, net/http
 - Frontend: React
 - DB: PostgreSQL
 - Infra: Docker Compose, Makefile
