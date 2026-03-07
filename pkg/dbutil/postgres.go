@@ -63,6 +63,10 @@ func New(ctx context.Context, databaseURL string) (*Repository, error) {
 	return r, nil
 }
 
+func (r *Repository) Pool() *pgxpool.Pool {
+	return r.pool
+}
+
 func (r *Repository) Close() {
 	if r.pool != nil {
 		r.pool.Close()
