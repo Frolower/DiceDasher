@@ -75,7 +75,7 @@ This project is designed to use microservice architecture.
 ├── docs/
 │   ├── api/                      Existing API endpoints overview
 │   ├── service/
-│   │   └── resolver/             Documentation about resolve service
+│   │   └── resolve/             Documentation about resolve service
 │   ├── CODE_OF_CONDUCT.md
 │   ├── CONTRIBUTING.md
 │   ├── ENDPOINTS.md              Implemented API endpoints
@@ -84,6 +84,7 @@ This project is designed to use microservice architecture.
 ├── frontend/
 │
 ├── pkg/                           Project-wide helper functions
+│   ├── dbutil/                    DB related helpers
 │   ├── dice/                      Dice rolling engine
 │   ├── httputil/                  Web related helpers
 │   ├── logger/                    Custom logging functions
@@ -91,6 +92,16 @@ This project is designed to use microservice architecture.
 │   └── go.mod
 │
 ├── services/                      Backend services
+│   ├── character-service/         Character service
+│   │   ├── cmd/character-service  Entrypoint
+│   │   ├── internal/
+│   │   │   ├── config/
+│   │   │   ├── handler/
+│   │   │   ├── repository/
+│   │   ├── .env.example
+│   │   ├── Dockerfile
+│   │   └── go.mod
+│   │
 │   └── resolve-service/           Resolve service
 │       ├── cmd/resolve-service    Entrypoint
 │       ├── internal/
@@ -102,6 +113,7 @@ This project is designed to use microservice architecture.
 │       ├── Dockerfile
 │       └── go.mod
 │
+├── .dockerignore
 ├── .gitignore
 ├── docker-compose.yml
 ├── go.work
