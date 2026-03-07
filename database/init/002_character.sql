@@ -38,3 +38,6 @@ CREATE TABLE public.pregen_characters (
 );
 
 CREATE INDEX idx_templates_system ON public.pregen_characters(system_name);
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.characters TO character_service;
+GRANT SELECT ON TABLE public.pregen_characters TO character_service;
