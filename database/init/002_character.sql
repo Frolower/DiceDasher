@@ -23,21 +23,25 @@ CREATE TABLE public.characters (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE INDEX idx_characters_user ON public.characters(user_id);
-CREATE INDEX idx_characters_system ON public.characters(system_name);
-CREATE INDEX idx_character_types_system ON public.characters(character_type);
-
 -- Pregenerated characters table
 CREATE TABLE public.pregen_characters (
     id SERIAL PRIMARY KEY,
     system_name ttrpg_system NOT NULL,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
+    type character_type NOT NULL,
     template_data JSONB NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Indexes
+
+CREATE INDEX idx_characters_user ON public.characters(user_id);
+CREATE INDEX idx_characters_system ON public.characters(system_name);
+CREATE INDEX idx_character_types_system ON public.characters(character_type);
 CREATE INDEX idx_templates_system ON public.pregen_characters(system_name);
+
+-- Grants
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.characters TO character_service;
 GRANT SELECT ON TABLE public.pregen_characters TO character_service;
