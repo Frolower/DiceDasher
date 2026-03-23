@@ -33,5 +33,5 @@ CREATE INDEX idx_roll_history_character ON public.roll_history(character_id) WHE
 CREATE INDEX idx_roll_history_created ON public.roll_history(created_at);
 CREATE INDEX idx_roll_history_system ON public.roll_history(system_name);
 
--- Table privileges
+-- Grants
 GRANT SELECT, INSERT ON TABLE public.roll_history TO resolve_service;
