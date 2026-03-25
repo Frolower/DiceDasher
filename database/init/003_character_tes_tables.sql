@@ -54,6 +54,7 @@ CREATE INDEX idx_item_code ON tes.items(code);
 
 -- Grants
 
+GRANT USAGE ON SCHEMA tes TO character_service;
 GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE tes.player_cars TO character_service;
 GRANT SELECT ON TABLE tes.car_stats TO character_service;
 GRANT SELECT ON TABLE tes.items TO character_service;
