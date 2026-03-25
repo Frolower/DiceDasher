@@ -10,7 +10,7 @@ INSERT INTO public.pregen_characters (
 VALUES (
            'tes',
            'Law Enforcement',
-            'Default Police Officer'
+            'Default Police Officer',
            'npc',
            '{
              "stats": {
