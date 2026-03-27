@@ -5,7 +5,7 @@
 INSERT INTO tes.items (
     code,
     name,
-    item_kind,
+    type,
     data
 ) VALUES
       (
@@ -324,7 +324,7 @@ INSERT INTO tes.items (
 INSERT INTO tes.items (
     code,
     name,
-    item_kind,
+    type,
     data
 ) VALUES
       (
@@ -363,7 +363,7 @@ INSERT INTO tes.items (
 INSERT INTO tes.items (
     code,
     name,
-    item_kind,
+    type,
     data
 ) VALUES
       (
@@ -433,7 +433,7 @@ INSERT INTO tes.items (
 INSERT INTO tes.items (
     code,
     name,
-    item_kind,
+    type,
     data
 ) VALUES
       (
@@ -544,7 +544,7 @@ INSERT INTO tes.items (
 INSERT INTO tes.items (
     code,
     name,
-    item_kind,
+    type,
     data
 ) VALUES
       (

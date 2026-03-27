@@ -6,7 +6,7 @@ CREATE SCHEMA IF NOT EXISTS tes;
 
 -- TES specific enums
 
-CREATE TYPE tes.item_kind AS ENUM ('weapon', 'neurocaster', 'armor', 'gear', 'drone');
+CREATE TYPE tes.item_type AS ENUM ('weapon', 'neurocaster', 'armor', 'gear', 'drone');
 
 -- TES specific schemas
 
@@ -42,7 +42,7 @@ CREATE TABLE tes.items (
     id SERIAL PRIMARY KEY,
     code VARCHAR(255) NOT NULL UNIQUE,
     name VARCHAR(255) NOT NULL,
-    item_kind tes.item_kind NOT NULL,
+    type tes.item_type NOT NULL,
     data JSONB NOT NULL DEFAULT '{}'
 );
 
