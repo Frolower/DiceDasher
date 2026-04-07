@@ -4,6 +4,7 @@ import (
 	"context"
 	"diceDaher/service/character/internal/config"
 	"diceDaher/service/character/internal/handler"
+	"diceDaher/service/character/internal/system"
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/httputil"
 	"log"
@@ -22,6 +23,9 @@ func main() {
 		log.Fatal(err)
 	}
 	defer repo.Close()
+
+	system.Register("tes", tes.Resolver{})
+	system.Register("vtmv5", vtmv5.Resolver{})
 
 	r := httputil.NewRouter()
 	handler.RegisterRouters(r)
