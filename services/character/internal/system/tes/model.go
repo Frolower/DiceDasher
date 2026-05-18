@@ -93,6 +93,7 @@ type vehicle struct {
 	Fuel        string       `json:"fuel"`
 	Description string       `json:"description"`
 	Stats       vehicleStats `json:"stats"`
+	GroupGear   []gear       `json:"group_gear"`
 }
 
 type vehicleStats struct {
