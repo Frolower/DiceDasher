@@ -483,6 +483,10 @@ func validateVehicle(v vehicle) error {
 		errs = append(errs, errors.New("you are required to have 3 shared gear elements"))
 	}
 
+	for _, gear := range v.SharedGear {
+		errs = append(errs, validateGear(gear))
+	}
+
 	return errors.Join(errs...)
 }
 
