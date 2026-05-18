@@ -323,11 +323,11 @@ func validateStartingCash(a string, m int) error {
 func validateJorney(j journey) error {
 	var errs []error
 
-	if len(j.Goal) == 0 {
-		errs = append(errs, errors.New("goal is required"))
+	if j.Goal == "" {
+		errs = append(errs, errors.New("goal is empty"))
 	}
-	if len(j.Threat) == 0 {
-		errs = append(errs, errors.New("threat is required"))
+	if j.Threat == "" {
+		errs = append(errs, errors.New("threat is empty"))
 	}
 
 	return errors.Join(errs...)
