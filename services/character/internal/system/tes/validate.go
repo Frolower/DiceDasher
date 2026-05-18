@@ -277,8 +277,8 @@ func validateArmor(a gear) error {
 	if a.Price < 0 {
 		errs = append(errs, errors.New("armor price should be greater or equal to 0"))
 	}
-	if a.AgilityModifier < 0 {
-		errs = append(errs, errors.New("agility modifier should be greater or equal to 0"))
+	if a.AgilityModifier < 0 && a.AgilityModifier > -4 {
+		errs = append(errs, errors.New("agility modifier should be between -1 and -3"))
 	}
 	if a.ArmorLevel < 1 {
 		errs = append(errs, errors.New("armor level should be greater or equal to 1"))
