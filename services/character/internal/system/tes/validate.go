@@ -104,7 +104,7 @@ func (c characterList) Validate() error {
 
 	errs = append(errs, validateStartingCash(c.Archetype, c.Cash))
 
-	errs = append(errs, validateJorney(c.Journey))
+	errs = append(errs, validateJourney(c.Journey))
 
 	errs = append(errs, validateTension(c.Tension))
 
@@ -336,7 +336,7 @@ func validateStartingCash(a string, m int) error {
 	return nil
 }
 
-func validateJorney(j journey) error {
+func validateJourney(j journey) error {
 	var errs []error
 
 	if j.Goal == "" {
