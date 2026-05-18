@@ -465,6 +465,8 @@ func validateVehicle(v vehicle) error {
 		"militaryDroneShip":        {},
 	}
 
+	errs = append(errs, validateVehicleStats(v.Stats))
+
 	if _, ok := vehicleTypes[v.VehicleType]; !ok {
 		errs = append(errs, errors.New("vehicle type is invalid"))
 	}
@@ -481,7 +483,7 @@ func validateVehicle(v vehicle) error {
 	return errors.Join(errs...)
 }
 
-func validateVehcleStats(s vehicleStats) error {
+func validateVehicleStats(s vehicleStats) error {
 	var errs []error
 
 	if s.Maneuverability < 0 {
