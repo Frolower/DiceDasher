@@ -84,12 +84,7 @@ func (c characterList) Validate() error {
 
 	errs = append(errs, validateStartingCash(c.Archetype, c.Cash))
 
-	if c.Journey.Goal == "" {
-		errs = append(errs, errors.New("journey goal is empty"))
-	}
-	if c.Journey.Threat == "" {
-		errs = append(errs, errors.New("journey threat is empty"))
-	}
+	errs = append(errs, validateJorney(c.Journey))
 
 	errs = append(errs, validateTension(c.Tension))
 
@@ -141,12 +136,12 @@ func validateInventory(inventory []gear) error {
 	var g gear
 	neurocasterCount := 0
 
-	for _, gu := range inventory {
+	for _, g := range inventory {
 		if g.Type == neurocasterType {
 			neurocasterCount++
-			n = gu
+			n = g
 		} else {
-			g = gu
+			g = g
 		}
 	}
 
@@ -319,6 +314,19 @@ func validateStartingCash(a string, m int) error {
 	}
 
 	return nil
+}
+
+func validateJorney(j journey) error {
+	var errs []error
+
+	if len(j.Goal) == 0 {
+		errs = append(errs, errors.New("goal is required"))
+	}
+	if len(j.Threat) == 0 {
+		errs = append(errs, errors.New("threat is required"))
+	}
+
+	return errors.Join(errs...)
 }
 
 func validateTension(t []tension) error {
