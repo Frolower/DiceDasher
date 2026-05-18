@@ -3,6 +3,7 @@ package tes
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 const (
@@ -18,6 +19,9 @@ const (
 	gearType        = "gear"
 	weaponType      = "weapon"
 	armorType       = "armor"
+
+	toughTalent   = "tough"
+	dreamerTalent = "dreamer"
 )
 
 func validateCreate(r createRequest) error {
@@ -50,12 +54,24 @@ func (c characterList) Validate() error {
 		errs = append(errs, errors.New("favourite song is empty"))
 	}
 
-	if c.Derivatives.Health != (c.Stats.Strength+c.Stats.Agility+1)/2 {
-		errs = append(errs, errors.New("health should be equal to STR + AGL / 2, rounded up"))
+	if slices.Contains(c.Talents, toughTalent) {
+		if c.Derivatives.Health != (c.Stats.Strength+c.Stats.Agility+1)/2+2 {
+			errs = append(errs, errors.New("health should be equal to STR + AGL / 2, rounded up"))
+		}
+	} else {
+		if c.Derivatives.Health != (c.Stats.Strength+c.Stats.Agility+1)/2 {
+			errs = append(errs, errors.New("health should be equal to STR + AGL / 2, rounded up"))
+		}
 	}
 
-	if c.Derivatives.Hope != (c.Stats.Empathy+c.Stats.Wits+1)/2 {
-		errs = append(errs, errors.New("health should be equal to EMP + WIT / 2, rounded up"))
+	if slices.Contains(c.Talents, dreamerTalent) {
+		if c.Derivatives.Hope != (c.Stats.Empathy+c.Stats.Wits+1)/2+2 {
+			errs = append(errs, errors.New("health should be equal to EMP + WIT / 2, rounded up"))
+		}
+	} else {
+		if c.Derivatives.Hope != (c.Stats.Empathy+c.Stats.Wits+1)/2 {
+			errs = append(errs, errors.New("health should be equal to EMP + WIT / 2, rounded up"))
+		}
 	}
 
 	if c.Bliss.Bliss < 0 {
