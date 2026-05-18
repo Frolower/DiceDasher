@@ -82,11 +82,7 @@ func (c characterList) Validate() error {
 		errs = append(errs, errors.New("bliss should be greater or equal to 0"))
 	}
 
-	if statSum > secondTalentBaseline && len(c.Talents) != 1 {
-		errs = append(errs, errors.New("character must have 1 Talent"))
-	} else if statSum <= secondTalentBaseline && len(c.Talents) != 2 {
-		errs = append(errs, errors.New("character must have 2 Talents"))
-	}
+	errs = append(errs, validateTalents(c.Talents, statSum))
 
 	if c.Dream == "" {
 		errs = append(errs, errors.New("dream is empty"))
@@ -359,6 +355,83 @@ func validateTension(t []tension) error {
 		if t.Tension < 1 {
 			errs = append(errs, errors.New("tension should be greater or equal to 1"))
 		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func validateTalents(talents []string, s int) error {
+	var errs []error
+
+	var validTalents = map[string]struct{}{
+		"athlete":        {},
+		"backstabber":    {},
+		"biker":          {},
+		"bladeFighter":   {},
+		"boatman":        {},
+		"bomber":         {},
+		"bowman":         {},
+		"charmer":        {},
+		"clubFighter":    {},
+		"conArtist":      {},
+		"dataMiner":      {},
+		"dirtyFighter":   {},
+		"dramaQueen":     {},
+		"dreamer":        {},
+		"driver":         {},
+		"droneOperator":  {},
+		"electronics":    {},
+		"evasive":        {},
+		"gamer":          {},
+		"hacker":         {},
+		"hardened":       {},
+		"intuition":      {},
+		"leader":         {},
+		"loneWolf":       {},
+		"machinegunner":  {},
+		"martialArtist":  {},
+		"mechanic":       {},
+		"medic":          {},
+		"menacing":       {},
+		"musician":       {},
+		"neuroresistant": {},
+		"nineLives":      {},
+		"nurse":          {},
+		"pilot":          {},
+		"pistoleer":      {},
+		"resilient":      {},
+		"rider":          {},
+		"scout":          {},
+		"sleuth":         {},
+		"sniper":         {},
+		"speaker":        {},
+		"stealthy":       {},
+		"surgeon":        {},
+		"technoBabbler":  {},
+		"thief":          {},
+		"tough":          {},
+	}
+
+	if s > secondTalentBaseline && len(talents) != 1 {
+		errs = append(errs, errors.New("character must have 1 Talent"))
+	} else if s <= secondTalentBaseline && len(talents) != 2 {
+		errs = append(errs, errors.New("character must have 2 Talents"))
+	}
+
+	seen := map[string]struct{}{}
+
+	for _, talent := range talents {
+		if _, ok := validTalents[talent]; !ok {
+			errs = append(errs, fmt.Errorf("%s is invalid talent", talent))
+			continue
+		}
+
+		if _, ok := seen[talent]; ok {
+			errs = append(errs, fmt.Errorf("%s talent is duplicated", talent))
+			continue
+		}
+
+		seen[talent] = struct{}{}
 	}
 
 	return errors.Join(errs...)
