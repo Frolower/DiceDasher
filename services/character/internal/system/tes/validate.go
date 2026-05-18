@@ -355,6 +355,9 @@ func validateTension(t []tension) error {
 		if t.Tension < 1 {
 			errs = append(errs, errors.New("tension should be greater or equal to 1"))
 		}
+		if t.Tension > 2 {
+			errs = append(errs, errors.New("tension can't be greater than 2"))
+		}
 	}
 
 	return errors.Join(errs...)
