@@ -16,6 +16,7 @@ type characterList struct {
 	Bliss         bliss       `json:"bliss"`
 	Talents       []string    `json:"talents"`
 	Dream         string      `json:"dream"`
+	Flaw          string      `json:"flaw"`
 	Inventory     []gear      `json:"gear"`
 	Cash          int         `json:"cash"`
 	Journey       journey     `json:"journey"`

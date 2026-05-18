@@ -76,6 +76,10 @@ func (c characterList) Validate() error {
 		errs = append(errs, errors.New("dream is empty"))
 	}
 
+	if c.Flaw == "" {
+		errs = append(errs, errors.New("flaw is empty"))
+	}
+
 	if len(c.Inventory) < 1 || len(c.Inventory) > 4 {
 		errs = append(errs, errors.New("expected 0 or 1 neurocaster and 1 other gear element at the character creation"))
 	}
