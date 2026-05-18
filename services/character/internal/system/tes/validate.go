@@ -479,8 +479,8 @@ func validateVehicle(v vehicle) error {
 	if v.Fuel == "" {
 		errs = append(errs, errors.New("fuel field is empty"))
 	}
-	if len(v.GroupGear) != 3 {
-		errs = append(errs, errors.New("you are required to have 3 group gear elements"))
+	if len(v.SharedGear) != 3 {
+		errs = append(errs, errors.New("you are required to have 3 shared gear elements"))
 	}
 
 	return errors.Join(errs...)
