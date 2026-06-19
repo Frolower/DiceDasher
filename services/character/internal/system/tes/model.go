@@ -1,9 +1,17 @@
 package tes
 
+import "github.com/google/uuid"
+
 type createRequest struct {
+	UserID        uuid.UUID     `json:"user_id"`
 	Type          string        `json:"type"`
 	Rules         bool          `json:"rules"`
 	CharacterList characterList `json:"character"`
+}
+
+type storedCharacter struct {
+	Type      string        `json:"type"`
+	Character characterList `json:"character"`
 }
 
 type characterList struct {

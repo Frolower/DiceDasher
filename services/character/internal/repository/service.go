@@ -24,14 +24,24 @@ func FromContext(ctx context.Context) (*Repository, error) {
 	return New(base.Pool()), nil
 }
 
-func (r *Repository) InsertCharacter(ctx context.Context, ) (uuid.UUID, error) {
+func (r *Repository) InsertPlayerCreatedCharacter(ctx context.Context, rec Character) (uuid.UUID, error) {
 	const q = `
-INSERT INTO characters ()
+INSERT INTO public.characters
+(user_id, system_name, character_type, name, data)
+VALUES ($1, $2, $3, $4, $5::jsonb)
+RETURNING id;
 `
-
 	var id uuid.UUID
 
-	err := r.pool.QueryRow()
+	err := r.pool.QueryRow(
+		ctx,
+		q,
+		rec.UserID,
+		rec.SystemName,
+		rec.CharacterType,
+		rec.Name,
+		rec.Data,
+	).Scan(&id)
 
-	return
+	return id, err
 }

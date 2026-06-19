@@ -4,16 +4,16 @@ import "errors"
 
 var ErrUnknownSystem = errors.New("unknown system")
 
-var registry = map[string]Resolver{}
+var registry = map[string]Character{}
 
-func Register(name string, r Resolver) {
-	registry[name] = r
+func Register(name string, c Character) {
+	registry[name] = c
 }
 
-func Get(name string) (Resolver, error) {
-	r, ok := registry[name]
+func Get(name string) (Character, error) {
+	c, ok := registry[name]
 	if !ok {
 		return nil, ErrUnknownSystem
 	}
-	return r, nil
+	return c, nil
 }

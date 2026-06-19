@@ -1,13 +1,21 @@
 package handler
 
 import (
+	"diceDaher/service/character/internal/repository"
+	"diceDaher/service/character/internal/system"
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
+
+	"github.com/google/uuid"
 )
+
+type createCharacterResponse struct {
+	ID uuid.UUID `json:"id"`
+}
 
 func postUserCreatedCharacterHandler(w http.ResponseWriter, r *http.Request) {
 	sys := r.URL.Query().Get("system")
@@ -34,10 +42,35 @@ func postUserCreatedCharacterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp, status, err := character.CreateCharacter(r.Context(), raw)
+	created, status, err := character.CreateCharacter(r.Context(), raw)
 	if err != nil {
 		http.Error(w, err.Error(), status)
 		logger.Logf(r.Context(), "ERROR: %s", err)
+		return
+	}
+
+	repo, err := repository.FromContext(r.Context())
+	if err != nil {
+		logger.Logf(r.Context(), "ERROR: repository not in context: %s", err)
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	id, err := repo.InsertPlayerCreatedCharacter(r.Context(), repository.Character{
+		UserID:        created.UserID,
+		SystemName:    sys,
+		CharacterType: created.CharacterType,
+		Name:          created.Name,
+		Data:          created.Data,
+	})
+	if err != nil {
+		logger.Logf(r.Context(), "ERROR saving character: %s", err)
+		http.Error(w, "failed to save character", http.StatusInternalServerError)
+		return
+	}
+
+	if err := httputil.PackJSON(w, http.StatusCreated, createCharacterResponse{ID: id}); err != nil {
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 }
