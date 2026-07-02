@@ -170,12 +170,12 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		ss := styleForStatus(sw.status, mode)
 
 		// Log on response
-		log.Printf("|%s %3d %s| %22s | %40s | id=%s |%s%-6s%s| \"%s\"%s bytes=%d",
+		log.Printf("|%s %3d %s| %22s | %40s | id=%s |%s%-6s%s| \"%s\"%s bytes=%d%s",
 			ss, sw.status, cReset,
 			dur, r.UserAgent(), id.String(),
 			ms, r.Method, cReset,
 			r.URL.RequestURI(), cGray,
-			sw.bytes)
+			sw.bytes, cReset)
 	})
 }
 
