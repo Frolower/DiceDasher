@@ -1,4 +1,4 @@
-module diceDaher/service/character
+module diceDasher/services/character
 
 go 1.26
 

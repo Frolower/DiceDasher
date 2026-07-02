@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"diceDaher/service/character/internal/repository"
-	"diceDaher/service/character/internal/system"
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
+	"diceDasher/services/character/internal/repository"
+	"diceDasher/services/character/internal/system"
 	"encoding/json"
 	"errors"
 	"log"

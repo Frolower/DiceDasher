@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"diceDaher/service/character/internal/config"
-	"diceDaher/service/character/internal/handler"
-	"diceDaher/service/character/internal/system"
-	"diceDaher/service/character/internal/system/tes"
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/httputil"
+	"diceDasher/services/character/internal/config"
+	"diceDasher/services/character/internal/handler"
+	"diceDasher/services/character/internal/system"
+	"diceDasher/services/character/internal/system/tes"
 	"log"
 	"net"
 	"net/http"

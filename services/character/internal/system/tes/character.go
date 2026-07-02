@@ -2,8 +2,8 @@ package tes
 
 import (
 	"context"
-	"diceDaher/service/character/internal/system"
 	"diceDasher/pkg/logger"
+	"diceDasher/services/character/internal/system"
 	"encoding/json"
 	"errors"
 	"net/http"
