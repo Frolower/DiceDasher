@@ -49,10 +49,13 @@ docker run --env-file services/resolve/.env -p 8080:8080 resolve-service
 
 The service is configured via environment variables:
 
-| Variable       | Description              | Default |
-|----------------|--------------------------|---------|
-| `PORT`         | HTTP server port         | `8080`  |
-| `DATABASE_URL` | PostgreSQL connection URL | —      |
+| Variable       | Description                               | Default   |
+|----------------|-------------------------------------------|-----------|
+| `HTTP_ADDR`    | HTTP listen address                       | `:8080`   |
+| `DATABASE_URL` | PostgreSQL connection URL                 | —         |
+| `LOG_MODE`     | `default`, `debug`, or `contrast` logging | `default` |
+
+The default logger omits `/health` requests. Use `LOG_MODE=debug` to include them.
 
 ## API
 

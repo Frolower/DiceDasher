@@ -43,12 +43,15 @@ docker run --env-file services/character/.env -p 8081:8081 character-service
 
 ## Configuration
 
-| Variable       | Description                    | Default |
-|----------------|--------------------------------|---------|
-| `HTTP_ADDR`    | HTTP listen address            | `:8081` |
-| `DATABASE_URL` | PostgreSQL connection URL      | —       |
+| Variable       | Description                               | Default   |
+|----------------|-------------------------------------------|-----------|
+| `HTTP_ADDR`    | HTTP listen address                       | `:8081`   |
+| `DATABASE_URL` | PostgreSQL connection URL                 | —         |
+| `LOG_MODE`     | `default`, `debug`, or `contrast` logging | `default` |
 
 `DATABASE_URL` is required.
+
+The default logger omits `/health` requests. Use `LOG_MODE=debug` to include them.
 
 ## API
 

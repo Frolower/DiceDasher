@@ -129,21 +129,33 @@ func styleForMethod(method, mode string) string {
 }
 
 func RequestLogger(next http.Handler) http.Handler {
-	return RequestLoggerWithMode(next, "normal")
+	return RequestLoggerWithMode(next, "default")
 }
 
 func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
+	logHealth := mode == "debug"
+	colorMode := mode
+
 	switch mode {
+	case "debug":
+		colorMode = "default"
 	case "", "default", "contrast":
 		if mode == "" {
 			mode = "default"
+			colorMode = "default"
 		}
 	default:
 		logger.LogWarningf("unexpected mode for request logger: %s", mode)
 		mode = "default"
+		colorMode = "default"
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/health" && !logHealth {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		id := logger.NewReqID()
 
 		// Put id into context so handlers can use it if they want
@@ -152,7 +164,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		sw := &statusWriter{ResponseWriter: w}
 		start := time.Now()
 
-		ms := styleForMethod(r.Method, mode)
+		ms := styleForMethod(r.Method, colorMode)
 		ip := clientIP(r)
 
 		// Log on request
@@ -167,7 +179,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 			sw.status = http.StatusOK
 		}
 
-		ss := styleForStatus(sw.status, mode)
+		ss := styleForStatus(sw.status, colorMode)
 
 		// Log on response
 		log.Printf("|%s %3d %s| %22s | %40s | id=%s |%s%-6s%s| \"%s\"%s bytes=%d%s",
