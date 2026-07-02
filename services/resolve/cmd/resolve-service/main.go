@@ -40,6 +40,7 @@ func main() {
 	// Wrap with middlewares
 	wrapped := handler.WithRepository(repo)(r)
 	wrapped = httputil.RequestLoggerWithMode(wrapped, "default")
+	wrapped = httputil.CORS("http://localhost:8082")(wrapped)
 
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,

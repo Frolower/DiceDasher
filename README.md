@@ -149,7 +149,8 @@ into docker containers and won't require any additional downloads
   curl http://localhost:8080/health
   curl http://localhost:8081/health
   ```
-5. Stop containers
+5. Open Swagger UI at [http://localhost:8082](http://localhost:8082).
+6. Stop containers
   ```sh
   make down
   ```

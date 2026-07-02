@@ -1,0 +1,612 @@
+openapi: 3.1.0
+info:
+  title: DiceDasher API
+  version: 0.1.0
+  description: |
+    API for DiceDasher's dice resolution and character services.
+    Use the schema selector in Swagger UI to choose the request body that matches
+    the `system` and `action` query parameters.
+  license:
+    name: MIT
+    identifier: MIT
+tags:
+  - name: Health
+    description: Service health checks
+  - name: Resolve
+    description: System-specific dice resolution
+  - name: Character
+    description: Character creation and storage
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Check service health
+      operationId: health
+      servers:
+        - url: http://localhost:8080
+          description: Resolve Service
+        - url: http://localhost:8081
+          description: Character Service
+      responses:
+        "200":
+          description: The selected service is healthy.
+          content:
+            text/plain:
+              schema:
+                type: string
+                const: OK
+              example: OK
+  /resolve:
+    post:
+      tags: [Resolve]
+      summary: Resolve a dice action
+      description: |
+        Dispatches a request to the selected game system. If `action` is omitted,
+        it defaults to `roll`. Choose the matching request schema in Swagger UI.
+        Roll history is persisted when the database is available.
+      operationId: resolveDice
+      servers:
+        - url: http://localhost:8080
+          description: Resolve Service
+      parameters:
+        - name: system
+          in: query
+          required: true
+          description: Game system identifier.
+          schema:
+            type: string
+            enum: [generic, vtmv5, tes]
+        - name: action
+          in: query
+          required: false
+          description: System-specific action. Defaults to `roll`.
+          schema:
+            type: string
+            default: roll
+            enum: [roll, reroll, check, push]
+      requestBody:
+        required: false
+        description: No body must be sent for `system=vtmv5&action=check`.
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: "#/components/schemas/GenericRollRequest"
+                - $ref: "#/components/schemas/VtmRollRequest"
+                - $ref: "#/components/schemas/VtmRerollRequest"
+                - $ref: "#/components/schemas/TesRollRequest"
+                - $ref: "#/components/schemas/RecordRequest"
+            examples:
+              genericRoll:
+                summary: Generic 3d6 roll
+                value:
+                  number: 3
+                  size: 6
+              vtmRoll:
+                summary: VTM V5 roll
+                value:
+                  attribute: 3
+                  skill: 2
+                  hunger: 2
+                  target: 3
+              vtmReroll:
+                summary: VTM V5 willpower reroll
+                value:
+                  record_id: 923a67f6-a421-41cf-b323-f71c0e7caffc
+                  reroll_index: [0, 1]
+              tesRoll:
+                summary: The Electric State roll
+                value:
+                  attr: 4
+                  assist: 1
+                  gear: 2
+                  modificator: 0
+                  target: 2
+              tesPush:
+                summary: Push a previous TES roll
+                value:
+                  record_id: 90e8e1f0-c213-4fa3-9a64-7d7ce3115e04
+      responses:
+        "200":
+          description: Action resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResolveEnvelope"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /character:
+    post:
+      tags: [Character]
+      summary: Create a character
+      description: Validates a system-specific character, stores it in PostgreSQL, and returns its UUID.
+      operationId: createCharacter
+      servers:
+        - url: http://localhost:8081
+          description: Character Service
+      parameters:
+        - name: system
+          in: query
+          required: true
+          description: Game system identifier.
+          schema:
+            type: string
+            enum: [tes]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TesCharacterCreateRequest"
+            examples:
+              relaxedValidation:
+                summary: Minimal request with rule validation disabled
+                value:
+                  user_id: d7a92c4c-7c65-41d8-946a-4b94d3e721f9
+                  type: pc
+                  rules: false
+                  character:
+                    name: Mira
+              completeCharacter:
+                summary: Complete TES character sheet
+                value:
+                  user_id: d7a92c4c-7c65-41d8-946a-4b94d3e721f9
+                  type: pc
+                  rules: true
+                  character:
+                    name: Mira
+                    archetype: investigator
+                    favourite_song: Running Up That Hill
+                    description: A traveller searching for the truth.
+                    stats:
+                      strength: 4
+                      agility: 4
+                      wits: 4
+                      empathy: 4
+                    derivatives:
+                      health: 4
+                      hope: 4
+                    bliss:
+                      bliss: 0
+                      permanent: 0
+                    talents: [sleuth]
+                    dream: Find the missing children.
+                    flaw: Never lets a mystery go.
+                    gear:
+                      - name: Flashlight
+                        code: flashlight
+                        type: gear
+                        bonus: 1
+                        price: 10
+                        notes: Battery powered.
+                    cash: 100
+                    journey:
+                      goal: Reach the exclusion zone.
+                      threat: Government patrols.
+                    tension:
+                      - traveller_name: Alex
+                        tension: 1
+                    conditions:
+                      injuries: []
+                      traumas: []
+                    vehicle:
+                      vehicle_type: 4wdCar
+                      model: Station wagon
+                      passenger: 5
+                      fuel: gasoline
+                      description: The group's vehicle.
+                      stats:
+                        maneuverability: 1
+                        speed: 2
+                        hull: 3
+                        armor: 1
+                        traits:
+                          - name: hull
+                            stat: hull
+                            bonus: 1
+                        gear: []
+                      SharedGear:
+                        - {name: Toolbox, code: toolbox, type: gear, bonus: 1, price: 0, notes: ""}
+                        - {name: Radio, code: radio, type: gear, bonus: 1, price: 0, notes: ""}
+                        - {name: First aid kit, code: firstAid, type: gear, bonus: 1, price: 0, notes: ""}
+      responses:
+        "201":
+          description: Character created and stored.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateCharacterResponse"
+              example:
+                id: 90e8e1f0-c213-4fa3-9a64-7d7ce3115e04
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+        "500":
+          $ref: "#/components/responses/InternalError"
+components:
+  responses:
+    BadRequest:
+      description: Missing parameter, malformed JSON, or invalid action.
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Unknown game system.
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/Error"
+    ValidationError:
+      description: Request fields violate system validation rules.
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/Error"
+    InternalError:
+      description: Internal server or database error.
+      content:
+        text/plain:
+          schema:
+            $ref: "#/components/schemas/Error"
+  schemas:
+    Error:
+      type: string
+      example: validation failed
+    GenericRollRequest:
+      type: object
+      title: Generic roll
+      required: [number, size]
+      properties:
+        number:
+          type: integer
+          minimum: 1
+          description: Number of dice.
+        size:
+          type: integer
+          minimum: 2
+          description: Number of faces per die.
+    VtmRollRequest:
+      type: object
+      title: VTM V5 roll
+      required: [attribute, skill, hunger, target]
+      properties:
+        attribute: {type: integer, minimum: 1}
+        skill: {type: integer, minimum: 0}
+        hunger: {type: integer, minimum: 0}
+        target: {type: integer, minimum: 1}
+    VtmRerollRequest:
+      type: object
+      title: VTM V5 reroll
+      required: [record_id, reroll_index]
+      properties:
+        record_id:
+          type: string
+          format: uuid
+          description: Record ID returned by the original VTM roll.
+        reroll_index:
+          type: array
+          minItems: 1
+          items: {type: integer, minimum: 0}
+          description: Zero-based indices of regular dice to reroll.
+    TesRollRequest:
+      type: object
+      title: The Electric State roll
+      required: [attr, assist, gear, modificator, target]
+      properties:
+        attr: {type: integer, minimum: 1}
+        assist: {type: integer, minimum: 0, maximum: 3}
+        gear: {type: integer, minimum: 0}
+        modificator:
+          type: integer
+          description: GM modifier; the resulting dice pool must remain positive.
+        target:
+          type: integer
+          minimum: 0
+          description: Required successes; cannot exceed attr + assist + gear.
+    RecordRequest:
+      type: object
+      title: The Electric State push
+      required: [record_id]
+      properties:
+        record_id:
+          type: string
+          format: uuid
+          description: Record ID returned by the original TES roll.
+    ResolveEnvelope:
+      type: object
+      required: [payload]
+      properties:
+        record_id:
+          type: string
+          format: uuid
+          description: Persisted roll ID. Omitted if history could not be saved.
+        payload:
+          oneOf:
+            - $ref: "#/components/schemas/GenericRollResponse"
+            - $ref: "#/components/schemas/VtmRollResponse"
+            - $ref: "#/components/schemas/VtmRerollResponse"
+            - $ref: "#/components/schemas/VtmCheckResponse"
+            - $ref: "#/components/schemas/TesRollResponse"
+            - $ref: "#/components/schemas/TesPushResponse"
+    GenericRollResponse:
+      type: object
+      required: [expression, rolls, sum]
+      properties:
+        expression: {type: string, example: 3d6}
+        rolls:
+          type: array
+          items: {type: integer}
+          example: [3, 1, 2]
+        sum: {type: integer, example: 6}
+    VtmRollResponse:
+      type: object
+      required: [expression, main_roll, hunger_roll, successes, success, is_critical, crit_type]
+      properties:
+        expression: {type: string, example: 5d10}
+        main_roll:
+          type: array
+          items: {type: integer, minimum: 1, maximum: 10}
+        hunger_roll:
+          type: array
+          items: {type: integer, minimum: 1, maximum: 10}
+        successes: {type: integer, minimum: 0}
+        success: {type: boolean}
+        is_critical: {type: boolean}
+        crit_type:
+          type: string
+          enum: [none, critical, messy critical, bestial failure]
+    VtmRerollResponse:
+      allOf:
+        - $ref: "#/components/schemas/VtmRollResponse"
+        - type: object
+          required: [reroll_expression]
+          properties:
+            reroll_expression: {type: string, example: 2d10}
+    VtmCheckResponse:
+      type: object
+      required: [expression, result, success]
+      properties:
+        expression: {type: string, const: 1d10}
+        result: {type: integer, minimum: 1, maximum: 10}
+        success: {type: boolean}
+    TesRollResponse:
+      type: object
+      required: [expression, attribute_rolls, gear_rolls, successes, success]
+      properties:
+        expression: {type: string, example: 7d6}
+        attribute_rolls:
+          type: array
+          items: {type: integer, minimum: 1, maximum: 6}
+        gear_rolls:
+          type: array
+          items: {type: integer, minimum: 1, maximum: 6}
+        successes: {type: integer, minimum: 0}
+        success: {type: boolean}
+    TesPushResponse:
+      allOf:
+        - $ref: "#/components/schemas/TesRollResponse"
+        - type: object
+          required: [push_expression, hope_losses, gear_damage]
+          properties:
+            push_expression: {type: string, example: 3d6}
+            hope_losses: {type: integer, minimum: 0}
+            gear_damage: {type: integer, minimum: 0}
+    CreateCharacterResponse:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string, format: uuid}
+    TesCharacterCreateRequest:
+      type: object
+      required: [user_id, type]
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [pc, npc]
+        rules:
+          type: boolean
+          default: false
+          description: Validate the complete sheet against TES character creation rules.
+        character:
+          $ref: "#/components/schemas/TesCharacter"
+    TesCharacter:
+      type: object
+      properties:
+        name: {type: string}
+        archetype:
+          type: string
+          enum: [artist, criminal, devotee, doctor, dronePilot, investigator, outsider, runawayKid, scientist, veteran]
+        favourite_song: {type: string}
+        description: {type: string}
+        stats: {$ref: "#/components/schemas/TesStats"}
+        derivatives: {$ref: "#/components/schemas/TesDerivatives"}
+        bliss: {$ref: "#/components/schemas/TesBliss"}
+        talents:
+          type: array
+          minItems: 1
+          maxItems: 2
+          uniqueItems: true
+          items: {$ref: "#/components/schemas/TesTalent"}
+        dream: {type: string}
+        flaw: {type: string}
+        gear:
+          type: array
+          minItems: 1
+          maxItems: 4
+          items: {$ref: "#/components/schemas/TesGear"}
+        cash: {type: integer, minimum: 0}
+        journey: {$ref: "#/components/schemas/TesJourney"}
+        tension:
+          type: array
+          items: {$ref: "#/components/schemas/TesTension"}
+        conditions: {$ref: "#/components/schemas/TesConditions"}
+        vehicle: {$ref: "#/components/schemas/TesVehicle"}
+    TesStats:
+      type: object
+      required: [strength, agility, wits, empathy]
+      properties:
+        strength: {type: integer, minimum: 2, maximum: 6}
+        agility: {type: integer, minimum: 2, maximum: 6}
+        wits: {type: integer, minimum: 2, maximum: 6}
+        empathy: {type: integer, minimum: 2, maximum: 6}
+    TesDerivatives:
+      type: object
+      required: [health, hope]
+      properties:
+        health: {type: integer, minimum: 1}
+        hope: {type: integer, minimum: 1}
+    TesBliss:
+      type: object
+      required: [bliss, permanent]
+      properties:
+        bliss: {type: integer, minimum: 0}
+        permanent: {type: integer, minimum: 0}
+    TesTalent:
+      type: string
+      enum:
+        - athlete
+        - backstabber
+        - biker
+        - bladeFighter
+        - boatman
+        - bomber
+        - bowman
+        - charmer
+        - clubFighter
+        - conArtist
+        - dataMiner
+        - dirtyFighter
+        - dramaQueen
+        - dreamer
+        - driver
+        - droneOperator
+        - electronics
+        - evasive
+        - gamer
+        - hacker
+        - hardened
+        - intuition
+        - leader
+        - loneWolf
+        - machinegunner
+        - martialArtist
+        - mechanic
+        - medic
+        - menacing
+        - musician
+        - neuroresistant
+        - nineLives
+        - nurse
+        - pilot
+        - pistoleer
+        - resilient
+        - rider
+        - scout
+        - sleuth
+        - sniper
+        - speaker
+        - stealthy
+        - surgeon
+        - technoBabbler
+        - thief
+        - tough
+    TesGear:
+      type: object
+      required: [name, code, type]
+      properties:
+        name: {type: string}
+        code: {type: string}
+        type:
+          type: string
+          enum: [gear, weapon, armor, neurocaster]
+        bonus: {type: integer, minimum: 0}
+        price: {type: integer, minimum: 0}
+        notes: {type: string}
+        damage_value: {type: integer, minimum: 0}
+        damage_kind: {type: string, enum: [physical, explosive]}
+        range_min: {$ref: "#/components/schemas/TesRange"}
+        range_max: {$ref: "#/components/schemas/TesRange"}
+        tags:
+          type: array
+          items: {type: string}
+        blast_power: {type: integer, minimum: 1}
+        armor_level: {type: integer, minimum: 1}
+        agility_modifier: {type: integer, minimum: -3, maximum: 0}
+        processor: {type: integer, minimum: 1}
+        network: {type: integer, minimum: 1}
+        graphics: {type: integer, minimum: 1}
+    TesRange:
+      type: string
+      enum: [engaged, short, medium, long, extreme]
+    TesJourney:
+      type: object
+      required: [goal, threat]
+      properties:
+        goal: {type: string}
+        threat: {type: string}
+    TesTension:
+      type: object
+      required: [traveller_name, tension]
+      properties:
+        traveller_name: {type: string}
+        tension: {type: integer, minimum: 1, maximum: 2}
+    TesConditions:
+      type: object
+      properties:
+        injuries:
+          type: array
+          items: {type: string}
+        traumas:
+          type: array
+          items: {type: string}
+    TesVehicle:
+      type: object
+      required: [vehicle_type, model, passenger, fuel, stats, SharedGear]
+      properties:
+        vehicle_type:
+          type: string
+          enum: [horse, wagon, bicycle, motorcycle, dirtBike, 2wdCar, 4wdCar, pickupTruck, van, lightTruck, heavyTruck, bus, rowboat, smallSailingBoat, smallMotorBoat, helicopter, lightAirplane, smallCommercialDroneShip, militaryDroneShip]
+        model: {type: string}
+        passenger: {type: integer, minimum: 0}
+        fuel: {type: string}
+        description: {type: string}
+        stats: {$ref: "#/components/schemas/TesVehicleStats"}
+        SharedGear:
+          type: array
+          minItems: 3
+          maxItems: 3
+          items: {$ref: "#/components/schemas/TesGear"}
+    TesVehicleStats:
+      type: object
+      required: [maneuverability, speed, hull, armor]
+      properties:
+        maneuverability: {type: integer, minimum: 0}
+        speed: {type: integer, minimum: 1}
+        hull: {type: integer, minimum: 1}
+        armor: {type: integer, minimum: 0}
+        traits:
+          type: array
+          items: {$ref: "#/components/schemas/TesVehicleTrait"}
+        gear:
+          type: array
+          items: {$ref: "#/components/schemas/TesGear"}
+    TesVehicleTrait:
+      type: object
+      required: [name, stat, bonus]
+      properties:
+        name: {type: string}
+        stat: {type: string, enum: [maneuverability, speed, hull, armor]}
+        bonus: {type: integer, minimum: 1}

@@ -2,6 +2,8 @@
 
 This document provides a general list of all API endpoints across DiceDasher services.
 
+Interactive API documentation is available through Swagger UI at `http://localhost:8082` after running `make up`. The source specification is [openapi.yaml](openapi.yaml).
+
 ## Resolve Service
 
 Base URL: `http://localhost:8080`
