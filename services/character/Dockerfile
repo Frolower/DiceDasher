@@ -17,6 +17,8 @@ RUN go build -o /app/character-service ./cmd/character-service
 
 FROM alpine:3.21
 
+RUN apk add --no-cache curl
+
 WORKDIR /app
 COPY --from=build /app/character-service /app/character-service
 

@@ -35,7 +35,7 @@ Perform a standard TES dice pool roll.
 | `record_id`               | string   | record id of this roll          |
 | `payload.expression`      | string   | Dice notation (e.g., "6d6")     |
 | `payload.attribute_rolls` | int[]    | Attribute + assist dice results |
-| `payload.datagear_rolls`  | int[]    | Gear dice results               |
+| `payload.gear_rolls`      | int[]    | Gear dice results               |
 | `payload.successes`       | int      | Total 6s rolled                 |
 | `payload.success`         | bool     | Whether roll met the target     |
 

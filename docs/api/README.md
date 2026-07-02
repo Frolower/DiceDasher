@@ -44,3 +44,30 @@ curl -X POST "http://localhost:8080/resolve?system=tes&action=roll" \
   -H "Content-Type: application/json" \
   -d '{"attr": 4, "assist": 1, "gear": 2, "modificator": 0, "target": 2}'
 ```
+
+## Character Service
+
+Base URL: `http://localhost:8081`
+
+Full documentation: [/docs/services/character/](../services/character/)
+
+### Endpoints
+
+| Method | Endpoint     | Description                  | Details                                               |
+|--------|--------------|------------------------------|-------------------------------------------------------|
+| GET    | `/health`    | Health check                 | [→](../services/character/endpoints.md#get-health)    |
+| POST   | `/character` | Create and store a character | [→](../services/character/endpoints.md#post-character) |
+
+### Supported Systems
+
+| System | Operation        | Description        |
+|--------|------------------|--------------------|
+| `tes`  | Character create | The Electric State |
+
+### Quick Example
+
+```sh
+curl -X POST "http://localhost:8081/character?system=tes" \
+  -H "Content-Type: application/json" \
+  --data @character.json
+```

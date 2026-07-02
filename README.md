@@ -50,6 +50,7 @@ Currently supported systems:
 
 Currently existing services:
 - resolve service: resolves dice rolls according to the system rules
+- character service: creates and stores system-specific characters
 
 ## About
 
@@ -74,11 +75,11 @@ This project is designed to use microservice architecture.
 │
 ├── docs/
 │   ├── api/                      Existing API endpoints overview
-│   ├── service/
-│   │   └── resolve/             Documentation about resolve service
+│   ├── services/
+│   │   ├── character/           Character service documentation
+│   │   └── resolve/             Resolve service documentation
 │   ├── CODE_OF_CONDUCT.md
 │   ├── CONTRIBUTING.md
-│   ├── ENDPOINTS.md              Implemented API endpoints
 │   └── SECURITY.md
 │
 ├── frontend/
@@ -92,7 +93,7 @@ This project is designed to use microservice architecture.
 │   └── go.mod
 │
 ├── services/                      Backend services
-│   ├── character-service/         Character service
+│   ├── character/                 Character service
 │   │   ├── cmd/character-service  Entrypoint
 │   │   ├── internal/
 │   │   │   ├── config/
@@ -102,7 +103,7 @@ This project is designed to use microservice architecture.
 │   │   ├── Dockerfile
 │   │   └── go.mod
 │   │
-│   └── resolve-service/           Resolve service
+│   └── resolve/                   Resolve service
 │       ├── cmd/resolve-service    Entrypoint
 │       ├── internal/
 │       │   ├── config/
@@ -146,6 +147,7 @@ into docker containers and won't require any additional downloads
 4. Check if services are healthy
   ```sh
   curl http://localhost:8080/health
+  curl http://localhost:8081/health
   ```
 5. Stop containers
   ```sh
