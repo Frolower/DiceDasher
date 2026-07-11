@@ -8,9 +8,8 @@ func RegisterRouters(r *httputil.Router) {
 	r.Handle("/login").POST()
 	r.Handle("/logout").POST()
 	r.Handle("/me").GET()
-	r.Handle("/user").PATCH()
+	r.Handle("/user").PATCH().DELETE()
 	r.Handle("/password").PUT()
-	r.Handle("/user").DELETE()
 
 	//health
 	r.Handle("/health").GET(health)
