@@ -3,6 +3,7 @@ package handler
 import "diceDasher/pkg/httputil"
 
 func RegisterRouters(r *httputil.Router) {
+	// user specific routes
 	r.Handle("/register").POST()
 	r.Handle("/login").POST()
 	r.Handle("/logout").POST()
@@ -10,4 +11,7 @@ func RegisterRouters(r *httputil.Router) {
 	r.Handle("/user").PATCH()
 	r.Handle("/password").PUT()
 	r.Handle("/user").DELETE()
+
+	//health
+	r.Handle("/health").GET(health)
 }
