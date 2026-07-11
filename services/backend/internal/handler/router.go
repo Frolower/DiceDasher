@@ -12,5 +12,5 @@ func RegisterRouters(r *httputil.Router) {
 	r.Handle("/password").PUT()
 
 	//health
-	r.Handle("/health").GET(health)
+	r.Handle("/health").GET(Health)
 }
