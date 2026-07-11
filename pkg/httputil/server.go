@@ -65,3 +65,18 @@ func (r *Route) POST(h http.HandlerFunc) *Route {
 	r.handlers[http.MethodPost] = h
 	return r
 }
+
+func (r *Route) PUT(h http.HandlerFunc) *Route {
+	r.handlers[http.MethodPut] = h
+	return r
+}
+
+func (r *Route) PATCH(h http.HandlerFunc) *Route {
+	r.handlers[http.MethodPatch] = h
+	return r
+}
+
+func (r *Route) DELETE(h http.HandlerFunc) *Route {
+	r.handlers[http.MethodDelete] = h
+	return r
+}
