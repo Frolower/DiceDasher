@@ -22,5 +22,5 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build /app/resolve-service /app/resolve-service
 
-EXPOSE 8080
+EXPOSE 8082
 CMD ["/app/resolve-service"]
