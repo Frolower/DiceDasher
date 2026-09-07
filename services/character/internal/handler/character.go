@@ -44,7 +44,14 @@ func postUserCreatedCharacterHandler(w http.ResponseWriter, r *http.Request) {
 
 	created, status, err := character.CreateCharacter(r.Context(), raw)
 	if err != nil {
-		http.Error(w, err.Error(), status)
+		var validationErr *system.ValidationError
+		if errors.As(err, &validationErr) {
+			if packErr := httputil.PackJSON(w, status, validationErr); packErr != nil {
+				logger.Logf(r.Context(), "ERROR encoding validation response: %s", packErr)
+			}
+		} else {
+			http.Error(w, err.Error(), status)
+		}
 		logger.Logf(r.Context(), "ERROR: %s", err)
 		return
 	}

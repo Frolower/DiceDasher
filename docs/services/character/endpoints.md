@@ -34,7 +34,7 @@ Validate, create, and store a character. The request body depends on the selecte
 | `201`  | Character created and stored                     |
 | `400`  | Missing system, malformed JSON, or missing user ID |
 | `404`  | Unknown system                                   |
-| `422`  | The character violates system validation rules   |
+| `422`  | The character violates integrity or creation rules   |
 | `500`  | Database or internal server error                |
 
 ### Success response
@@ -56,3 +56,20 @@ curl -X POST "http://localhost:8081/character?system=tes" \
 ```
 
 See [systems/tes.md](systems/tes.md) for the complete request schema.
+
+### Validation errors
+
+A `422` response uses `application/json` and contains all detected violations:
+
+```json
+{
+  "errors": [
+    {"field": "character.name", "code": "required", "message": "name is required"},
+    {"field": "character.gear[1].price", "code": "negative_value", "message": "must be greater or equal to 0"}
+  ]
+}
+```
+
+Paths use JSON field names and zero-based array indexes. Codes are `required`, `too_long`, `negative_value`, `invalid_value`, `invalid_item`, and `creation_rule`. Some type-specific and creation checks identify a group such as `character.gear[0]` or `character.stats`; their message describes the constraint. Other error statuses retain their existing text format.
+
+Compatibility: free-mode requests with missing/blank names or invalid supplied values now return `422`; validation errors previously returned plain text.

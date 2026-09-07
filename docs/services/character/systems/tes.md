@@ -9,9 +9,9 @@ The `tes` character implementation creates player characters (`pc`) and non-play
 | `user_id`   | UUID    | Yes      | Owner of the character |
 | `type`      | string  | Yes      | `pc` or `npc` |
 | `rules`     | boolean | No       | Apply TES creation-rule validation when `true`; defaults to `false` |
-| `character` | object  | Conditional | Character sheet; required for meaningful creation and validated when `rules` is `true` |
+| `character` | object  | Yes | Character sheet; integrity is always validated |
 
-When `rules` is `false`, the service still requires a non-zero `user_id` and a valid character `type`, but skips character-sheet validation.
+Both modes require a non-zero `user_id`, a valid character `type`, and a non-blank character name of at most 255 Unicode characters. `rules: false` allows a minimal sheet and custom creation values; it does not disable integrity checks.
 
 ## Character sheet
 
@@ -36,7 +36,16 @@ When `rules` is `false`, the service still requires a non-zero `user_id` and a v
 
 ## Validation summary
 
-Validation is enabled by `"rules": true`.
+Validation consists of two independently composed policies.
+
+**Integrity (always enabled):**
+
+- Name must be non-blank and at most 255 Unicode characters.
+- Base stats, health, hope, bliss, permanent bliss, and cash must be non-negative. Omitted numeric values default to zero.
+- Every supplied item in `gear`, `vehicle.SharedGear`, and `vehicle.stats.gear` must have a non-blank name and code, a non-negative price, a supported type, and valid type-specific values (including damage/range, armor, and neurocaster fields).
+- A minimal sheet containing only a name remains valid in free mode. Narrative fields, archetype/talent catalogs, and vehicle creation requirements belong to the creation policy.
+
+**TES creation policy (only with `"rules": true`):**
 
 - Every base stat must be between 2 and 6.
 - `health` is `(strength + agility) / 2`, rounded up; the `tough` talent adds 2.

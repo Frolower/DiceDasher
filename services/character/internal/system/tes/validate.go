@@ -24,87 +24,27 @@ const (
 	dreamerTalent = "dreamer"
 )
 
-func validateCreate(r createRequest) error {
+func validateDerivatives(c characterList) error {
 	var errs []error
-
-	if r.Type != npc && r.Type != pc {
-		errs = append(errs, fmt.Errorf("type must be pc or npc"))
-	}
-
-	if r.Rules {
-		errs = append(errs, r.CharacterList.Validate())
-	}
-
-	return errors.Join(errs...)
-}
-
-func (c characterList) Validate() error {
-	var errs []error
-	statSum := c.Stats.Agility + c.Stats.Empathy + c.Stats.Strength + c.Stats.Wits
-
-	if c.Name == "" {
-		errs = append(errs, errors.New("character's name is empty"))
-	}
-
-	errs = append(errs, validateArchetype(c.Archetype))
-
-	errs = append(errs, c.Stats.Validate())
-
-	if c.FavouriteSong == "" {
-		errs = append(errs, errors.New("favourite song is empty"))
-	}
-
 	if slices.Contains(c.Talents, toughTalent) {
 		if c.Derivatives.Health != (c.Stats.Strength+c.Stats.Agility+1)/2+2 {
-			errs = append(errs, errors.New("health should be equal to STR + AGL / 2, rounded up"))
+			errs = append(errs, errors.New("health should be equal to (STR + AGL) / 2, rounded up, plus talent bonus"))
 		}
 	} else {
 		if c.Derivatives.Health != (c.Stats.Strength+c.Stats.Agility+1)/2 {
-			errs = append(errs, errors.New("health should be equal to STR + AGL / 2, rounded up"))
+			errs = append(errs, errors.New("health should be equal to (STR + AGL) / 2, rounded up, plus talent bonus"))
 		}
 	}
 
 	if slices.Contains(c.Talents, dreamerTalent) {
 		if c.Derivatives.Hope != (c.Stats.Empathy+c.Stats.Wits+1)/2+2 {
-			errs = append(errs, errors.New("health should be equal to EMP + WIT / 2, rounded up"))
+			errs = append(errs, errors.New("hope should be equal to (EMP + WIT) / 2, rounded up, plus talent bonus"))
 		}
 	} else {
 		if c.Derivatives.Hope != (c.Stats.Empathy+c.Stats.Wits+1)/2 {
-			errs = append(errs, errors.New("health should be equal to EMP + WIT / 2, rounded up"))
+			errs = append(errs, errors.New("hope should be equal to (EMP + WIT) / 2, rounded up, plus talent bonus"))
 		}
 	}
-
-	if c.Bliss.Bliss < 0 {
-		errs = append(errs, errors.New("bliss should be greater or equal to 0"))
-	}
-
-	if c.Bliss.Permanent < 0 {
-		errs = append(errs, errors.New("bliss should be greater or equal to 0"))
-	}
-
-	errs = append(errs, validateTalents(c.Talents, statSum))
-
-	if c.Dream == "" {
-		errs = append(errs, errors.New("dream is empty"))
-	}
-
-	if c.Flaw == "" {
-		errs = append(errs, errors.New("flaw is empty"))
-	}
-
-	if len(c.Inventory) < 1 || len(c.Inventory) > 4 {
-		errs = append(errs, errors.New("expected 0 or 1 neurocaster and 1 other gear element at the character creation"))
-	}
-
-	errs = append(errs, validateInventory(c.Inventory))
-
-	errs = append(errs, validateStartingCash(c.Archetype, c.Cash))
-
-	errs = append(errs, validateJourney(c.Journey))
-
-	errs = append(errs, validateTension(c.Tension))
-
-	errs = append(errs, validateVehicle(c.Vehicle))
 
 	return errors.Join(errs...)
 }
@@ -146,52 +86,23 @@ func (s stats) Validate() error {
 	return errors.Join(errs...)
 }
 
+// Only the creation policy limits the number of neurocasters.
 func validateInventory(inventory []gear) error {
-	var errs []error
-	var n gear
-	var g gear
-	neurocasterCount := 0
-
-	for _, g := range inventory {
-		if g.Type == neurocasterType {
-			neurocasterCount++
-			n = g
-		} else {
-			g = g
+	count := 0
+	for _, item := range inventory {
+		if item.Type == neurocasterType {
+			count++
 		}
 	}
-
-	if neurocasterCount > 1 {
-		errs = append(errs, errors.New("maximum 1 neurocaster allowed during character creation"))
+	if count > 1 {
+		return errors.New("maximum 1 neurocaster allowed during character creation")
 	}
-
-	if neurocasterCount == 1 {
-		errs = append(errs, validateNeurocaster(n))
-	}
-
-	if g.Type == weaponType {
-		errs = append(errs, validateWeapon(g))
-	} else if g.Type == armorType {
-		errs = append(errs, validateArmor(g))
-	} else if g.Type == gearType {
-		errs = append(errs, validateGear(g))
-	}
-
-	return errors.Join(errs...)
+	return nil
 }
 
 func validateNeurocaster(n gear) error {
 	var errs []error
 
-	if n.Name == "" {
-		errs = append(errs, errors.New("neurocaster name is empty"))
-	}
-	if n.Code == "" {
-		errs = append(errs, errors.New("neurocaster code is empty"))
-	}
-	if n.Price < 0 {
-		errs = append(errs, errors.New("neurocaster price should be greater or equal to 0"))
-	}
 	if n.Processor < 1 {
 		errs = append(errs, errors.New("neurocaster processor should be greater or equal to 1"))
 	}
@@ -208,15 +119,6 @@ func validateNeurocaster(n gear) error {
 func validateWeapon(w gear) error {
 	var errs []error
 
-	if w.Name == "" {
-		errs = append(errs, errors.New("weapon name is empty"))
-	}
-	if w.Code == "" {
-		errs = append(errs, errors.New("weapon code is empty"))
-	}
-	if w.Price < 0 {
-		errs = append(errs, errors.New("weapon price must be greater or equal to 0"))
-	}
 	if w.Bonus < 0 {
 		errs = append(errs, errors.New("weapon bonus must be greater or equal to 0"))
 	}
@@ -268,16 +170,7 @@ func validateRange(min, max string) error {
 func validateArmor(a gear) error {
 	var errs []error
 
-	if a.Name == "" {
-		errs = append(errs, errors.New("armor name is empty"))
-	}
-	if a.Code == "" {
-		errs = append(errs, errors.New("armor code is empty"))
-	}
-	if a.Price < 0 {
-		errs = append(errs, errors.New("armor price should be greater or equal to 0"))
-	}
-	if a.AgilityModifier < 0 && a.AgilityModifier > -4 {
+	if a.AgilityModifier < -3 || a.AgilityModifier > -1 {
 		errs = append(errs, errors.New("agility modifier should be between -1 and -3"))
 	}
 	if a.ArmorLevel < 1 {
@@ -290,15 +183,6 @@ func validateArmor(a gear) error {
 func validateGear(g gear) error {
 	var errs []error
 
-	if g.Name == "" {
-		errs = append(errs, errors.New("gear name is empty"))
-	}
-	if g.Code == "" {
-		errs = append(errs, errors.New("gear code is empty"))
-	}
-	if g.Price < 0 {
-		errs = append(errs, errors.New("gear price should be greater or equal to 0"))
-	}
 	if g.Bonus < 0 {
 		errs = append(errs, errors.New("gear bonus should be greater or equal to 0"))
 	}
@@ -481,10 +365,6 @@ func validateVehicle(v vehicle) error {
 	}
 	if len(v.SharedGear) != 3 {
 		errs = append(errs, errors.New("you are required to have 3 shared gear elements"))
-	}
-
-	for _, gear := range v.SharedGear {
-		errs = append(errs, validateGear(gear))
 	}
 
 	return errors.Join(errs...)
