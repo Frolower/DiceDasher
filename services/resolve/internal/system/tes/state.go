@@ -1,6 +1,7 @@
 package tes
 
 import (
+	"diceDasher/pkg/dice"
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
@@ -42,6 +43,13 @@ func loadState(rec repository.RollHistory) (rollState, error) {
 	}
 	if len(s.AttributeRolls)+len(s.GearRolls) == 0 || s.Target < 0 {
 		return s, errors.New("invalid stored roll state")
+	}
+	count, err := dice.AddCounts(len(s.AttributeRolls), len(s.GearRolls))
+	if err != nil {
+		return s, err
+	}
+	if _, err := dice.NewPool(count, dieSize); err != nil {
+		return s, err
 	}
 	for _, pool := range [][]int{s.AttributeRolls, s.GearRolls} {
 		for _, value := range pool {

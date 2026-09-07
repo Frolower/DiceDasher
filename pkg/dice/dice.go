@@ -1,21 +1,20 @@
 package dice
 
 import (
-	"fmt"
 	"math/rand/v2"
 )
 
 func RollDie(sides int) (int, error) {
-	if sides < 2 {
-		return 0, fmt.Errorf("sides must be >= 2")
+	if _, err := NewPool(1, sides); err != nil {
+		return 0, err
 	}
 	roll := rand.IntN(sides) + 1
 	return roll, nil
 }
 
 func RollDice(count int, sides int) ([]int, error) {
-	if sides < 2 {
-		return nil, fmt.Errorf("sides must be >= 2")
+	if _, err := NewPool(count, sides); err != nil {
+		return nil, err
 	}
 
 	rolls := make([]int, count)
@@ -26,8 +25,8 @@ func RollDice(count int, sides int) ([]int, error) {
 }
 
 func RerollKeepingValues(previous []int, except []int, sides int) ([]int, error) {
-	if sides < 2 {
-		return nil, fmt.Errorf("sides must be >= 2")
+	if _, err := NewPool(len(previous), sides); err != nil {
+		return nil, err
 	}
 
 	exceptSet := make(map[int]struct{}, len(except))
@@ -53,8 +52,8 @@ func RerollKeepingValues(previous []int, except []int, sides int) ([]int, error)
 }
 
 func RerollSpecificValues(previous []int, index []int, sides int) ([]int, error) {
-	if sides < 2 {
-		return nil, fmt.Errorf("sides must be >= 2")
+	if _, err := NewPool(len(previous), sides); err != nil {
+		return nil, err
 	}
 
 	indexSet := make(map[int]struct{}, len(index))

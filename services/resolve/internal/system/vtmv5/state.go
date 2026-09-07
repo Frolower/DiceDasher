@@ -1,6 +1,7 @@
 package vtmv5
 
 import (
+	"diceDasher/pkg/dice"
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
@@ -42,6 +43,13 @@ func loadState(rec repository.RollHistory) (rollState, error) {
 	}
 	if len(s.MainRoll)+len(s.HungerRoll) == 0 || s.Target < 1 {
 		return s, errors.New("invalid stored roll state")
+	}
+	count, err := dice.AddCounts(len(s.MainRoll), len(s.HungerRoll))
+	if err != nil {
+		return s, err
+	}
+	if _, err := dice.NewPool(count, dieSize); err != nil {
+		return s, err
 	}
 	for _, pool := range [][]int{s.MainRoll, s.HungerRoll} {
 		for _, value := range pool {

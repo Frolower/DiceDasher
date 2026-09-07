@@ -36,16 +36,17 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return rollResponse{}, http.StatusBadRequest, err
 	}
-	if err := validateRoll(req); err != nil {
+	attributePool, gearPool, err := rollPools(req)
+	if err != nil {
 		return rollResponse{}, http.StatusUnprocessableEntity, err
 	}
 
-	expression := fmt.Sprintf("%dd%d", req.Attr+req.Assist+req.Gear+req.Modificator, dieSize)
-	attributeRolls, err := dice.RollDice(req.Attr+req.Assist+req.Modificator, dieSize)
+	expression := fmt.Sprintf("%dd%d", attributePool.Count()+gearPool.Count(), dieSize)
+	attributeRolls, err := attributePool.Roll()
 	if err != nil {
 		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	gearRolls, err := dice.RollDice(req.Gear, dieSize)
+	gearRolls, err := gearPool.Roll()
 	if err != nil {
 		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}

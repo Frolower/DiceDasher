@@ -108,3 +108,13 @@ and is created when initializing `resolve_db`.
 Legacy initial rolls can still be continued. Legacy push/reroll records without a snapshot
 return HTTP 409; continue from the original roll instead. Wrong system/action also returns
 409, missing history returns 404, and invalid reroll indices return 422.
+
+## Dice pool limits
+
+All systems allow at most 1000 dice per complete roll (including all components),
+and dice may have 2–1,000,000 sides. Invalid request pools return HTTP 422.
+The limits are defined in `pkg/dice/pool.go`; pool arithmetic rejects integer overflow.
+TES applies modifiers to the attribute pool: it must remain nonnegative, and the
+combined attribute and gear pool must be nonempty. VTM hunger dice cannot exceed
+`attribute + skill`. Empty component pools are allowed. Persisted continuation
+states and the shared dice functions enforce the same resource limits.
