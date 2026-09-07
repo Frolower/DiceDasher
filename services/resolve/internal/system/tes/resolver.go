@@ -6,6 +6,7 @@ import (
 	"diceDasher/pkg/logger"
 	"diceDasher/pkg/util"
 	"diceDasher/services/resolve/internal/repository"
+	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -52,6 +53,7 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	success := successes >= req.Target
 
 	return rollResponse{
+		state:          rollState{Target: req.Target, AttributeRolls: attributeRolls, GearRolls: gearRolls},
 		Expression:     expression,
 		AttributeRolls: attributeRolls,
 		GearRolls:      gearRolls,
@@ -62,7 +64,6 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 
 func resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, error) {
 	var req pushRequest
-	var rec pushRecord
 
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return pushResponse{}, http.StatusBadRequest, err
@@ -79,23 +80,18 @@ func resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, e
 
 	extractedData, err := repo.GetRollHistoryByID(ctx, req.RecordID)
 	if err != nil {
-		return pushResponse{}, http.StatusInternalServerError, err
+		return pushResponse{}, system.HistoryErrorStatus(err), err
 	}
 
-	// Extracting results from thr db
-	if err = json.Unmarshal(extractedData.ResponsePayload, &rec); err != nil {
-		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	rec, err := loadState(extractedData)
+	if err != nil {
+		return pushResponse{}, system.HistoryErrorStatus(err), err
 	}
 
-	// Extracting target from the request
-	if err = json.Unmarshal(extractedData.RequestPayload, &rec); err != nil {
-		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
-	}
+	return continueRoll(rec)
+}
 
-	if err := validatePushRecord(rec); err != nil {
-		return pushResponse{}, http.StatusInternalServerError, err
-	}
-
+func continueRoll(rec rollState) (pushResponse, int, error) {
 	expression := fmt.Sprintf("%dd%d", len(rec.AttributeRolls)+len(rec.GearRolls), dieSize)
 	rerollDiceNumber := util.CountBetween(rec.AttributeRolls, 2, 5) + util.CountBetween(rec.GearRolls, 2, 5)
 	pushExpression := fmt.Sprintf("%dd%d", rerollDiceNumber, dieSize)
@@ -113,6 +109,7 @@ func resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, e
 	gearDamage := util.CountInt(gearRolls, 1)
 
 	return pushResponse{
+		state:          rollState{Target: rec.Target, AttributeRolls: attributeRolls, GearRolls: gearRolls, Lineage: rec.Lineage},
 		Expression:     expression,
 		PushExpression: pushExpression,
 		AttributeRolls: attributeRolls,

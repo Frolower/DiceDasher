@@ -1,7 +1,6 @@
 package vtmv5
 
 import (
-	"diceDasher/pkg/util"
 	"errors"
 
 	"github.com/google/uuid"
@@ -39,18 +38,16 @@ func validateReroll(req rerollRequest) error {
 	return errors.Join(errs...)
 }
 
-func validateRerollRecord(req rerollRecord, rerollIndex []int) error {
-	var errs []error
-
-	if len(req.MainRoll)+len(req.HungerRoll) == 0 {
-		errs = append(errs, errors.New("no dice in a roll"))
+func validateRerollState(state rollState, indices []int) error {
+	seen := make(map[int]bool, len(indices))
+	for _, index := range indices {
+		if index < 0 || index >= len(state.MainRoll) {
+			return errors.New("reroll index out of range")
+		}
+		if seen[index] {
+			return errors.New("duplicate reroll index")
+		}
+		seen[index] = true
 	}
-	if util.CountAbove(rerollIndex, len(req.MainRoll)-1) > 0 {
-		errs = append(errs, errors.New("reroll index out of range"))
-	}
-	if req.Target < 1 {
-		errs = append(errs, errors.New("target must be >= 1"))
-	}
-
-	return errors.Join(errs...)
+	return nil
 }

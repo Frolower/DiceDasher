@@ -64,6 +64,14 @@ func ResolveHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Logf(r.Context(), "ERROR: repository not in context: %s", err)
 	} else {
+		var stateJSON json.RawMessage
+		if stateful, ok := resp.(system.StatefulResult); ok {
+			stateJSON, err = json.Marshal(stateful.HistoryState())
+			if err != nil {
+				http.Error(w, "internal error", http.StatusInternalServerError)
+				return
+			}
+		}
 		respJSON, err := json.Marshal(resp)
 		if err != nil {
 			logger.Logf(r.Context(), "ERROR marshaling response: %s", err)
@@ -78,6 +86,7 @@ func ResolveHandler(w http.ResponseWriter, r *http.Request) {
 					ActionType:      action,
 					RequestPayload:  raw,
 					ResponsePayload: respJSON,
+					StatePayload:    stateJSON,
 				})
 				if err != nil {
 					logger.Logf(r.Context(), "ERROR saving roll history: %s", err)

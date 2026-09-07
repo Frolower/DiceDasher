@@ -12,6 +12,7 @@ type RollHistory struct {
 	RequestID       uuid.UUID       `db:"request_id"`
 	SystemName      string          `db:"system_name"`
 	ActionType      string          `db:"action_type"`
+	StatePayload    json.RawMessage `db:"state_payload"`
 	RequestPayload  json.RawMessage `db:"request_payload"`
 	ResponsePayload json.RawMessage `db:"response_payload" `
 	CampaignID      *uuid.UUID      `db:"campaign_id"`

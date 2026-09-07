@@ -7,10 +7,10 @@ import (
 	"diceDasher/pkg/logger"
 	"diceDasher/pkg/util"
 	"diceDasher/services/resolve/internal/repository"
+	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 )
 
@@ -77,6 +77,7 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	}
 
 	return rollResponse{
+		state:      rollState{Target: req.Target, MainRoll: mainRoll, HungerRoll: hungerRoll},
 		Expression: expression,
 		MainRoll:   mainRoll,
 		HungerRoll: hungerRoll,
@@ -89,7 +90,6 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 
 func resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, int, error) {
 	var req rerollRequest
-	var rec rerollRecord
 
 	if err := json.Unmarshal(raw, &req); err != nil {
 		return rerollResponse{}, http.StatusBadRequest, err
@@ -106,28 +106,25 @@ func resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, in
 
 	extractedData, err := repo.GetRollHistoryByID(ctx, req.RecordID)
 	if err != nil {
-		return rerollResponse{}, http.StatusInternalServerError, err
+		return rerollResponse{}, system.HistoryErrorStatus(err), err
 	}
 
-	// Extracting roll results
-	if err = json.Unmarshal(extractedData.ResponsePayload, &rec); err != nil {
-		return rerollResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	rec, err := loadState(extractedData)
+	if err != nil {
+		return rerollResponse{}, system.HistoryErrorStatus(err), err
 	}
 
-	// Extracting target from request
-	if err = json.Unmarshal(extractedData.RequestPayload, &rec); err != nil {
-		return rerollResponse{}, http.StatusInternalServerError, errors.New("internal error")
-	}
+	return continueRoll(rec, req.RerollIndex)
+}
 
-	log.Print(rec.Target)
-
-	if err := validateRerollRecord(rec, req.RerollIndex); err != nil {
-		return rerollResponse{}, http.StatusInternalServerError, err
+func continueRoll(rec rollState, indices []int) (rerollResponse, int, error) {
+	if err := validateRerollState(rec, indices); err != nil {
+		return rerollResponse{}, http.StatusUnprocessableEntity, err
 	}
 
 	expression := fmt.Sprintf("%dd%d", len(rec.MainRoll)+len(rec.HungerRoll), dieSize)
-	rerollExpression := fmt.Sprintf("%dd%d", len(rec.RerollIndex), dieSize)
-	mainRoll, err := dice.RerollSpecificValues(rec.MainRoll, rec.RerollIndex, dieSize)
+	rerollExpression := fmt.Sprintf("%dd%d", len(indices), dieSize)
+	mainRoll, err := dice.RerollSpecificValues(rec.MainRoll, indices, dieSize)
 	if err != nil {
 		return rerollResponse{}, http.StatusBadRequest, errors.New("interal error")
 	}
@@ -157,6 +154,7 @@ func resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, in
 	}
 
 	return rerollResponse{
+		state:            rollState{Target: rec.Target, MainRoll: mainRoll, HungerRoll: hungerRoll, Lineage: rec.Lineage},
 		Expression:       expression,
 		RerollExpression: rerollExpression,
 		MainRoll:         mainRoll,

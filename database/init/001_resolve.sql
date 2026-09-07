@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS public.roll_history (
     action_type roll_action NOT NULL,
     request_payload JSONB,
     response_payload JSONB NOT NULL,
+    state_payload JSONB,
     campaign_id UUID,
     character_id UUID,
     created_at TIMESTAMPTZ DEFAULT NOW()

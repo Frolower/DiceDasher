@@ -9,9 +9,12 @@ type rollRequest struct {
 }
 
 type rollResponse struct {
+	state          rollState
 	Expression     string `json:"expression"`
 	AttributeRolls []int  `json:"attribute_rolls"`
 	GearRolls      []int  `json:"gear_rolls"`
 	Successes      int    `json:"successes"`
 	Success        bool   `json:"success"`
 }
+
+func (r rollResponse) HistoryState() any { return r.state }

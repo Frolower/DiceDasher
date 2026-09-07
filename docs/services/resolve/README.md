@@ -94,3 +94,17 @@ curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=roll" \
    }
    ```
 4. Import the package in `main.go`
+
+## Persisted roll state
+
+TES and VTM V5 store a private `state_payload` snapshot alongside request/response history.
+It contains the dice, target, and original/parent record IDs. The public response is unchanged.
+The initial roll has no parent; its record ID becomes the original ID on continuation.
+Allowed transitions are TES `roll|push -> push` and VTM V5 `roll|reroll -> reroll`.
+This does not enforce a maximum number of continuations or prevent branching from the same record.
+
+The `state_payload` column is defined in `database/init/001_resolve.sql`
+and is created when initializing `resolve_db`.
+Legacy initial rolls can still be continued. Legacy push/reroll records without a snapshot
+return HTTP 409; continue from the original roll instead. Wrong system/action also returns
+409, missing history returns 404, and invalid reroll indices return 422.

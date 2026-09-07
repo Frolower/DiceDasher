@@ -85,7 +85,7 @@ Reroll specific dice from a previous roll (Willpower reroll). Only main dice can
 |----------------|-------|----------|-----------------------------------------|------------------------------------|
 | `main_roll`    | int[] | Yes      | Combined length >= 1                    | Previous main dice results         |
 | `hunger_roll`  | int[] | Yes      | Combined length >= 1                    | Previous hunger dice results       |
-| `reroll_index` | int[] | Yes      | length >= 1, indices < main_roll length | Indices of main_roll dice to reroll|
+| `reroll_index` | int[] | Yes      | length >= 1, unique indices, 0 <= index < main_roll length | Indices of main_roll dice to reroll|
 | `target`       | int   | Yes      | >= 1                                    | Required successes                 |
 
 ### Response
@@ -118,7 +118,7 @@ curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=reroll" \
   "record_id": "17ea1c08-78f3-4ebc-b69e-ec344a5bf3f3",
   "payload": {
     "expression": "5d10",
-    "reroll_expression": "0d10",
+    "reroll_expression": "2d10",
     "main_roll": [7, 4, 10],
     "hunger_roll": [10, 2],
     "successes": 5,

@@ -7,8 +7,11 @@ import (
 	"diceDasher/pkg/dbutil"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var ErrNotFound = errors.New("record not found")
 
 type Repository struct {
 	pool *pgxpool.Pool
@@ -29,8 +32,8 @@ func FromContext(ctx context.Context) (*Repository, error) {
 func (r *Repository) InsertRollHistory(ctx context.Context, rec RollHistory) (uuid.UUID, error) {
 	const q = `
 INSERT INTO public.roll_history
-(request_id, system_name, action_type, request_payload, response_payload, campaign_id, character_id)
-VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7)
+(request_id, system_name, action_type, request_payload, response_payload, campaign_id, character_id, state_payload)
+VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6, $7, $8::jsonb)
 RETURNING id;
 `
 	var id uuid.UUID
@@ -45,6 +48,7 @@ RETURNING id;
 		rec.ResponsePayload,
 		rec.CampaignID,
 		rec.CharacterID,
+		rec.StatePayload,
 	).Scan(&id)
 
 	return id, err
@@ -52,18 +56,22 @@ RETURNING id;
 
 func (r *Repository) GetRollHistoryByID(ctx context.Context, id uuid.UUID) (RollHistory, error) {
 	const q = `
-SELECT request_payload, response_payload
+SELECT id, system_name, action_type, request_payload, response_payload, state_payload
 FROM public.roll_history
 WHERE id = $1;
 `
 	var rec RollHistory
 	err := r.pool.QueryRow(ctx, q, id).Scan(
+		&rec.ID,
+		&rec.SystemName,
+		&rec.ActionType,
 		&rec.RequestPayload,
 		&rec.ResponsePayload,
+		&rec.StatePayload,
 	)
 	if err != nil {
-		if err.Error() == "no rows in result set" {
-			return RollHistory{}, errors.New("record not found")
+		if errors.Is(err, pgx.ErrNoRows) {
+			return RollHistory{}, ErrNotFound
 		}
 		return RollHistory{}, err
 	}

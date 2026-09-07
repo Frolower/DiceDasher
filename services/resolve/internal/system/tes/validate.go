@@ -37,16 +37,3 @@ func validatePush(req pushRequest) error {
 
 	return errors.Join(errs...)
 }
-
-func validatePushRecord(req pushRecord) error {
-	var errs []error
-
-	if len(req.AttributeRolls) < 1 {
-		errs = append(errs, errors.New("attribute rolls must be at least 1"))
-	}
-	if req.Target < 1 || req.Target > len(req.AttributeRolls) {
-		errs = append(errs, errors.New("target score must be between 1 and total dice number"))
-	}
-
-	return errors.Join(errs...)
-}

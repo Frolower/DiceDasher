@@ -8,6 +8,7 @@ type rollRequest struct {
 }
 
 type rollResponse struct {
+	state      rollState
 	Expression string `json:"expression"`
 	MainRoll   []int  `json:"main_roll"`
 	HungerRoll []int  `json:"hunger_roll"`
@@ -16,3 +17,5 @@ type rollResponse struct {
 	IsCritical bool   `json:"is_critical"`
 	CritType   string `json:"crit_type"`
 }
+
+func (r rollResponse) HistoryState() any { return r.state }
