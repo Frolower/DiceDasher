@@ -84,9 +84,9 @@ func TestItemFactoryAcceptsLegacyZeroFields(t *testing.T) {
 
 func TestTypedItemsPersistInEveryInventory(t *testing.T) {
 	raw := `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":{"name":"Mira","gear":[{"type":"gear","name":"Tool","code":"tool"}],"vehicle":{"SharedGear":[{"type":"gear","name":"Radio","code":"radio"}],"stats":{"gear":[{"type":"gear","name":"Kit","code":"kit"}]}}}}`
-	created, status, err := (Character{}).CreateCharacter(context.Background(), json.RawMessage(raw))
-	if err != nil || status != 201 {
-		t.Fatalf("status %d: %v", status, err)
+	created, err := (Character{}).CreateCharacter(context.Background(), json.RawMessage(raw))
+	if err != nil {
+		t.Fatal(err)
 	}
 	var stored struct {
 		Character struct {

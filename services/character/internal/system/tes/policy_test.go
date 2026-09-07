@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"net/http"
 	"strings"
 	"testing"
 
@@ -71,21 +70,31 @@ func TestFreeModeSkipsCreationLimits(t *testing.T) {
 func TestCreateCharacterContract(t *testing.T) {
 	for _, tt := range []struct {
 		name, raw string
-		status    int
+		kind      string
 	}{
-		{"minimal", `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":{"name":"Mira"}}`, 201},
-		{"missing sheet", `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc"}`, 422},
-		{"null sheet", `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":null}`, 422},
-		{"missing owner", `{"type":"pc","character":{"name":"Mira"}}`, 400},
-		{"invalid JSON", `{`, 400},
+		{"minimal", `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":{"name":"Mira"}}`, "success"},
+		{"missing sheet", `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc"}`, "validation"},
+		{"null sheet", `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":null}`, "validation"},
+		{"missing owner", `{"type":"pc","character":{"name":"Mira"}}`, "input"},
+		{"invalid JSON", `{`, "input"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			_, status, err := (Character{}).CreateCharacter(context.Background(), json.RawMessage(tt.raw))
-			if status != tt.status {
-				t.Fatalf("status %d: %v", status, err)
-			}
-			if status == http.StatusCreated && err != nil {
-				t.Fatal(err)
+			_, err := (Character{}).CreateCharacter(context.Background(), json.RawMessage(tt.raw))
+			var input *system.InputError
+			var validation *system.ValidationError
+			switch tt.kind {
+			case "success":
+				if err != nil {
+					t.Fatal(err)
+				}
+			case "input":
+				if !errors.As(err, &input) {
+					t.Fatalf("expected input error: %v", err)
+				}
+			case "validation":
+				if !errors.As(err, &validation) {
+					t.Fatalf("expected validation error: %v", err)
+				}
 			}
 		})
 	}

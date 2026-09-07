@@ -19,7 +19,8 @@ services/character/
 ├── cmd/character-service/ # Entry point
 └── internal/
     ├── config/            # Configuration
-    ├── handler/           # HTTP handlers
+    ├── handler/           # HTTP parsing and error/status mapping
+    ├── service/           # Creation use case and repository interface
     ├── repository/        # Database layer
     └── system/            # System-specific character logic
         └── tes/           # The Electric State
@@ -74,12 +75,26 @@ curl -X POST "http://localhost:8081/character?system=tes" \
 
    ```go
    type Character interface {
-       CreateCharacter(ctx context.Context, raw json.RawMessage) (CreatedCharacter, int, error)
+       CreateCharacter(ctx context.Context, raw json.RawMessage) (CreatedCharacter, error)
    }
    ```
 
-3. Register the implementation in `cmd/character-service/main.go`:
+3. Pass the implementation to the service constructor in `cmd/character-service/main.go`:
 
    ```go
-   system.Register("system_name", implementation)
+   characters := service.New(repository.New(repo.Pool()), map[string]system.Character{
+       "tes": tes.Character{},
+       "system_name": implementation,
+   })
+   handler.New(characters).RegisterRouters(r)
    ```
+
+## Creation flow and dependencies
+
+`Handler → CharacterService → system.Character → Repository`
+
+The service selects a strategy, prepares the character, and persists it through its `Repository` interface. `main` constructs the PostgreSQL adapter, service, and handler explicitly. The service snapshots its system map; there is no global registration or repository stored in request context. Context carries request cancellation and logging context through the use case.
+
+Strategies return a character or an error without HTTP status codes. The handler maps `system.InputError` to 400, `system.ValidationError` to the existing 422 JSON response, `service.ErrUnknownSystem` to 404, and persistence/internal failures to 500 without exposing their causes. Success remains 201 with an `id`. Request syntax is checked before invoking the service, so malformed JSON with an unknown system returns 400.
+
+Service tests use an in-memory repository stub; HTTP tests exercise routing and response mapping without PostgreSQL.

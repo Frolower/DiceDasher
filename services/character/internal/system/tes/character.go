@@ -6,25 +6,24 @@ import (
 	"diceDasher/services/character/internal/system"
 	"encoding/json"
 	"errors"
-	"net/http"
 
 	"github.com/google/uuid"
 )
 
 type Character struct{}
 
-func (Character) CreateCharacter(ctx context.Context, raw json.RawMessage) (system.CreatedCharacter, int, error) {
+func (Character) CreateCharacter(ctx context.Context, raw json.RawMessage) (system.CreatedCharacter, error) {
 	logger.Logf(ctx, "RUN: CreateCharacter system=tes |")
 
 	var req createRequest
 	if err := json.Unmarshal(raw, &req); err != nil {
-		return system.CreatedCharacter{}, http.StatusBadRequest, err
+		return system.CreatedCharacter{}, &system.InputError{Err: err}
 	}
 	if req.UserID == uuid.Nil {
-		return system.CreatedCharacter{}, http.StatusBadRequest, errors.New("user_id is required")
+		return system.CreatedCharacter{}, &system.InputError{Err: errors.New("user_id is required")}
 	}
 	if err := validateCreate(req); err != nil {
-		return system.CreatedCharacter{}, http.StatusUnprocessableEntity, err
+		return system.CreatedCharacter{}, err
 	}
 
 	data, err := json.Marshal(storedCharacter{
@@ -32,7 +31,7 @@ func (Character) CreateCharacter(ctx context.Context, raw json.RawMessage) (syst
 		Character: req.CharacterList,
 	})
 	if err != nil {
-		return system.CreatedCharacter{}, http.StatusInternalServerError, err
+		return system.CreatedCharacter{}, err
 	}
 
 	return system.CreatedCharacter{
@@ -40,5 +39,5 @@ func (Character) CreateCharacter(ctx context.Context, raw json.RawMessage) (syst
 		CharacterType: req.Type,
 		Name:          req.CharacterList.Name,
 		Data:          data,
-	}, http.StatusCreated, nil
+	}, nil
 }

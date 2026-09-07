@@ -6,6 +6,8 @@ import (
 	"diceDasher/pkg/httputil"
 	"diceDasher/services/character/internal/config"
 	"diceDasher/services/character/internal/handler"
+	"diceDasher/services/character/internal/repository"
+	"diceDasher/services/character/internal/service"
 	"diceDasher/services/character/internal/system"
 	"diceDasher/services/character/internal/system/tes"
 	"log"
@@ -25,14 +27,13 @@ func main() {
 	}
 	defer repo.Close()
 
-	system.Register("tes", tes.Character{})
+	characters := service.New(repository.New(repo.Pool()), map[string]system.Character{"tes": tes.Character{}})
 
 	r := httputil.NewRouter()
-	handler.RegisterRouters(r)
+	handler.New(characters).RegisterRouters(r)
 
 	// Wrap with middlewares
-	wrapped := handler.WithRepository(repo)(r)
-	wrapped = httputil.RequestLoggerWithMode(wrapped, cfg.LogMode)
+	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
 	wrapped = httputil.CORS("http://localhost:8082")(wrapped)
 
 	srv := &http.Server{

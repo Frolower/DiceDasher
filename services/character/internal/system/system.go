@@ -15,5 +15,5 @@ type CreatedCharacter struct {
 }
 
 type Character interface {
-	CreateCharacter(ctx context.Context, raw json.RawMessage) (CreatedCharacter, int, error)
+	CreateCharacter(ctx context.Context, raw json.RawMessage) (CreatedCharacter, error)
 }

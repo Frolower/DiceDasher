@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"diceDasher/pkg/dbutil"
+	"diceDasher/services/character/internal/service"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -16,15 +16,7 @@ func New(pool *pgxpool.Pool) *Repository {
 	return &Repository{pool: pool}
 }
 
-func FromContext(ctx context.Context) (*Repository, error) {
-	base, err := dbutil.FromContext(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return New(base.Pool()), nil
-}
-
-func (r *Repository) InsertPlayerCreatedCharacter(ctx context.Context, rec Character) (uuid.UUID, error) {
+func (r *Repository) InsertPlayerCreatedCharacter(ctx context.Context, rec service.Record) (uuid.UUID, error) {
 	const q = `
 INSERT INTO public.characters
 (user_id, system_name, character_type, name, data)
