@@ -18,7 +18,7 @@ func TestRollPoolValidation(t *testing.T) {
 		{Attr: dice.MaxDice, Gear: 1},
 	} {
 		raw, _ := json.Marshal(req)
-		_, status, err := resolveRoll(raw)
+		_, status, err := (Resolver{}).resolveRoll(raw)
 		if err == nil || status != http.StatusUnprocessableEntity {
 			t.Fatalf("accepted %+v: %d %v", req, status, err)
 		}
@@ -29,7 +29,7 @@ func TestRollPoolValidation(t *testing.T) {
 		{Attr: 1, Modificator: dice.MaxDice - 1, Target: 1},
 	} {
 		raw, _ := json.Marshal(req)
-		result, status, err := resolveRoll(raw)
+		result, status, err := (Resolver{}).resolveRoll(raw)
 		if err != nil || status != http.StatusOK {
 			t.Fatalf("rejected %+v: %d %v", req, status, err)
 		}

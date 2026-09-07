@@ -15,22 +15,22 @@ import (
 
 const dieSize = 6
 
-type Resolver struct{}
+type Resolver struct{ Dice dice.Generator }
 
-func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
+func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
 	logger.Logf(ctx, "RUN: resolver=tes action=%s |", action)
 
 	switch action {
 	case "roll":
-		return resolveRoll(raw)
+		return r.resolveRoll(raw)
 	case "push":
-		return resolvePush(ctx, raw)
+		return r.resolvePush(ctx, raw)
 	default:
 		return nil, http.StatusBadRequest, errors.New("invalid action")
 	}
 }
 
-func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
+func (r Resolver) resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	var req rollRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
@@ -42,11 +42,11 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	}
 
 	expression := fmt.Sprintf("%dd%d", attributePool.Count()+gearPool.Count(), dieSize)
-	attributeRolls, err := attributePool.Roll()
+	attributeRolls, err := r.Dice.RollDice(attributePool.Count(), dieSize)
 	if err != nil {
 		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	gearRolls, err := gearPool.Roll()
+	gearRolls, err := r.Dice.RollDice(gearPool.Count(), dieSize)
 	if err != nil {
 		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
@@ -63,7 +63,7 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	}, http.StatusOK, nil
 }
 
-func resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, error) {
+func (r Resolver) resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, error) {
 	var req pushRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
@@ -89,18 +89,18 @@ func resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, e
 		return pushResponse{}, system.HistoryErrorStatus(err), err
 	}
 
-	return continueRoll(rec)
+	return r.continueRoll(rec)
 }
 
-func continueRoll(rec rollState) (pushResponse, int, error) {
+func (r Resolver) continueRoll(rec rollState) (pushResponse, int, error) {
 	expression := fmt.Sprintf("%dd%d", len(rec.AttributeRolls)+len(rec.GearRolls), dieSize)
 	rerollDiceNumber := util.CountBetween(rec.AttributeRolls, 2, 5) + util.CountBetween(rec.GearRolls, 2, 5)
 	pushExpression := fmt.Sprintf("%dd%d", rerollDiceNumber, dieSize)
-	attributeRolls, err := dice.RerollKeepingValues(rec.AttributeRolls, []int{1, 6}, dieSize)
+	attributeRolls, err := r.Dice.RerollKeepingValues(rec.AttributeRolls, []int{1, 6}, dieSize)
 	if err != nil {
 		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}
-	gearRolls, err := dice.RerollKeepingValues(rec.GearRolls, []int{1, 6}, dieSize)
+	gearRolls, err := r.Dice.RerollKeepingValues(rec.GearRolls, []int{1, 6}, dieSize)
 	if err != nil {
 		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
 	}

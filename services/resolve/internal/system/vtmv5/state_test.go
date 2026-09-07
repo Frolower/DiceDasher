@@ -25,7 +25,7 @@ func TestContinuationRoundTrip(t *testing.T) {
 		if state.Target != 2 || state.OriginalID != root || state.ParentID != rec.ID {
 			t.Fatalf("lost state: %+v", state)
 		}
-		response, status, err := continueRoll(state, []int{0})
+		response, status, err := (Resolver{}).continueRoll(state, []int{0})
 		if err != nil || status != http.StatusOK {
 			t.Fatalf("continuation: %d %v", status, err)
 		}
@@ -80,7 +80,7 @@ func TestRejectUnsupportedHistory(t *testing.T) {
 
 func TestInitialRollPersistsState(t *testing.T) {
 	raw := json.RawMessage(`{"attribute":2,"skill":1,"hunger":1,"target":1}`)
-	response, status, err := resolveRoll(raw)
+	response, status, err := (Resolver{}).resolveRoll(raw)
 	if err != nil || status != http.StatusOK {
 		t.Fatalf("roll: %d %v", status, err)
 	}
@@ -100,7 +100,7 @@ func TestInitialRollPersistsState(t *testing.T) {
 func TestInvalidRerollIndices(t *testing.T) {
 	state := rollState{MainRoll: []int{1, 6}, Target: 1}
 	for _, indices := range [][]int{{-1}, {2}, {0, 0}} {
-		_, status, err := continueRoll(state, indices)
+		_, status, err := (Resolver{}).continueRoll(state, indices)
 		if err == nil || status != http.StatusUnprocessableEntity {
 			t.Fatalf("accepted indices %v", indices)
 		}

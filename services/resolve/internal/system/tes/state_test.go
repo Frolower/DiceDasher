@@ -25,7 +25,7 @@ func TestContinuationRoundTrip(t *testing.T) {
 		if state.Target != 2 || state.OriginalID != root || state.ParentID != rec.ID {
 			t.Fatalf("lost state: %+v", state)
 		}
-		response, status, err := continueRoll(state)
+		response, status, err := (Resolver{}).continueRoll(state)
 		if err != nil || status != http.StatusOK {
 			t.Fatalf("continuation: %d %v", status, err)
 		}
@@ -73,7 +73,7 @@ func TestRejectUnsupportedHistory(t *testing.T) {
 
 func TestInitialRollPersistsState(t *testing.T) {
 	raw := json.RawMessage(`{"attr":2,"gear":1,"target":1}`)
-	response, status, err := resolveRoll(raw)
+	response, status, err := (Resolver{}).resolveRoll(raw)
 	if err != nil || status != http.StatusOK {
 		t.Fatalf("roll: %d %v", status, err)
 	}

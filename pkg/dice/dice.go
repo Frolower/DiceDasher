@@ -1,30 +1,53 @@
 package dice
 
 import (
+	"fmt"
 	"math/rand/v2"
 )
 
-func RollDie(sides int) (int, error) {
+// Generator owns its random source; the zero value uses the concurrency-safe
+// package source. Injected sources must be safe for their intended usage.
+type Generator struct{ intN func(int) int }
+
+// NewGenerator accepts an IntN-compatible function returning values in [0, n).
+func NewGenerator(intN func(int) int) Generator { return Generator{intN: intN} }
+
+func (g Generator) next(sides int) (int, error) {
+	source := g.intN
+	if source == nil {
+		source = rand.IntN
+	}
+	value := source(sides)
+	if value < 0 || value >= sides {
+		return 0, fmt.Errorf("random source returned an invalid value")
+	}
+	return value + 1, nil
+}
+
+func (g Generator) RollDie(sides int) (int, error) {
 	if _, err := NewPool(1, sides); err != nil {
 		return 0, err
 	}
-	roll := rand.IntN(sides) + 1
-	return roll, nil
+	return g.next(sides)
 }
 
-func RollDice(count int, sides int) ([]int, error) {
+func (g Generator) RollDice(count int, sides int) ([]int, error) {
 	if _, err := NewPool(count, sides); err != nil {
 		return nil, err
 	}
 
 	rolls := make([]int, count)
 	for i := 0; i < count; i++ {
-		rolls[i] = rand.IntN(sides) + 1
+		value, err := g.next(sides)
+		if err != nil {
+			return nil, err
+		}
+		rolls[i] = value
 	}
 	return rolls, nil
 }
 
-func RerollKeepingValues(previous []int, except []int, sides int) ([]int, error) {
+func (g Generator) RerollKeepingValues(previous []int, except []int, sides int) ([]int, error) {
 	if _, err := NewPool(len(previous), sides); err != nil {
 		return nil, err
 	}
@@ -41,7 +64,7 @@ func RerollKeepingValues(previous []int, except []int, sides int) ([]int, error)
 		if _, keep := exceptSet[v]; keep {
 			continue
 		}
-		d, err := RollDie(sides)
+		d, err := g.RollDie(sides)
 		if err != nil {
 			return nil, err
 		}
@@ -51,7 +74,7 @@ func RerollKeepingValues(previous []int, except []int, sides int) ([]int, error)
 	return out, nil
 }
 
-func RerollSpecificValues(previous []int, index []int, sides int) ([]int, error) {
+func (g Generator) RerollSpecificValues(previous []int, index []int, sides int) ([]int, error) {
 	if _, err := NewPool(len(previous), sides); err != nil {
 		return nil, err
 	}
@@ -66,7 +89,7 @@ func RerollSpecificValues(previous []int, index []int, sides int) ([]int, error)
 
 	for i := range out {
 		if _, ok := indexSet[i]; ok {
-			d, err := RollDie(sides)
+			d, err := g.RollDie(sides)
 			if err != nil {
 				return nil, err
 			}
@@ -75,4 +98,16 @@ func RerollSpecificValues(previous []int, index []int, sides int) ([]int, error)
 	}
 
 	return out, nil
+}
+
+func RollDie(sides int) (int, error) { return (Generator{}).RollDie(sides) }
+
+func RollDice(count int, sides int) ([]int, error) { return (Generator{}).RollDice(count, sides) }
+
+func RerollKeepingValues(previous []int, except []int, sides int) ([]int, error) {
+	return (Generator{}).RerollKeepingValues(previous, except, sides)
+}
+
+func RerollSpecificValues(previous []int, index []int, sides int) ([]int, error) {
+	return (Generator{}).RerollSpecificValues(previous, index, sides)
 }

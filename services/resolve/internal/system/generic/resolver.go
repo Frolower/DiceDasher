@@ -11,9 +11,9 @@ import (
 	"net/http"
 )
 
-type Resolver struct{}
+type Resolver struct{ Dice dice.Generator }
 
-func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
+func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
 	logger.Logf(ctx, "RUN: resolver=generic action=%s |", action)
 	var req request
 
@@ -28,7 +28,7 @@ func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage)
 	}
 
 	expression := fmt.Sprintf("%dd%d", req.Number, req.Size)
-	rolls, err := dice.RollDice(req.Number, req.Size)
+	rolls, err := r.Dice.RollDice(req.Number, req.Size)
 	if err != nil {
 		return response{}, http.StatusInternalServerError, errors.New("internal error")
 	}

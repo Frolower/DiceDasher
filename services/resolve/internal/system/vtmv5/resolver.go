@@ -5,7 +5,6 @@ import (
 	"context"
 	"diceDasher/pkg/dice"
 	"diceDasher/pkg/logger"
-	"diceDasher/pkg/util"
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
@@ -16,24 +15,24 @@ import (
 
 const dieSize = 10
 
-type Resolver struct{}
+type Resolver struct{ Dice dice.Generator }
 
-func (Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
+func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
 	logger.Logf(ctx, "RUN: resolver=vtmv5 action=%s |", action)
 
 	switch action {
 	case "roll":
-		return resolveRoll(raw)
+		return r.resolveRoll(raw)
 	case "reroll":
-		return resolveReroll(ctx, raw)
+		return r.resolveReroll(ctx, raw)
 	case "check":
-		return resolveCheck(raw)
+		return r.resolveCheck(raw)
 	default:
 		return nil, http.StatusBadRequest, errors.New("unknown action")
 	}
 }
 
-func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
+func (r Resolver) resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	var req rollRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
@@ -45,51 +44,29 @@ func resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 	}
 
 	expression := fmt.Sprintf("%dd%d", mainPool.Count()+hungerPool.Count(), dieSize)
-	mainRoll, err := mainPool.Roll()
+	mainRoll, err := r.Dice.RollDice(mainPool.Count(), dieSize)
 	if err != nil {
 		return rollResponse{}, http.StatusBadRequest, errors.New("internal error")
 	}
-	hungerRoll, err := hungerPool.Roll()
+	hungerRoll, err := r.Dice.RollDice(hungerPool.Count(), dieSize)
 	if err != nil {
 		return rollResponse{}, http.StatusBadRequest, errors.New("internal error")
 	}
-	regular10s := util.CountInt(mainRoll, 10)
-	hunger10s := util.CountInt(hungerRoll, 10)
-	successes := util.CountBetween(mainRoll, 6, 10) + util.CountBetween(hungerRoll, 6, 10)
-	pairsOf10s := (regular10s + hunger10s) / 2
-	successes += pairsOf10s * 2 // Adds 2 extra successes for each pair of 10's
-	success := successes >= req.Target
-	hungerFails := util.CountInt(hungerRoll, 1)
-	isCritical := false
-	critType := "none"
-
-	if !success && hungerFails > 0 {
-		isCritical = true
-		critType = "bestial failure"
-	}
-
-	if pairsOf10s > 0 {
-		isCritical = true
-		if hunger10s > 0 {
-			critType = "messy critical"
-		} else {
-			critType = "critical"
-		}
-	}
+	outcome := Evaluate(mainRoll, hungerRoll, req.Target)
 
 	return rollResponse{
 		state:      rollState{Target: req.Target, MainRoll: mainRoll, HungerRoll: hungerRoll},
 		Expression: expression,
 		MainRoll:   mainRoll,
 		HungerRoll: hungerRoll,
-		Successes:  successes,
-		Success:    success,
-		IsCritical: isCritical,
-		CritType:   critType,
+		Successes:  outcome.Successes,
+		Success:    outcome.Success,
+		IsCritical: outcome.IsCritical,
+		CritType:   outcome.CritType,
 	}, http.StatusOK, nil
 }
 
-func resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, int, error) {
+func (r Resolver) resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, int, error) {
 	var req rerollRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
@@ -115,44 +92,22 @@ func resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, in
 		return rerollResponse{}, system.HistoryErrorStatus(err), err
 	}
 
-	return continueRoll(rec, req.RerollIndex)
+	return r.continueRoll(rec, req.RerollIndex)
 }
 
-func continueRoll(rec rollState, indices []int) (rerollResponse, int, error) {
+func (r Resolver) continueRoll(rec rollState, indices []int) (rerollResponse, int, error) {
 	if err := validateRerollState(rec, indices); err != nil {
 		return rerollResponse{}, http.StatusUnprocessableEntity, err
 	}
 
 	expression := fmt.Sprintf("%dd%d", len(rec.MainRoll)+len(rec.HungerRoll), dieSize)
 	rerollExpression := fmt.Sprintf("%dd%d", len(indices), dieSize)
-	mainRoll, err := dice.RerollSpecificValues(rec.MainRoll, indices, dieSize)
+	mainRoll, err := r.Dice.RerollSpecificValues(rec.MainRoll, indices, dieSize)
 	if err != nil {
 		return rerollResponse{}, http.StatusBadRequest, errors.New("interal error")
 	}
 	hungerRoll := rec.HungerRoll
-	regular10s := util.CountInt(mainRoll, 10)
-	hunger10s := util.CountInt(hungerRoll, 10)
-	successes := util.CountBetween(mainRoll, 6, 10) + util.CountBetween(hungerRoll, 6, 10)
-	pairsOf10s := (regular10s + hunger10s) / 2
-	successes += pairsOf10s * 2 // Adds 2 extra successes for each pair of 10's
-	success := successes >= rec.Target
-	hungerFails := util.CountInt(hungerRoll, 1)
-	isCritical := false
-	critType := "none"
-
-	if !success && hungerFails > 0 {
-		isCritical = true
-		critType = "bestial failure"
-	}
-
-	if pairsOf10s > 0 {
-		isCritical = true
-		if hunger10s > 0 {
-			critType = "messy critical"
-		} else {
-			critType = "critical"
-		}
-	}
+	outcome := Evaluate(mainRoll, hungerRoll, rec.Target)
 
 	return rerollResponse{
 		state:            rollState{Target: rec.Target, MainRoll: mainRoll, HungerRoll: hungerRoll, Lineage: rec.Lineage},
@@ -160,20 +115,20 @@ func continueRoll(rec rollState, indices []int) (rerollResponse, int, error) {
 		RerollExpression: rerollExpression,
 		MainRoll:         mainRoll,
 		HungerRoll:       hungerRoll,
-		Successes:        successes,
-		Success:          success,
-		IsCritical:       isCritical,
-		CritType:         critType,
+		Successes:        outcome.Successes,
+		Success:          outcome.Success,
+		IsCritical:       outcome.IsCritical,
+		CritType:         outcome.CritType,
 	}, http.StatusOK, nil
 }
 
-func resolveCheck(raw json.RawMessage) (checkResponse, int, error) {
+func (r Resolver) resolveCheck(raw json.RawMessage) (checkResponse, int, error) {
 	if len(bytes.TrimSpace(raw)) != 0 {
 		return checkResponse{}, http.StatusBadRequest, errors.New("this action takes an empty body")
 	}
 
 	expression := fmt.Sprintf("1d%d", dieSize)
-	result, err := dice.RollDie(dieSize)
+	result, err := r.Dice.RollDie(dieSize)
 	if err != nil {
 		return checkResponse{}, http.StatusUnprocessableEntity, errors.New("internal error")
 	}
