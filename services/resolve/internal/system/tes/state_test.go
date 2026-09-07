@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"net/http"
 	"reflect"
 	"testing"
 )
@@ -25,9 +24,9 @@ func TestContinuationRoundTrip(t *testing.T) {
 		if state.Target != 2 || state.OriginalID != root || state.ParentID != rec.ID {
 			t.Fatalf("lost state: %+v", state)
 		}
-		response, status, err := (Resolver{}).continueRoll(state)
-		if err != nil || status != http.StatusOK {
-			t.Fatalf("continuation: %d %v", status, err)
+		response, err := (Resolver{}).continueRoll(state)
+		if err != nil {
+			t.Fatalf("continuation: %v", err)
 		}
 
 		if !reflect.DeepEqual(state.GearRolls, []int{1, 6}) {
@@ -73,9 +72,9 @@ func TestRejectUnsupportedHistory(t *testing.T) {
 
 func TestInitialRollPersistsState(t *testing.T) {
 	raw := json.RawMessage(`{"attr":2,"gear":1,"target":1}`)
-	response, status, err := (Resolver{}).resolveRoll(raw)
-	if err != nil || status != http.StatusOK {
-		t.Fatalf("roll: %d %v", status, err)
+	response, err := (Resolver{}).resolveRoll(raw)
+	if err != nil {
+		t.Fatalf("roll: %v", err)
 	}
 	encoded, err := json.Marshal(response.HistoryState())
 	if err != nil {

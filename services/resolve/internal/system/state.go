@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 // StatefulResult exposes persistence state without adding fields to the HTTP payload.
@@ -37,14 +36,3 @@ func (s Lineage) Next(previous uuid.UUID) Lineage {
 }
 
 func HasState(raw json.RawMessage) bool { return len(raw) != 0 && string(raw) != "null" }
-
-func HistoryErrorStatus(err error) int {
-	switch {
-	case errors.Is(err, repository.ErrNotFound):
-		return http.StatusNotFound
-	case errors.Is(err, ErrInvalidTransition), errors.Is(err, ErrLegacyContinuation):
-		return http.StatusConflict
-	default:
-		return http.StatusInternalServerError
-	}
-}

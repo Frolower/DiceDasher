@@ -108,7 +108,7 @@ paths:
                   record_id: 90e8e1f0-c213-4fa3-9a64-7d7ce3115e04
       responses:
         "200":
-          description: Action resolved successfully.
+          description: Action resolved and history saved successfully.
           content:
             application/json:
               schema:
@@ -117,6 +117,8 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          description: History record cannot be continued by this action or lacks continuation state.
         "422":
           $ref: "#/components/responses/ValidationError"
         "500":
@@ -324,12 +326,12 @@ components:
           description: Record ID returned by the original TES roll.
     ResolveEnvelope:
       type: object
-      required: [payload]
+      required: [record_id, payload]
       properties:
         record_id:
           type: string
           format: uuid
-          description: Persisted roll ID. Omitted if history could not be saved.
+          description: Persisted roll ID. History must be saved for the action to succeed.
         payload:
           oneOf:
             - $ref: "#/components/schemas/GenericRollResponse"

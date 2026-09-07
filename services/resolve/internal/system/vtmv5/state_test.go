@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/google/uuid"
-	"net/http"
 	"reflect"
 	"testing"
 )
@@ -25,9 +24,9 @@ func TestContinuationRoundTrip(t *testing.T) {
 		if state.Target != 2 || state.OriginalID != root || state.ParentID != rec.ID {
 			t.Fatalf("lost state: %+v", state)
 		}
-		response, status, err := (Resolver{}).continueRoll(state, []int{0})
-		if err != nil || status != http.StatusOK {
-			t.Fatalf("continuation: %d %v", status, err)
+		response, err := (Resolver{}).continueRoll(state, []int{0})
+		if err != nil {
+			t.Fatalf("continuation: %v", err)
 		}
 
 		if response.RerollExpression != "1d10" {
@@ -80,9 +79,9 @@ func TestRejectUnsupportedHistory(t *testing.T) {
 
 func TestInitialRollPersistsState(t *testing.T) {
 	raw := json.RawMessage(`{"attribute":2,"skill":1,"hunger":1,"target":1}`)
-	response, status, err := (Resolver{}).resolveRoll(raw)
-	if err != nil || status != http.StatusOK {
-		t.Fatalf("roll: %d %v", status, err)
+	response, err := (Resolver{}).resolveRoll(raw)
+	if err != nil {
+		t.Fatalf("roll: %v", err)
 	}
 	encoded, err := json.Marshal(response.HistoryState())
 	if err != nil {
@@ -100,8 +99,8 @@ func TestInitialRollPersistsState(t *testing.T) {
 func TestInvalidRerollIndices(t *testing.T) {
 	state := rollState{MainRoll: []int{1, 6}, Target: 1}
 	for _, indices := range [][]int{{-1}, {2}, {0, 0}} {
-		_, status, err := (Resolver{}).continueRoll(state, indices)
-		if err == nil || status != http.StatusUnprocessableEntity {
+		_, err := (Resolver{}).continueRoll(state, indices)
+		if !system.IsValidation(err) {
 			t.Fatalf("accepted indices %v", indices)
 		}
 	}

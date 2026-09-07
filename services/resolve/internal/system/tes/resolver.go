@@ -3,22 +3,25 @@ package tes
 import (
 	"context"
 	"diceDasher/pkg/dice"
-	"diceDasher/pkg/logger"
 	"diceDasher/pkg/util"
-	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 )
 
 const dieSize = 6
 
-type Resolver struct{ Dice dice.Generator }
+type Resolver struct {
+	Dice    dice.Generator
+	history system.HistoryReader
+}
 
-func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
-	logger.Logf(ctx, "RUN: resolver=tes action=%s |", action)
+func New(history system.HistoryReader, generator dice.Generator) Resolver {
+	return Resolver{Dice: generator, history: history}
+}
+
+func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error) {
 
 	switch action {
 	case "roll":
@@ -26,29 +29,29 @@ func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessag
 	case "push":
 		return r.resolvePush(ctx, raw)
 	default:
-		return nil, http.StatusBadRequest, errors.New("invalid action")
+		return nil, system.Invalid(system.BadRequest, errors.New("invalid action"))
 	}
 }
 
-func (r Resolver) resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
+func (r Resolver) resolveRoll(raw json.RawMessage) (rollResponse, error) {
 	var req rollRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
-		return rollResponse{}, http.StatusBadRequest, err
+		return rollResponse{}, system.Invalid(system.BadRequest, err)
 	}
 	attributePool, gearPool, err := rollPools(req)
 	if err != nil {
-		return rollResponse{}, http.StatusUnprocessableEntity, err
+		return rollResponse{}, system.Invalid(system.Validation, err)
 	}
 
 	expression := fmt.Sprintf("%dd%d", attributePool.Count()+gearPool.Count(), dieSize)
 	attributeRolls, err := r.Dice.RollDice(attributePool.Count(), dieSize)
 	if err != nil {
-		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
+		return rollResponse{}, err
 	}
 	gearRolls, err := r.Dice.RollDice(gearPool.Count(), dieSize)
 	if err != nil {
-		return rollResponse{}, http.StatusInternalServerError, errors.New("internal error")
+		return rollResponse{}, err
 	}
 	successes := util.CountInt(attributeRolls, 6) + util.CountInt(gearRolls, 6)
 	success := successes >= req.Target
@@ -60,49 +63,47 @@ func (r Resolver) resolveRoll(raw json.RawMessage) (rollResponse, int, error) {
 		GearRolls:      gearRolls,
 		Successes:      successes,
 		Success:        success,
-	}, http.StatusOK, nil
+	}, nil
 }
 
-func (r Resolver) resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, int, error) {
+func (r Resolver) resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, error) {
 	var req pushRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
-		return pushResponse{}, http.StatusBadRequest, err
+		return pushResponse{}, system.Invalid(system.BadRequest, err)
 	}
 	if err := validatePush(req); err != nil {
-		return pushResponse{}, http.StatusUnprocessableEntity, err
+		return pushResponse{}, system.Invalid(system.Validation, err)
 	}
 
-	repo, err := repository.FromContext(ctx)
-	if err != nil {
-		logger.Logf(ctx, "ERROR: repository not in context: %s", err)
-		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
+	if r.history == nil {
+		return pushResponse{}, errors.New("history reader is not configured")
 	}
 
-	extractedData, err := repo.GetRollHistoryByID(ctx, req.RecordID)
+	extractedData, err := r.history.GetRollHistoryByID(ctx, req.RecordID)
 	if err != nil {
-		return pushResponse{}, system.HistoryErrorStatus(err), err
+		return pushResponse{}, err
 	}
 
 	rec, err := loadState(extractedData)
 	if err != nil {
-		return pushResponse{}, system.HistoryErrorStatus(err), err
+		return pushResponse{}, err
 	}
 
 	return r.continueRoll(rec)
 }
 
-func (r Resolver) continueRoll(rec rollState) (pushResponse, int, error) {
+func (r Resolver) continueRoll(rec rollState) (pushResponse, error) {
 	expression := fmt.Sprintf("%dd%d", len(rec.AttributeRolls)+len(rec.GearRolls), dieSize)
 	rerollDiceNumber := util.CountBetween(rec.AttributeRolls, 2, 5) + util.CountBetween(rec.GearRolls, 2, 5)
 	pushExpression := fmt.Sprintf("%dd%d", rerollDiceNumber, dieSize)
 	attributeRolls, err := r.Dice.RerollKeepingValues(rec.AttributeRolls, []int{1, 6}, dieSize)
 	if err != nil {
-		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
+		return pushResponse{}, err
 	}
 	gearRolls, err := r.Dice.RerollKeepingValues(rec.GearRolls, []int{1, 6}, dieSize)
 	if err != nil {
-		return pushResponse{}, http.StatusInternalServerError, errors.New("internal error")
+		return pushResponse{}, err
 	}
 	successes := util.CountInt(attributeRolls, 6) + util.CountInt(gearRolls, 6)
 	success := successes >= rec.Target
@@ -119,5 +120,5 @@ func (r Resolver) continueRoll(rec rollState) (pushResponse, int, error) {
 		Success:        success,
 		HopeLosses:     hopeLosses,
 		GearDamage:     gearDamage,
-	}, http.StatusOK, nil
+	}, nil
 }

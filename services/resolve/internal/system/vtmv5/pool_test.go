@@ -3,8 +3,8 @@ package vtmv5
 import (
 	"diceDasher/pkg/dice"
 	"diceDasher/services/resolve/internal/repository"
+	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
-	"net/http"
 	"testing"
 )
 
@@ -17,9 +17,9 @@ func TestRollPoolValidation(t *testing.T) {
 		{Attribute: 1, Hunger: -1, Target: 1},
 	} {
 		raw, _ := json.Marshal(req)
-		_, status, err := (Resolver{}).resolveRoll(raw)
-		if err == nil || status != http.StatusUnprocessableEntity {
-			t.Fatalf("accepted %+v: %d %v", req, status, err)
+		_, err := (Resolver{}).resolveRoll(raw)
+		if !system.IsValidation(err) {
+			t.Fatalf("accepted %+v: %v", req, err)
 		}
 	}
 	for _, req := range []rollRequest{
@@ -27,9 +27,9 @@ func TestRollPoolValidation(t *testing.T) {
 		{Attribute: 2, Hunger: 2, Target: 1},
 	} {
 		raw, _ := json.Marshal(req)
-		result, status, err := (Resolver{}).resolveRoll(raw)
-		if err != nil || status != http.StatusOK {
-			t.Fatalf("rejected %+v: %d %v", req, status, err)
+		result, err := (Resolver{}).resolveRoll(raw)
+		if err != nil {
+			t.Fatalf("rejected %+v: %v", req, err)
 		}
 		if len(result.MainRoll)+len(result.HungerRoll) != req.Attribute+req.Skill {
 			t.Fatal("wrong pool size")

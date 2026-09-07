@@ -3,7 +3,6 @@ package vtmv5
 import (
 	"diceDasher/pkg/dice"
 	"encoding/json"
-	"net/http"
 	"reflect"
 	"testing"
 )
@@ -57,18 +56,18 @@ func sequence(t *testing.T, values ...int) dice.Generator {
 
 func TestRollAndRerollEvaluateIdentically(t *testing.T) {
 	r := Resolver{Dice: sequence(t, 10, 6, 10)}
-	roll, status, err := r.resolveRoll(json.RawMessage(`{"attribute":3,"hunger":1,"target":5}`))
-	if err != nil || status != http.StatusOK {
-		t.Fatalf("roll: %d %v", status, err)
+	roll, err := r.resolveRoll(json.RawMessage(`{"attribute":3,"hunger":1,"target":5}`))
+	if err != nil {
+		t.Fatalf("roll: %v", err)
 	}
 	if roll.Successes != 5 || !roll.Success || roll.CritType != "messy critical" {
 		t.Fatalf("wrong roll: %+v", roll)
 	}
 	source := rollState{MainRoll: []int{2, 6}, HungerRoll: []int{10}, Target: 5}
 	r.Dice = sequence(t, 10)
-	reroll, status, err := r.continueRoll(source, []int{0})
-	if err != nil || status != http.StatusOK {
-		t.Fatalf("reroll: %d %v", status, err)
+	reroll, err := r.continueRoll(source, []int{0})
+	if err != nil {
+		t.Fatalf("reroll: %v", err)
 	}
 	if !reflect.DeepEqual(reroll.MainRoll, roll.MainRoll) || !reflect.DeepEqual(reroll.HungerRoll, roll.HungerRoll) ||
 		reroll.Successes != roll.Successes || reroll.Success != roll.Success || reroll.IsCritical != roll.IsCritical || reroll.CritType != roll.CritType {
@@ -82,9 +81,9 @@ func TestRollAndRerollEvaluateIdentically(t *testing.T) {
 func TestCheckUsesInjectedGenerator(t *testing.T) {
 	for _, value := range []int{5, 6} {
 		r := Resolver{Dice: sequence(t, value)}
-		got, status, err := r.resolveCheck(nil)
-		if err != nil || status != http.StatusOK || got.Result != value || got.Success != (value >= 6) {
-			t.Fatalf("check: %+v %d %v", got, status, err)
+		got, err := r.resolveCheck(nil)
+		if err != nil || got.Result != value || got.Success != (value >= 6) {
+			t.Fatalf("check: %+v %v", got, err)
 		}
 	}
 }

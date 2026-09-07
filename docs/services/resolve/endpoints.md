@@ -43,8 +43,10 @@ Dispatcher endpoint for dice resolution. The request/response body depends on `s
 |--------|------------------------------------------|
 | 200    | Success                                  |
 | 400    | Bad request (missing params, invalid JSON) |
-| 404    | Unknown system                           |
+| 404    | Unknown system or missing history record |
+| 409    | History record cannot be continued       |
 | 422    | Validation error (invalid field values)  |
+| 500    | Execution or history persistence failed  |
 
 ---
 

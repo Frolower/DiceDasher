@@ -1,106 +1,63 @@
 package handler
 
 import (
-	"encoding/json"
-	"errors"
-	"log"
-	"net/http"
-
+	"context"
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
 	"diceDasher/services/resolve/internal/repository"
+	"diceDasher/services/resolve/internal/service"
 	"diceDasher/services/resolve/internal/system"
-
-	"github.com/google/uuid"
+	"encoding/json"
+	"errors"
+	"net/http"
 )
 
-type resolveEnvelope struct {
-	RecordID *uuid.UUID `json:"record_id,omitempty"`
-	Payload  any        `json:"payload"`
+type ResolveService interface {
+	Resolve(context.Context, service.Command) (service.Result, error)
 }
+type Handler struct{ service ResolveService }
 
-func ResolveHandler(w http.ResponseWriter, r *http.Request) {
-	sys := r.URL.Query().Get("system")
-	if sys == "" {
-		http.Error(w, "missing query param: system", http.StatusBadRequest)
-		log.Println("request arrived without system")
-		return
-	}
+func New(service ResolveService) *Handler { return &Handler{service: service} }
 
-	action := r.URL.Query().Get("action")
-	if action == "" {
-		action = "roll" // default action
-		log.Println("request arrived without action")
-	}
-
-	resolver, err := system.Get(sys)
-	if err != nil {
-		if errors.Is(err, system.ErrUnknownSystem) {
-			http.Error(w, "unknown system", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
+func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 	var raw json.RawMessage
 	if err := httputil.UnpackJSON(r, &raw); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
-		logger.Logf(r.Context(), "ERROR: %s", err)
 		return
 	}
-
-	resp, status, err := resolver.Resolve(r.Context(), action, raw)
+	requestID, _ := logger.ReqIDFromContext(r.Context())
+	result, err := h.service.Resolve(r.Context(), service.Command{
+		System: r.URL.Query().Get("system"), Action: r.URL.Query().Get("action"), Payload: raw, RequestID: requestID,
+	})
 	if err != nil {
-		http.Error(w, err.Error(), status)
 		logger.Logf(r.Context(), "ERROR: %s", err)
+		status, message := errorResponse(err)
+		http.Error(w, message, status)
 		return
 	}
-
-	// Save roll history to database
-	var recordID *uuid.UUID
-
-	repo, err := repository.FromContext(r.Context())
-	if err != nil {
-		logger.Logf(r.Context(), "ERROR: repository not in context: %s", err)
-	} else {
-		var stateJSON json.RawMessage
-		if stateful, ok := resp.(system.StatefulResult); ok {
-			stateJSON, err = json.Marshal(stateful.HistoryState())
-			if err != nil {
-				http.Error(w, "internal error", http.StatusInternalServerError)
-				return
-			}
-		}
-		respJSON, err := json.Marshal(resp)
-		if err != nil {
-			logger.Logf(r.Context(), "ERROR marshaling response: %s", err)
-		} else {
-			requestID, exists := logger.ReqIDFromContext(r.Context())
-			if exists != true {
-				logger.Logf(r.Context(), "ERROR getting request ID")
-			} else {
-				id, err := repo.InsertRollHistory(r.Context(), repository.RollHistory{
-					RequestID:       requestID,
-					SystemName:      sys,
-					ActionType:      action,
-					RequestPayload:  raw,
-					ResponsePayload: respJSON,
-					StatePayload:    stateJSON,
-				})
-				if err != nil {
-					logger.Logf(r.Context(), "ERROR saving roll history: %s", err)
-				} else {
-					recordID = &id
-				}
-			}
-		}
+	if err := httputil.PackJSON(w, http.StatusOK, result); err != nil {
+		logger.Logf(r.Context(), "ERROR writing response: %s", err)
 	}
+}
 
-	out := resolveEnvelope{RecordID: recordID, Payload: resp}
-
-	if err := httputil.PackJSON(w, status, out); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
+func errorResponse(err error) (int, string) {
+	var requestError *system.RequestError
+	switch {
+	case errors.As(err, &requestError):
+		switch requestError.Kind {
+		case system.BadRequest:
+			return http.StatusBadRequest, requestError.Error()
+		case system.Validation:
+			return http.StatusUnprocessableEntity, requestError.Error()
+		}
+	case errors.Is(err, system.ErrUnknownSystem):
+		return http.StatusNotFound, "unknown system"
+	case errors.Is(err, repository.ErrNotFound):
+		return http.StatusNotFound, "record not found"
+	case errors.Is(err, system.ErrInvalidTransition):
+		return http.StatusConflict, system.ErrInvalidTransition.Error()
+	case errors.Is(err, system.ErrLegacyContinuation):
+		return http.StatusConflict, system.ErrLegacyContinuation.Error()
 	}
+	return http.StatusInternalServerError, "internal error"
 }

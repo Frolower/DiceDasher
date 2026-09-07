@@ -84,16 +84,27 @@ curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=roll" \
 2. Implement the `system.Resolver` interface:
    ```go
    type Resolver interface {
-       Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error)
+       Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error)
    }
    ```
-3. Register the resolver in `init()`:
-   ```go
-   func init() {
-       system.Register("system_name", Resolver{})
-   }
-   ```
-4. Import the package in `main.go`
+3. Import the package in `main.go` and add its resolver to the map passed to
+   `service.New`. Construct any dependencies there; there is no global registry.
+4. Return `system.RequestError` for malformed or invalid commands. Return execution
+   errors with their causes intact; the HTTP handler maps errors to responses.
+
+## Execution and persistence
+
+`handler.Handler` decodes HTTP requests and maps errors to HTTP statuses.
+`service.ResolveService` selects a resolver, executes the command, serializes the
+result and private state, and saves both in one history record. Resolvers return
+`(result, error)` without HTTP status codes. TES/VTM accept a `system.HistoryReader`
+through their constructors; the service accepts a `HistoryWriter`. Dependencies
+are assembled in `main.go`, without storing repositories in request contexts.
+
+Every successful operation includes a persisted `record_id`. A storage failure
+returns HTTP 500 with a generic public message; the underlying error is logged.
+The service does not retry the random operation. This does not provide idempotency
+for client retries or guarantee delivery after a successful database write.
 
 ## Persisted roll state
 

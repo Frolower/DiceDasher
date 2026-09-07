@@ -3,34 +3,32 @@ package generic
 import (
 	"context"
 	"diceDasher/pkg/dice"
-	"diceDasher/pkg/logger"
 	"diceDasher/pkg/util"
+	"diceDasher/services/resolve/internal/system"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 )
 
 type Resolver struct{ Dice dice.Generator }
 
-func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, int, error) {
-	logger.Logf(ctx, "RUN: resolver=generic action=%s |", action)
+func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error) {
 	var req request
 
 	if action != "roll" {
-		return nil, http.StatusBadRequest, errors.New("invalid action")
+		return nil, system.Invalid(system.BadRequest, errors.New("invalid action"))
 	}
 	if err := json.Unmarshal(raw, &req); err != nil {
-		return nil, http.StatusBadRequest, err
+		return nil, system.Invalid(system.BadRequest, err)
 	}
 	if err := validate(req); err != nil {
-		return nil, http.StatusUnprocessableEntity, err
+		return nil, system.Invalid(system.Validation, err)
 	}
 
 	expression := fmt.Sprintf("%dd%d", req.Number, req.Size)
 	rolls, err := r.Dice.RollDice(req.Number, req.Size)
 	if err != nil {
-		return response{}, http.StatusInternalServerError, errors.New("internal error")
+		return response{}, err
 	}
 	sum := util.Sum(rolls)
 
@@ -38,5 +36,5 @@ func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessag
 		Expression: expression,
 		Rolls:      rolls,
 		Sum:        sum,
-	}, http.StatusOK, nil
+	}, nil
 }

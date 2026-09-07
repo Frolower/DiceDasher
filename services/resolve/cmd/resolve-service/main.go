@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"diceDasher/pkg/dbutil"
+	"diceDasher/pkg/dice"
+	"diceDasher/services/resolve/internal/repository"
+	"diceDasher/services/resolve/internal/service"
 	"log"
 	"net"
 	"net/http"
@@ -29,17 +32,16 @@ func main() {
 	}
 	defer repo.Close()
 
-	// register resolvers
-	system.Register("generic", generic.Resolver{})
-	system.Register("tes", tes.Resolver{})
-	system.Register("vtmv5", vtmv5.Resolver{})
-
+	history := repository.New(repo.Pool())
+	generator := dice.Generator{}
+	resolveService := service.New(map[string]system.Resolver{
+		"generic": generic.Resolver{Dice: generator},
+		"tes":     tes.New(history, generator),
+		"vtmv5":   vtmv5.New(history, generator),
+	}, history)
 	r := httputil.NewRouter()
-	handler.RegisterRoutes(r)
-
-	// Wrap with middlewares
-	wrapped := handler.WithRepository(repo)(r)
-	wrapped = httputil.RequestLoggerWithMode(wrapped, cfg.LogMode)
+	handler.New(resolveService).RegisterRoutes(r)
+	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
 	wrapped = httputil.CORS("http://localhost:8081")(wrapped)
 
 	srv := &http.Server{
