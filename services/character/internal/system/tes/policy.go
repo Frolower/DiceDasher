@@ -58,35 +58,16 @@ func validateIntegrity(c characterList, result *system.ValidationError) {
 	validateItems(c.Vehicle.Stats.Gear, "vehicle.stats.gear", result)
 }
 
-func validateItems(items []gear, path string, result *system.ValidationError) {
+func validateItems(items []gearDTO, path string, result *system.ValidationError) {
 	for i, item := range items {
 		field := fmt.Sprintf("%s[%d]", path, i)
-		if strings.TrimSpace(item.Name) == "" {
-			addViolation(result, field+".name", "required", "name is required")
-		}
-		if strings.TrimSpace(item.Code) == "" {
-			addViolation(result, field+".code", "required", "code is required")
-		}
-		if item.Price < 0 {
-			addViolation(result, field+".price", "negative_value", "must be greater or equal to 0")
-		}
-		// Each item is checked independently of creation-time inventory limits.
-		var err error
-		switch item.Type {
-		case gearType:
-			err = validateGear(item)
-		case weaponType:
-			err = validateWeapon(item)
-		case armorType:
-			err = validateArmor(item)
-		case neurocasterType:
-			err = validateNeurocaster(item)
-		default:
-			addViolation(result, field+".type", "invalid_value", "unknown gear type")
-			continue
-		}
-		if err != nil {
-			addViolation(result, field, "invalid_item", err.Error())
+		_, violations := newItem(item)
+		for _, violation := range violations {
+			itemField := field
+			if violation.Field != "" {
+				itemField += "." + violation.Field
+			}
+			addViolation(result, itemField, violation.Code, violation.Message)
 		}
 	}
 }

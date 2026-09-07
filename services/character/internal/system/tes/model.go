@@ -25,7 +25,7 @@ type characterList struct {
 	Talents       []string    `json:"talents"`
 	Dream         string      `json:"dream"`
 	Flaw          string      `json:"flaw"`
-	Inventory     []gear      `json:"gear"`
+	Inventory     []gearDTO   `json:"gear"`
 	Cash          int         `json:"cash"`
 	Journey       journey     `json:"journey"`
 	Tension       []tension   `json:"tension"`
@@ -50,7 +50,8 @@ type bliss struct {
 	Permanent int `json:"permanent"`
 }
 
-type gear struct {
+// gearDTO preserves the flat input contract. Domain code uses the variants in item.go.
+type gearDTO struct {
 	// general gear
 	Name  string `json:"name"`
 	Code  string `json:"code"`
@@ -101,7 +102,7 @@ type vehicle struct {
 	Fuel        string       `json:"fuel"`
 	Description string       `json:"description"`
 	Stats       vehicleStats `json:"stats"`
-	SharedGear  []gear       `json:"SharedGear"`
+	SharedGear  []gearDTO    `json:"SharedGear"`
 }
 
 type vehicleStats struct {
@@ -110,7 +111,7 @@ type vehicleStats struct {
 	Hull            int        `json:"hull"`
 	Armor           int        `json:"armor"`
 	Traits          []carTrait `json:"traits"`
-	Gear            []gear     `json:"gear"`
+	Gear            []gearDTO  `json:"gear"`
 }
 
 type carTrait struct {

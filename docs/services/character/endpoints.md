@@ -70,6 +70,6 @@ A `422` response uses `application/json` and contains all detected violations:
 }
 ```
 
-Paths use JSON field names and zero-based array indexes. Codes are `required`, `too_long`, `negative_value`, `invalid_value`, `invalid_item`, and `creation_rule`. Some type-specific and creation checks identify a group such as `character.gear[0]` or `character.stats`; their message describes the constraint. Other error statuses retain their existing text format.
+Paths use JSON field names and zero-based array indexes. Codes are `required`, `too_long`, `negative_value`, `invalid_value`, `invalid_item`, `incompatible_field`, and `creation_rule`. Some type-specific and creation checks identify a group such as `character.gear[0]` or `character.stats`; their message describes the constraint. Other error statuses retain their existing text format.
 
 Compatibility: free-mode requests with missing/blank names or invalid supplied values now return `422`; validation errors previously returned plain text.

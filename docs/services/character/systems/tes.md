@@ -57,7 +57,15 @@ Validation consists of two independently composed policies.
 
 Supported archetypes are `artist`, `criminal`, `devotee`, `doctor`, `dronePilot`, `investigator`, `outsider`, `runawayKid`, `scientist`, and `veteran`.
 
-Gear uses a common object whose relevant fields depend on `type`: `gear`, `weapon`, `armor`, or `neurocaster`. Common fields are `name`, `code`, `type`, `bonus`, `price`, and `notes`. Specialized fields include weapon damage and range, armor values, or neurocaster processor, network, and graphics values.
+Gear uses a common object whose relevant fields depend on `type`: `gear`, `weapon`, `armor`, or `neurocaster`. Common fields are `name`, `code`, `type`, `price`, and `notes`; `bonus` belongs to ordinary gear and weapons. Specialized fields include weapon damage and range, armor values, or neurocaster processor, network, and graphics values.
+
+### Typed item handling
+
+The flat request shape is unchanged. The service converts each input item through a validating factory into one of four domain variants: equipment, weapon, armor, or neurocaster. The same factory is used for personal inventory, shared gear, and vehicle equipment, independently of `rules`.
+
+Non-empty fields belonging to another variant are rejected with `422` and code `incompatible_field`, for example `character.gear[0].armor_level` on a weapon. Legacy irrelevant zero numbers, empty strings, and empty/null arrays are accepted and omitted from stored JSON. Stored items retain their `type` and only the fields of that variant. Existing database rows are not rewritten.
+
+Collection limits (one to four starting items and at most one neurocaster) remain in the optional creation policy.
 
 ## Vehicle shape
 

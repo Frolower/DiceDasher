@@ -13,12 +13,12 @@ import (
 )
 
 func validRequest() createRequest {
-	item := gear{Name: "Tool", Code: "tool", Type: gearType}
+	item := gearDTO{Name: "Tool", Code: "tool", Type: gearType}
 	return createRequest{UserID: uuid.New(), Type: pc, Rules: true, CharacterList: characterList{
 		Name: "Mira", Archetype: "artist", FavouriteSong: "Song", Stats: stats{4, 4, 4, 4},
 		Derivatives: derivatives{4, 4}, Talents: []string{"athlete"}, Dream: "Dream", Flaw: "Flaw",
-		Inventory: []gear{item}, Cash: 100, Journey: journey{"Goal", "Threat"},
-		Vehicle: vehicle{VehicleType: "4wdCar", Model: "Car", Fuel: "gasoline", Stats: vehicleStats{Speed: 1, Hull: 1}, SharedGear: []gear{item, item, item}},
+		Inventory: []gearDTO{item}, Cash: 100, Journey: journey{"Goal", "Threat"},
+		Vehicle: vehicle{VehicleType: "4wdCar", Model: "Car", Fuel: "gasoline", Stats: vehicleStats{Speed: 1, Hull: 1}, SharedGear: []gearDTO{item, item, item}},
 	}}
 }
 
@@ -31,7 +31,7 @@ func TestCreationPolicies(t *testing.T) {
 				t.Fatal(err)
 			}
 			r.CharacterList.Name = "  "
-			r.CharacterList.Inventory = append(r.CharacterList.Inventory, gear{Name: "Broken", Code: "broken", Type: gearType, Price: -1})
+			r.CharacterList.Inventory = append(r.CharacterList.Inventory, gearDTO{Name: "Broken", Code: "broken", Type: gearType, Price: -1})
 			err := validateCreate(r)
 			var validation *system.ValidationError
 			if !errors.As(err, &validation) {
@@ -102,7 +102,7 @@ func TestIntegrityBoundaries(t *testing.T) {
 		{"unknown item", func(c *characterList) { c.Inventory[0].Type = "unknown" }},
 		{"invalid weapon", func(c *characterList) { c.Inventory[0].Type = weaponType }},
 		{"shared item", func(c *characterList) { c.Vehicle.SharedGear[0].Price = -1 }},
-		{"vehicle item", func(c *characterList) { c.Vehicle.Stats.Gear = []gear{{Type: gearType}} }},
+		{"vehicle item", func(c *characterList) { c.Vehicle.Stats.Gear = []gearDTO{{Type: gearType}} }},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			r := validRequest()
@@ -115,7 +115,7 @@ func TestIntegrityBoundaries(t *testing.T) {
 	}
 	r := validRequest()
 	r.CharacterList.Name = strings.Repeat("я", 255)
-	r.CharacterList.Inventory = []gear{{Name: "Armor", Code: "armor", Type: armorType, ArmorLevel: 1, AgilityModifier: -2}}
+	r.CharacterList.Inventory = []gearDTO{{Name: "Armor", Code: "armor", Type: armorType, ArmorLevel: 1, AgilityModifier: -2}}
 	if err := validateCreate(r); err != nil {
 		t.Fatal(err)
 	}
