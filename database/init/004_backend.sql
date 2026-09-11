@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     email VARCHAR(254) NOT NULL,
     hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 
