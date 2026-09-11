@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS public.users (
 CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON public.users (lower(username));
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON public.users (lower(email));
 
-GRANT INSERT ON public.users TO backend_service;
-GRANT SELECT (id) ON public.users TO backend_service;
+GRANT INSERT ON public.users TO user_service;
+GRANT SELECT (id) ON public.users TO user_service;
