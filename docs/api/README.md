@@ -73,3 +73,14 @@ curl -X POST "http://localhost:8081/character?system=tes" \
   -H "Content-Type: application/json" \
   --data @character.json
 ```
+
+## Backend Service
+
+Base URL: `http://localhost:8083`
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/register` | Register username, email and password; returns `201 {"status":"created"}` without a session |
+| GET | `/health` | Health check |
+
+[Registration rules, errors and setup](../services/backend/README.md).

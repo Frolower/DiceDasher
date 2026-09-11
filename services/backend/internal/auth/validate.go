@@ -1,10 +1,11 @@
-package user
+package auth
 
 import (
 	"errors"
 	"regexp"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 )
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
@@ -17,8 +18,17 @@ func validateCreateInput(input CreateInput) error {
 		hasDigit bool
 	)
 
-	if len(input.Username) < 3 {
-		errs = append(errs, errors.New("username must be at least 3 characters"))
+	if n := utf8.RuneCountInString(input.Username); n < 5 || n > 64 {
+		errs = append(errs, errors.New("username must be between 5 and 64 characters"))
+	}
+
+	// Проверяем все Unicode-пробелы, включая табуляцию и неразрывный пробел.
+	if strings.ContainsFunc(input.Username, unicode.IsSpace) {
+		errs = append(errs, errors.New("username must not contain whitespace"))
+	}
+
+	if strings.ContainsFunc(input.Username, unicode.IsControl) {
+		errs = append(errs, errors.New("username must not contain control characters"))
 	}
 
 	if len(input.Email) < 3 || len(input.Email) > 254 {
@@ -27,8 +37,16 @@ func validateCreateInput(input CreateInput) error {
 		errs = append(errs, errors.New("email is incorrect"))
 	}
 
-	if len(input.Password) < 8 {
+	if utf8.RuneCountInString(input.Password) < 8 {
 		errs = append(errs, errors.New("password must be at least 8 characters"))
+	}
+
+	if len(input.Password) > 72 {
+		errs = append(errs, errors.New("password must be at most 72 bytes"))
+	}
+
+	if strings.ContainsFunc(input.Password, unicode.IsSpace) {
+		errs = append(errs, errors.New("password must not contain whitespace"))
 	}
 
 	for _, r := range input.Password {
@@ -53,7 +71,6 @@ func validateCreateInput(input CreateInput) error {
 }
 
 func normalizeCreateInput(input CreateInput) CreateInput {
-	input.Username = strings.TrimSpace(input.Username)
 	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
 	return input
 }

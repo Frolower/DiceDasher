@@ -5,9 +5,9 @@ import (
 	"net/http"
 )
 
-func RegisterRouters(r *httputil.Router) {
-	// user specific routes
-	r.Handle("/register").POST(HandleCreateUser)
+func (h *Handler) RegisterRouters(r *httputil.Router) {
+	// auth specific routes
+	r.Handle("/register").POST(h.HandleCreateUser)
 	r.Handle("/login").POST(notImplemented)
 	r.Handle("/logout").POST(notImplemented)
 	r.Handle("/me").GET(notImplemented)

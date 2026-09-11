@@ -53,6 +53,26 @@ services:
       retries: 5
     restart: unless-stopped
 
+  backend:
+    build:
+      context: .
+      dockerfile: services/backend/Dockerfile
+    environment:
+      DATABASE_URL: postgres://backend_service:backend_password@postgres:5432/backend_db?sslmode=disable
+      HTTP_ADDR: ":8083"
+      LOG_MODE: default
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/health || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   swagger-ui:
     image: swaggerapi/swagger-ui:latest
     ports:

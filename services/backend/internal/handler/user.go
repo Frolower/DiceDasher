@@ -1,58 +1,69 @@
 package handler
 
 import (
-	"backend/internal/repository"
-	"backend/internal/user"
+	"backend/internal/auth"
+	"context"
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
-	"encoding/json"
 	"errors"
 	"net/http"
 )
 
-func HandleCreateUser(w http.ResponseWriter, r *http.Request) {
+// Registrar — минимальная возможность, которая нужна HTTP-слою.
+// Обработчик ничего не знает о PostgreSQL и bcrypt: в main ему передают
+// готовый сервис, а в тестах — простую заглушку с тем же методом.
+type Registrar interface {
+	Register(context.Context, auth.CreateInput) (auth.Created, error)
+}
+
+// Handler хранит зависимости, общие для запросов. Данные самого запроса
+// остаются локальными переменными методов и не смешиваются между клиентами.
+type Handler struct{ registrar Registrar }
+
+func New(registrar Registrar) *Handler { return &Handler{registrar: registrar} }
+
+func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
+	// Ограничиваем тело до декодирования. Для трёх полей 16 КиБ достаточно;
+	// слишком большой запрос не должен занимать неограниченную память.
+	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	var req createUserRequest
-	var raw json.RawMessage
-
-	if err := httputil.UnpackJSON(r, &raw); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		logger.Logf(r.Context(), "error unpacking request body: %s", err)
+	// Декодируем сразу в структуру: UnpackJSON отклоняет неизвестные поля,
+	// некорректный JSON и несколько JSON-значений в одном теле.
+	if err := httputil.UnpackJSON(r, &req); err != nil {
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+		} else {
+			// Не возвращаем текст декодера: он может содержать присланные значения.
+			http.Error(w, "invalid request body", http.StatusBadRequest)
+		}
 		return
 	}
 
-	if err := json.Unmarshal(raw, &req); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		logger.Logf(r.Context(), "error decoding create user request: %s", err)
-		return
-	}
-
-	repo, err := repository.FromContext(r.Context())
-	if err != nil {
-		logger.Logf(r.Context(), "ERROR: repository not in context %s", err)
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	service := user.NewService(repo)
-	created, err := service.Create(r.Context(), user.CreateInput{
-		Username: req.Username,
-		Email:    req.Email,
-		Password: req.Password,
+	// HTTP-модель превращается во входные данные сценария регистрации.
+	// Проверка полей, хеширование и запись выполняются внутри auth.Service.
+	_, err := h.registrar.Register(r.Context(), auth.CreateInput{
+		Username: req.Username, Email: req.Email, Password: req.Password,
 	})
 	if err != nil {
-		if errors.Is(err, user.ErrInvalidInput) {
+		switch {
+		case errors.Is(err, auth.ErrInvalidInput):
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			logger.Logf(r.Context(), "ERROR validating user: %s", err)
-			return
+		case errors.Is(err, auth.ErrAlreadyExists):
+			http.Error(w, "username or email already exists", http.StatusConflict)
+		default:
+			// Клиент не получает детали БД. Репозиторий также не переносит
+			// PostgreSQL Detail в ошибки: там может оказаться email пользователя.
+			logger.Logf(r.Context(), "ERROR registering user: %s", err)
+			http.Error(w, "failed to create user", http.StatusInternalServerError)
 		}
-
-		logger.Logf(r.Context(), "ERROR creating user: %s", err)
-		http.Error(w, "failed to create user", http.StatusInternalServerError)
 		return
 	}
 
-	if err := httputil.PackJSON(w, http.StatusCreated, createUserResponse{ID: created.ID}); err != nil {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
+	// 201 означает, что пользователь уже сохранён. Сессию, cookie и токены
+	// регистрация пока не создаёт; внутренний UUID наружу не требуется.
+	if err := httputil.PackJSON(w, http.StatusCreated, createUserResponse{Status: "created"}); err != nil {
+		// Заголовки уже отправлены: второй HTTP-ответ здесь писать нельзя.
+		logger.Logf(r.Context(), "ERROR writing registration response: %s", err)
 	}
 }

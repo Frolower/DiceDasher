@@ -1,13 +1,15 @@
-package user
+package auth
 
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 )
 
 var (
+	ErrAlreadyExists      = errors.New("username or email already exists")
 	ErrInvalidInput       = errors.New("invalid user input")
 	ErrStoreNotConfigured = errors.New("user store is not configured")
 )
@@ -51,7 +53,7 @@ func NewServiceWithHasher(store Store, hasher PasswordHasher) *Service {
 	return &Service{store: store, hasher: hasher}
 }
 
-func (s *Service) Create(ctx context.Context, input CreateInput) (Created, error) {
+func (s *Service) Register(ctx context.Context, input CreateInput) (Created, error) {
 	if s.store == nil {
 		return Created{}, ErrStoreNotConfigured
 	}
@@ -63,7 +65,7 @@ func (s *Service) Create(ctx context.Context, input CreateInput) (Created, error
 
 	hash, err := s.hasher.Hash(input.Password)
 	if err != nil {
-		return Created{}, err
+		return Created{}, fmt.Errorf("hash password: %w", err)
 	}
 
 	id, err := s.store.CreateUser(ctx, CreateRecord{

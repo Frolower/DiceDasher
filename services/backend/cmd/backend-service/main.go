@@ -1,14 +1,17 @@
 package main
 
 import (
+	"backend/internal/auth"
 	"backend/internal/config"
 	"backend/internal/handler"
+	"backend/internal/repository"
 	"context"
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/httputil"
 	"log"
 	"net"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -23,17 +26,21 @@ func main() {
 	}
 	defer repo.Close()
 
+	registration := auth.NewService(repository.New(repo.Pool()))
 	r := httputil.NewRouter()
-	handler.RegisterRouters(r)
+	handler.New(registration).RegisterRouters(r)
 
 	// Wrap with middlewares
-	wrapped := handler.WithRepository(repo)(r)
-	wrapped = httputil.RequestLoggerWithMode(wrapped, cfg.LogMode)
-	wrapped = httputil.CORS("http://localhost:8080")(wrapped)
+	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
+	wrapped = httputil.CORS("http://localhost:8082")(wrapped)
 
 	srv := &http.Server{
-		Addr:    cfg.HTTPAddr,
-		Handler: wrapped,
+		Addr:              cfg.HTTPAddr,
+		Handler:           wrapped,
+		ReadHeaderTimeout: 5 * time.Second,
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 	}
 
 	ln, err := net.Listen("tcp", cfg.HTTPAddr)
@@ -41,6 +48,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	log.Printf("character service READY on %s", cfg.HTTPAddr)
+	log.Printf("backend service READY on %s", cfg.HTTPAddr)
 	log.Fatal(srv.Serve(ln))
 }
