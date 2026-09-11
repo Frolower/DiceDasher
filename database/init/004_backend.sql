@@ -1,4 +1,4 @@
-\connect backend_db
+\connect user_db
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
