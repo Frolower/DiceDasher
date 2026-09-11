@@ -3,10 +3,12 @@
 
 CREATE DATABASE resolve_db;
 CREATE DATABASE character_db;
+CREATE DATABASE user_db;
 
 -- Create dedicated users for each service
 CREATE USER resolve_service WITH ENCRYPTED PASSWORD 'resolve_password';
 CREATE USER character_service WITH ENCRYPTED PASSWORD 'character_password';
+CREATE USER user_service WITH ENCRYPTED PASSWORD 'user_password';
 
 -- Admin role
 CREATE ROLE dd_admin WITH LOGIN SUPERUSER PASSWORD 'admin_password';
