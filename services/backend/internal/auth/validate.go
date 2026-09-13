@@ -74,3 +74,15 @@ func normalizeCreateInput(input CreateInput) CreateInput {
 	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
 	return input
 }
+
+// При входе проверяем только форму запроса. Новые правила сложности пароля
+// не должны запрещать вход с паролем, который был установлен раньше.
+func validateLoginInput(input LoginInput) error {
+	if input.Username == "" || input.Password == "" {
+		return errors.New("username and password are required")
+	}
+	if utf8.RuneCountInString(input.Username) > 64 || len(input.Password) > 72 {
+		return errors.New("username or password is too long")
+	}
+	return nil
+}

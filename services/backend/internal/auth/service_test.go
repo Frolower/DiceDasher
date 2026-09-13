@@ -41,7 +41,7 @@ func TestRegisterNormalizesAndHashes(t *testing.T) {
 }
 
 func TestInvalidInputDoesNotHashOrSave(t *testing.T) {
-	s := NewServiceWithHasher(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
+	s := NewServiceWithPasswords(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
 		t.Fatal("invalid input reached store")
 		return uuid.Nil, nil
 	}), hashFunc(func(string) (string, error) { t.Fatal("invalid input reached bcrypt"); return "", nil }))
@@ -76,7 +76,7 @@ func TestInvalidInputDoesNotHashOrSave(t *testing.T) {
 func TestRegisterFailures(t *testing.T) {
 	input := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1"}
 	failure := errors.New("hash failed")
-	s := NewServiceWithHasher(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
+	s := NewServiceWithPasswords(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
 		t.Fatal("save after hash failure")
 		return uuid.Nil, nil
 	}), hashFunc(func(string) (string, error) { return "", failure }))
@@ -84,7 +84,7 @@ func TestRegisterFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, expected := range []error{ErrAlreadyExists, errors.New("storage failed")} {
-		s = NewServiceWithHasher(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) { return uuid.Nil, expected }), hashFunc(func(string) (string, error) { return "hash", nil }))
+		s = NewServiceWithPasswords(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) { return uuid.Nil, expected }), hashFunc(func(string) (string, error) { return "hash", nil }))
 		if got, err := s.Register(context.Background(), input); !errors.Is(err, expected) || got.ID != uuid.Nil {
 			t.Fatalf("result %v error %v", got, err)
 		}
@@ -109,7 +109,7 @@ func TestPasswordAtBcryptLimit(t *testing.T) {
 
 // Проверяем сценарий целиком, чтобы нормализация не скрыла пробелы по краям.
 func TestWhitespaceRejectedBeforeHashing(t *testing.T) {
-	s := NewServiceWithHasher(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
+	s := NewServiceWithPasswords(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
 		t.Fatal("whitespace reached store")
 		return uuid.Nil, nil
 	}), hashFunc(func(string) (string, error) {
@@ -140,5 +140,28 @@ func TestWhitespaceRejectedBeforeHashing(t *testing.T) {
 				})
 			}
 		}
+	}
+}
+
+// Регистрационные тесты не должны обращаться к поиску пользователя или Verify.
+func (f storeFunc) FindUserByUsername(context.Context, string) (Credentials, error) {
+	panic("unexpected credential lookup during registration")
+}
+
+func (f hashFunc) Verify(string, string) error {
+	panic("unexpected password verification during registration")
+}
+
+func TestBcryptVerify(t *testing.T) {
+	passwords := BcryptHasher{Cost: bcrypt.MinCost}
+	hash, err := passwords.Hash("StrongPass1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := passwords.Verify(hash, "StrongPass1"); err != nil {
+		t.Fatal(err)
+	}
+	if err := passwords.Verify(hash, "WrongPass1"); !errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

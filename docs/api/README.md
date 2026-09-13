@@ -80,6 +80,7 @@ Base URL: `http://localhost:8083`
 
 | Method | Endpoint | Description |
 |---|---|---|
+| POST | `/login` | Login with username/password; access JWT in JSON, refresh token in HttpOnly cookie |
 | POST | `/register` | Register username, email and password; returns `201 {"status":"created"}` without a session |
 | GET | `/health` | Health check |
 

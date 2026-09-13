@@ -26,13 +26,19 @@ func main() {
 	}
 	defer repo.Close()
 
-	registration := auth.NewService(repository.New(repo.Pool()))
+	tokens, err := auth.NewJWTManager(cfg.JWTKey, cfg.JWTIssuer, cfg.JWTAudience)
+	if err != nil {
+		log.Fatal(err)
+	}
+	store := repository.New(repo.Pool())
+	// Один repository реализует интерфейсы пользователей и сессий.
+	authentication := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), tokens)
 	r := httputil.NewRouter()
-	handler.New(registration).RegisterRouters(r)
+	handler.NewWithOptions(authentication, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigin: cfg.AllowedOrigin}).RegisterRouters(r)
 
 	// Wrap with middlewares
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
-	wrapped = httputil.CORS("http://localhost:8082")(wrapped)
+	wrapped = handler.CORS(cfg.AllowedOrigin)(wrapped)
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,

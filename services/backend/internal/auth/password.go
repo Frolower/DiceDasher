@@ -2,8 +2,9 @@ package auth
 
 import "golang.org/x/crypto/bcrypt"
 
-type PasswordHasher interface {
+type PasswordManager interface {
 	Hash(password string) (string, error)
+	Verify(hash, password string) error
 }
 
 type BcryptHasher struct {
@@ -25,4 +26,8 @@ func (h BcryptHasher) Hash(password string) (string, error) {
 		return "", err
 	}
 	return string(hash), nil
+}
+
+func (h BcryptHasher) Verify(hash, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }

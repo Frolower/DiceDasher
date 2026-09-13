@@ -2,80 +2,55 @@ package auth
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 )
 
-var (
-	ErrAlreadyExists      = errors.New("username or email already exists")
-	ErrInvalidInput       = errors.New("invalid user input")
-	ErrStoreNotConfigured = errors.New("user store is not configured")
-)
-
-type InvalidInputError struct {
-	Err error
-}
-
-func (e InvalidInputError) Error() string {
-	return e.Err.Error()
-}
-
-func (e InvalidInputError) Unwrap() error {
-	return e.Err
-}
-
-func (e InvalidInputError) Is(target error) bool {
-	return target == ErrInvalidInput
-}
-
-type Store interface {
+type UserStore interface {
 	CreateUser(ctx context.Context, rec CreateRecord) (uuid.UUID, error)
+	FindUserByUsername(ctx context.Context, username string) (Credentials, error)
+}
+
+type SessionStore interface {
+	CreateSession(ctx context.Context, rec Session) error
+	FindSessionByRefreshHash(ctx context.Context, hash string) (Session, error)
+
+	RotateRefreshToken(
+		ctx context.Context,
+		sessionID uuid.UUID,
+		oldHash string,
+		newHash string,
+		now time.Time,
+	) error
+
+	RevokeSessionByRefreshHash(ctx context.Context, hash string, now time.Time) error
 }
 
 type Service struct {
-	store  Store
-	hasher PasswordHasher
+	users     UserStore
+	sessions  SessionStore
+	passwords PasswordManager
+	tokens    TokenManager
+	now       func() time.Time
 }
 
-func NewService(store Store) *Service {
-	return &Service{
-		store:  store,
-		hasher: NewBcryptHasher(),
-	}
+// NewService создаёт сервис для существующей регистрации.
+// Для входа main передаёт сессии и JWT через NewServiceWithDependencies.
+func NewService(users UserStore) *Service {
+	return NewServiceWithDependencies(users, nil, nil, nil)
 }
 
-func NewServiceWithHasher(store Store, hasher PasswordHasher) *Service {
-	if hasher == nil {
-		hasher = NewBcryptHasher()
-	}
-	return &Service{store: store, hasher: hasher}
+// NewServiceWithPasswords позволяет подменить bcrypt в тестах регистрации.
+func NewServiceWithPasswords(users UserStore, passwords PasswordManager) *Service {
+	return NewServiceWithDependencies(users, nil, passwords, nil)
 }
 
-func (s *Service) Register(ctx context.Context, input CreateInput) (Created, error) {
-	if s.store == nil {
-		return Created{}, ErrStoreNotConfigured
+// Все зависимости сохраняются один раз при сборке приложения в main.
+// nil для passwords выбирает стандартный bcrypt; сессии и токены пока необязательны для Register.
+func NewServiceWithDependencies(users UserStore, sessions SessionStore, passwords PasswordManager, tokens TokenManager) *Service {
+	if passwords == nil {
+		passwords = NewBcryptHasher()
 	}
-
-	input = normalizeCreateInput(input)
-	if err := validateCreateInput(input); err != nil {
-		return Created{}, InvalidInputError{Err: err}
-	}
-
-	hash, err := s.hasher.Hash(input.Password)
-	if err != nil {
-		return Created{}, fmt.Errorf("hash password: %w", err)
-	}
-
-	id, err := s.store.CreateUser(ctx, CreateRecord{
-		Username:     input.Username,
-		Email:        input.Email,
-		PasswordHash: hash,
-	})
-	if err != nil {
-		return Created{}, err
-	}
-
-	return Created{ID: id}, nil
+	return &Service{users: users, sessions: sessions, passwords: passwords, tokens: tokens, now: time.Now}
 }

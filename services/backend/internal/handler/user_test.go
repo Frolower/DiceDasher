@@ -63,3 +63,13 @@ func TestRegistrationHTTPContract(t *testing.T) {
 		})
 	}
 }
+
+func (f creatorFunc) Login(context.Context, auth.LoginInput) (auth.Tokens, error) {
+	panic("unexpected Login in registration test")
+}
+func (f creatorFunc) Refresh(context.Context, string) (auth.Tokens, error) {
+	panic("unexpected Refresh in registration test")
+}
+func (f creatorFunc) Logout(context.Context, string) error {
+	panic("unexpected Logout in registration test")
+}

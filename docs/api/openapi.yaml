@@ -15,10 +15,82 @@ tags:
   - name: Resolve
     description: System-specific dice resolution
   - name: Backend
-    description: User registration
+    description: User registration and login
   - name: Character
     description: Character creation and storage
 paths:
+  /login:
+    post:
+      tags: [Backend]
+      summary: Sign in with username and password
+      description: |
+        Creates a 30-day session and issues a 10-minute access JWT.
+        Refresh token is sent only in an HttpOnly SameSite=Strict cookie.
+        Browser requests must include credentials; refresh/logout are not implemented yet.
+      operationId: loginUser
+      servers:
+        - url: http://localhost:8083
+          description: Backend Service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                password:
+                  type: string
+                  format: password
+                  minLength: 1
+                  maxLength: 72
+                  description: At most 72 UTF-8 bytes; passed unchanged to bcrypt.
+            example:
+              username: Alice
+              password: StrongPass1
+      responses:
+        "200":
+          description: Session saved. Refresh token is in Set-Cookie, not the response body.
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+              description: HttpOnly refresh cookie; Secure in HTTPS mode.
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [access_token, token_type, expires_at]
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    const: Bearer
+                  expires_at:
+                    type: string
+                    format: date-time
+        "400":
+          description: Invalid JSON or missing/oversized fields.
+        "401":
+          description: Invalid username or password.
+        "403":
+          description: Origin is not allowed.
+        "413":
+          description: Request body exceeds 16 KiB.
+        "415":
+          description: Content-Type must be application/json.
+        "500":
+          description: Login failed internally; no tokens returned.
   /register:
     post:
       tags: [Backend]

@@ -2,25 +2,11 @@ package handler
 
 import (
 	"backend/internal/auth"
-	"context"
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
 	"errors"
 	"net/http"
 )
-
-// Registrar — минимальная возможность, которая нужна HTTP-слою.
-// Обработчик ничего не знает о PostgreSQL и bcrypt: в main ему передают
-// готовый сервис, а в тестах — простую заглушку с тем же методом.
-type Registrar interface {
-	Register(context.Context, auth.CreateInput) (auth.Created, error)
-}
-
-// Handler хранит зависимости, общие для запросов. Данные самого запроса
-// остаются локальными переменными методов и не смешиваются между клиентами.
-type Handler struct{ registrar Registrar }
-
-func New(registrar Registrar) *Handler { return &Handler{registrar: registrar} }
 
 func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	// Ограничиваем тело до декодирования. Для трёх полей 16 КиБ достаточно;
@@ -30,8 +16,7 @@ func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	// Декодируем сразу в структуру: UnpackJSON отклоняет неизвестные поля,
 	// некорректный JSON и несколько JSON-значений в одном теле.
 	if err := httputil.UnpackJSON(r, &req); err != nil {
-		var tooLarge *http.MaxBytesError
-		if errors.As(err, &tooLarge) {
+		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
 		} else {
 			// Не возвращаем текст декодера: он может содержать присланные значения.
@@ -42,7 +27,7 @@ func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 
 	// HTTP-модель превращается во входные данные сценария регистрации.
 	// Проверка полей, хеширование и запись выполняются внутри auth.Service.
-	_, err := h.registrar.Register(r.Context(), auth.CreateInput{
+	_, err := h.authenticator.Register(r.Context(), auth.CreateInput{
 		Username: req.Username, Email: req.Email, Password: req.Password,
 	})
 	if err != nil {
