@@ -5,4 +5,5 @@
   - [x] Вход — username + password, access JWT и refresh-cookie
   - [x] Создание сессии — при успешном входе, хранится хеш refresh-токена
   - [ ] Смена пароля
-  - [ ] Обновление токенов и отзыв сессии (refresh/logout)
+  - [x] Отзыв сессии — POST /logout, удаление refresh-cookie
+  - [ ] Обновление токенов (refresh)

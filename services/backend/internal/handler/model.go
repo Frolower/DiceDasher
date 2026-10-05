@@ -22,7 +22,3 @@ type tokenResponse struct {
 	TokenType   string    `json:"token_type"`
 	ExpiresAt   time.Time `json:"expires_at"`
 }
-
-type LogoutRequest struct {
-	AccessToken string
-}

@@ -15,7 +15,7 @@ tags:
   - name: Resolve
     description: System-specific dice resolution
   - name: Backend
-    description: User registration and login
+    description: User registration, login and logout
   - name: Character
     description: Character creation and storage
 paths:
@@ -26,7 +26,7 @@ paths:
       description: |
         Creates a 30-day session and issues a 10-minute access JWT.
         Refresh token is sent only in an HttpOnly SameSite=Strict cookie.
-        Browser requests must include credentials; refresh/logout are not implemented yet.
+        Browser requests must include credentials. Logout is available; refresh is not implemented yet.
       operationId: loginUser
       servers:
         - url: http://localhost:8083
@@ -91,6 +91,45 @@ paths:
           description: Content-Type must be application/json.
         "500":
           description: Login failed internally; no tokens returned.
+  /logout:
+    post:
+      tags: [Backend]
+      summary: Sign out and revoke the current session
+      description: |
+        No request body or Content-Type is required. Reads the refresh token from
+        __Host-refresh_token when COOKIE_SECURE=true, otherwise refresh_token.
+        Browser requests must include credentials. Rejects disallowed Origin and
+        Sec-Fetch-Site cross-site when Origin is absent.
+        Revokes the matching session and deletes its refresh cookie. Repeated logout
+        or an unknown token also succeeds. An absent cookie succeeds without Set-Cookie.
+        Clients must discard their access JWT; signature verification alone does not
+        check session revocation in the database.
+      operationId: logoutUser
+      servers:
+        - url: http://localhost:8083
+          description: Backend Service
+      responses:
+        "204":
+          description: Session revoked or already absent. No response body.
+          headers:
+            Set-Cookie:
+              description: When a refresh cookie was supplied, deletes it with Max-Age=0 and a past Expires; preserves its name, Path=/, HttpOnly, Secure setting and SameSite=Strict, without Domain.
+              schema:
+                type: string
+            Cache-Control:
+              schema:
+                type: string
+                const: no-store
+            Pragma:
+              schema:
+                type: string
+                const: no-cache
+        "400":
+          description: Invalid cookie (text/plain).
+        "403":
+          description: Origin is not allowed or cross-site request has no Origin (text/plain).
+        "500":
+          description: Logout failed internally (text/plain); refresh cookie is retained for retry.
   /register:
     post:
       tags: [Backend]

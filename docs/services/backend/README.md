@@ -1,4 +1,4 @@
-# Backend: регистрация и вход
+# Backend: регистрация, вход и выход
 
 Backend: `http://localhost:8083`. Регистрация не создаёт сессию. Вход по username
 и паролю создаёт отдельную сессию и выдаёт access JWT + refresh-cookie.
@@ -10,12 +10,13 @@ Backend: `http://localhost:8083`. Регистрация не создаёт с�
 | `cmd/backend-service/main.go` | Сборка repository, bcrypt, JWTManager, auth.Service и handler |
 | `internal/handler/handler.go` | HTTP-интерфейс Authenticator, зависимости и настройки cookie |
 | `internal/handler/register.go` | HTTP-контракт регистрации |
-| `internal/handler/login.go` | JSON входа, проверка Origin, ошибки и ответ с токеном |
+| `internal/handler/login.go` | HTTP входа и выхода, проверка Origin, токены и удаление cookie |
 | `internal/handler/cookie.go` | Refresh-cookie |
 | `internal/handler/cors.go` | CORS для конкретного Origin с credentials |
 | `internal/auth/service.go` | Интерфейсы хранилищ и конструкторы |
 | `internal/auth/register.go` | Регистрация и сохранение bcrypt-хеша |
 | `internal/auth/login.go` | Поиск пользователя и проверка пароля |
+| `internal/auth/logout.go` | Отзыв сессии по хешу refresh-токена |
 | `internal/auth/session.go` | Создание сессии после проверки пароля |
 | `internal/auth/jwt.go` | Выпуск и проверка access JWT |
 | `internal/auth/refresh_token.go` | Криптографически случайный refresh и SHA-256 |
@@ -80,6 +81,31 @@ Refresh-токен передаётся только через `Set-Cookie`, а
 а не повторным хешированием. Для отсутствующего пользователя также выполняется
 bcrypt-проверка dummy-хеша, чтобы уменьшить различие времени ответа.
 
+## POST /logout
+
+```sh
+curl -i -X POST -b /tmp/dicedasher-cookies.txt -c /tmp/dicedasher-cookies.txt \
+  http://localhost:8083/logout
+```
+
+Тело запроса и Content-Type не требуются. Refresh-токен берётся из cookie:
+`__Host-refresh_token` при `COOKIE_SECURE=true`, иначе `refresh_token`.
+В браузере используйте `credentials: "include"`. Как и login, logout отвергает
+чужой Origin и `Sec-Fetch-Site: cross-site` без Origin.
+
+Сервис хеширует токен и устанавливает `revoked_at` у соответствующей сессии.
+Успех: `204` без тела, с `Cache-Control: no-store` и `Pragma: no-cache`.
+Cookie удаляется через Set-Cookie с тем же именем и Path=/, Max-Age=0 и прошедшим
+Expires; HttpOnly, Secure и SameSite совпадают с настройками входа.
+Повторный выход или неизвестный токен также возвращают `204` и удаляют cookie.
+При отсутствии cookie возвращается `204` без Set-Cookie.
+
+Ошибки: `400` — ошибка чтения cookie, `403` — неразрешённый источник запроса,
+`500` — внутренний сбой отзыва. При внутреннем сбое cookie не удаляется,
+чтобы клиент мог повторить запрос. Access JWT не удаляется этим обработчиком:
+клиент должен очистить его у себя. Проверка подписи JWT сама по себе не учитывает
+отзыв сессии в БД.
+
 ## Токены и сессии
 
 Access JWT (HS256) действует 10 минут. Содержит sub, sid, iss, aud, iat, exp и jti.
@@ -94,9 +120,9 @@ SHA-256-хеш, не исходный токен. Сессия действуе�
 Ошибка подписи не создаёт строку БД; ошибка записи не выдаёт токены. Обрыв сети после
 успешного INSERT может оставить сессию, которую клиент не получил; login не идемпотентен.
 
-Refresh и logout пока возвращают ErrNotImplemented на уровне сервиса; публичный
-logout остаётся 501, маршрут refresh ещё не подключён. Методы SQL для ротации/отзыва
-подготовлены, но история использованных refresh-токенов и защита от их повторного
+Logout реализован и отзывает сессию в БД. Refresh пока возвращает ErrNotImplemented
+на уровне сервиса, его маршрут ещё не подключён. Метод SQL для ротации подготовлен,
+но история использованных refresh-токенов и защита от их повторного
 использования ещё не реализованы. После истечения access JWT пока нужен новый login.
 Проверка JWT реализована как компонент, но middleware защиты `/me` и других
 маршрутов — следующий этап. Подписанный JWT сам не проверяет revoked_at в БД.
@@ -156,6 +182,9 @@ BACKEND_TEST_ADMIN_URL='postgres://YOUR_ADMIN@localhost:55439/user_db?sslmode=di
 go test -race ./services/backend/...
 ```
 
-Тесты проверяют регистрацию, bcrypt, JWT, cookie, повторный вход, ошибки пароля,
+Модульные тесты logout проверяют хеширование токена, отзыв сессии, удаление cookie,
+повторный выход, ошибки сервиса и проверку Origin. Интеграционного теста logout пока нет.
+
+Тесты также проверяют регистрацию, bcrypt, JWT, cookie, повторный вход, ошибки пароля,
 конкурирующую регистрацию и реальные SQL-права роли. Тестовые пользователи имеют
 случайные имена и удаляются вместе со своими сессиями.
