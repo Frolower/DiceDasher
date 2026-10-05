@@ -13,6 +13,7 @@ func (h *Handler) RegisterRouters(r *httputil.Router) {
 	r.Handle("/me").GET(notImplemented)
 	r.Handle("/user").PATCH(notImplemented).DELETE(notImplemented)
 	r.Handle("/password").PUT(notImplemented)
+	r.Handle("/refresh").POST(h.HandleRefresh)
 
 	//health
 	r.Handle("/health").GET(Health)
