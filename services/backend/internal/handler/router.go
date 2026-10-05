@@ -9,7 +9,7 @@ func (h *Handler) RegisterRouters(r *httputil.Router) {
 	// auth specific routes
 	r.Handle("/register").POST(h.HandleCreateUser)
 	r.Handle("/login").POST(h.HandleLogin)
-	r.Handle("/logout").POST(notImplemented)
+	r.Handle("/logout").POST(h.HandleLogout)
 	r.Handle("/me").GET(notImplemented)
 	r.Handle("/user").PATCH(notImplemented).DELETE(notImplemented)
 	r.Handle("/password").PUT(notImplemented)
