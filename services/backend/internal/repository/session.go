@@ -51,3 +51,17 @@ func (r *Repository) RevokeSessionByRefreshHash(ctx context.Context, hash string
 	}
 	return nil
 }
+
+func (r *Repository) FindSessionByID(ctx context.Context, id uuid.UUID) (auth.Session, error) {
+	const q = `SELECT id, user_id, refresh_token_hash, created_at, expires_at, revoked_at, COALESCE(user_agent, '') FROM public.sessions WHERE id=$1`
+	var s auth.Session
+	err := r.pool.QueryRow(ctx, q, id).Scan(&s.ID, &s.UserID, &s.RefreshTokenHash, &s.CreatedAt, &s.ExpiresAt, &s.RevokedAt, &s.UserAgent)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return auth.Session{}, auth.ErrSessionNotFound
+	}
+	if err != nil {
+		return auth.Session{}, fmt.Errorf("find session by id: %w", err)
+	}
+
+	return s, nil
+}

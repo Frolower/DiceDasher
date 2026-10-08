@@ -1,9 +1,10 @@
 # In progress
 
-- Бэкенд
-  - [x] Регистрация — POST /register, без сессии; [описание](services/backend/README.md)
-  - [x] Вход — username + password, access JWT и refresh-cookie
-  - [x] Создание сессии — при успешном входе, хранится хеш refresh-токена
-  - [ ] Смена пароля
-  - [x] Отзыв сессии — POST /logout, удаление refresh-cookie
-  - [ ] Обновление токенов (refresh)
+- Backend
+  - [x] Registration — POST /register, without a session; [documentation](services/backend/README.md)
+  - [x] Login — username + password, access JWT and refresh cookie
+  - [x] Session creation — on successful login; stores the refresh token hash
+  - [ ] Password change
+  - [x] Session revocation — POST /logout, refresh cookie removal
+  - [ ] Token refresh
+  - TODO: timeouts after deployment to the server

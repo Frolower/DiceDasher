@@ -15,6 +15,7 @@ type UserStore interface {
 type SessionStore interface {
 	CreateSession(ctx context.Context, rec Session) error
 	FindSessionByRefreshHash(ctx context.Context, hash string) (Session, error)
+	FindSessionByID(ctx context.Context, id uuid.UUID) (Session, error)
 
 	RotateRefreshToken(
 		ctx context.Context,
