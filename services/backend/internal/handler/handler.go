@@ -10,6 +10,7 @@ type Authenticator interface {
 	Login(context.Context, auth.LoginInput) (auth.Tokens, error)
 	Refresh(context.Context, string) (auth.Tokens, error)
 	Logout(context.Context, string) error
+	Authenticate(context.Context, string) (auth.AccessClaims, error)
 }
 
 type Options struct {

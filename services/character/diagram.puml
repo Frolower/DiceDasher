@@ -1,0 +1,742 @@
+@startuml
+namespace backend-service {
+}
+namespace auth {
+    class "AccessClaims" << (S,Aquamarine) >> {
+        + UserID uuid.UUID
+        + SessionID uuid.UUID
+        + ExpiresAt time.Time
+
+    }
+    class "BcryptHasher" << (S,Aquamarine) >> {
+        + Cost int
+
+        + Hash(password string) (string, error)
+        + Verify(hash string, password string) error
+
+    }
+    class "CreateInput" << (S,Aquamarine) >> {
+        + Username string
+        + Email string
+        + Password string
+
+    }
+    class "CreateRecord" << (S,Aquamarine) >> {
+        + Username string
+        + Email string
+        + PasswordHash string
+
+    }
+    class "Created" << (S,Aquamarine) >> {
+        + ID uuid.UUID
+
+    }
+    class "Credentials" << (S,Aquamarine) >> {
+        + UserID uuid.UUID
+        + PasswordHash string
+
+    }
+    class "InvalidInputError" << (S,Aquamarine) >> {
+        + Err error
+
+        + Error() string
+        + Unwrap() error
+        + Is(target error) bool
+
+    }
+    class "JWTManager" << (S,Aquamarine) >> {
+        - key []byte
+        - issuer string
+        - now <font color=blue>func</font>() time.Time
+
+        + IssueAccess(userID uuid.UUID, sessionID uuid.UUID, expiresAt time.Time) (string, error)
+        + VerifyAccess(raw string) (AccessClaims, error)
+        + GenerateRefresh() (string, error)
+        + HashRefresh(token string) string
+
+    }
+    class "LoginInput" << (S,Aquamarine) >> {
+        + Username string
+        + Password string
+        + UserAgent string
+
+    }
+    interface "PasswordManager"  {
+        + Hash(password string) (string, error)
+        + Verify(hash string, password string) error
+
+    }
+    class "Service" << (S,Aquamarine) >> {
+        - users UserStore
+        - sessions SessionStore
+        - passwords PasswordManager
+        - tokens TokenManager
+        - now <font color=blue>func</font>() time.Time
+
+        - createSession(ctx context.Context, userID uuid.UUID, userAgent string) (Tokens, error)
+
+        + Login(ctx context.Context, input LoginInput) (Tokens, error)
+        + Logout(ctx context.Context, refreshToken string) error
+        + Refresh(ctx context.Context, refreshToken string) (Tokens, error)
+        + Register(ctx context.Context, input CreateInput) (Created, error)
+
+    }
+    class "Session" << (S,Aquamarine) >> {
+        + ID uuid.UUID
+        + UserID uuid.UUID
+        + RefreshTokenHash string
+        + CreatedAt time.Time
+        + ExpiresAt time.Time
+        + RevokedAt *time.Time
+        + UserAgent string
+
+    }
+    interface "SessionStore"  {
+        + CreateSession(ctx context.Context, rec Session) error
+        + FindSessionByRefreshHash(ctx context.Context, hash string) (Session, error)
+        + FindSessionByID(ctx context.Context, id uuid.UUID) (Session, error)
+        + RotateRefreshToken(ctx context.Context, sessionID uuid.UUID, oldHash string, newHash string, now time.Time) error
+        + RevokeSessionByRefreshHash(ctx context.Context, hash string, now time.Time) error
+
+    }
+    interface "TokenManager"  {
+        + IssueAccess(userID uuid.UUID, sessionID uuid.UUID, expiresAt time.Time) (string, error)
+        + VerifyAccess(token string) (AccessClaims, error)
+        + GenerateRefresh() (string, error)
+        + HashRefresh(token string) string
+
+    }
+    class "Tokens" << (S,Aquamarine) >> {
+        + AccessToken string
+        + AccessExpiresAt time.Time
+        + RefreshToken string
+        + RefreshExpiresAt time.Time
+
+    }
+    interface "UserStore"  {
+        + CreateUser(ctx context.Context, rec CreateRecord) (uuid.UUID, error)
+        + FindUserByUsername(ctx context.Context, username string) (Credentials, error)
+
+    }
+    class "jwtClaims" << (S,Aquamarine) >> {
+        + SessionID string
+
+    }
+}
+namespace config {
+    class "Config" << (S,Aquamarine) >> {
+        + HTTPAddr string
+        + DatabaseURL string
+        + LogMode string
+        + JWTKey []byte
+        + JWTIssuer string
+        + JWTAudience string
+        + CookieSecure bool
+        + AllowedOrigin string
+
+    }
+}
+namespace handler {
+    interface "Authenticator"  {
+        + Register( context.Context,  auth.CreateInput) (auth.Created, error)
+        + Login( context.Context,  auth.LoginInput) (auth.Tokens, error)
+        + Refresh( context.Context,  string) (auth.Tokens, error)
+        + Logout( context.Context,  string) error
+
+    }
+    class "Handler" << (S,Aquamarine) >> {
+        - authenticator Authenticator
+        - options Options
+
+        - setRefreshCookie(w http.ResponseWriter, tokens auth.Tokens) 
+
+        + HandleLogin(w http.ResponseWriter, r *http.Request) 
+        + HandleLogout(w http.ResponseWriter, r *http.Request) 
+        + HandleRefresh(w http.ResponseWriter, r *http.Request) 
+        + HandleCreateUser(w http.ResponseWriter, r *http.Request) 
+        + RegisterRouters(r *httputil.Router) 
+
+    }
+    class "Options" << (S,Aquamarine) >> {
+        + CookieSecure bool
+        + AllowedOrigin string
+
+    }
+    class "createUserRequest" << (S,Aquamarine) >> {
+        + Username string
+        + Email string
+        + Password string
+
+    }
+    class "createUserResponse" << (S,Aquamarine) >> {
+        + Status string
+
+    }
+    class "loginRequest" << (S,Aquamarine) >> {
+        + Username string
+        + Password string
+
+    }
+    class "tokenResponse" << (S,Aquamarine) >> {
+        + AccessToken string
+        + TokenType string
+        + ExpiresAt time.Time
+
+    }
+}
+namespace repository {
+    class "Repository" << (S,Aquamarine) >> {
+        - pool *pgxpool.Pool
+
+        + CreateSession(ctx context.Context, session auth.Session) error
+        + FindSessionByRefreshHash(ctx context.Context, hash string) (auth.Session, error)
+        + RotateRefreshToken(ctx context.Context, sessionID uuid.UUID, oldHash string, newHash string, now time.Time) error
+        + RevokeSessionByRefreshHash(ctx context.Context, hash string, now time.Time) error
+        + FindSessionByID(ctx context.Context, id uuid.UUID) (auth.Session, error)
+        + CreateUser(ctx context.Context, rec auth.CreateRecord) (uuid.UUID, error)
+        + FindUserByUsername(ctx context.Context, username string) (auth.Credentials, error)
+
+    }
+}
+namespace character-service {
+}
+namespace config {
+    class "Config" << (S,Aquamarine) >> {
+        + HTTPAddr string
+        + DatabaseURL string
+        + LogMode string
+
+    }
+}
+namespace handler {
+    interface "CharacterCreator"  {
+        + Create( context.Context,  string,  json.RawMessage) (uuid.UUID, error)
+
+    }
+    class "Handler" << (S,Aquamarine) >> {
+        - characters CharacterCreator
+
+        - postUserCreatedCharacterHandler(w http.ResponseWriter, r *http.Request) 
+
+        + RegisterRouters(r *httputil.Router) 
+
+    }
+    class "createCharacterResponse" << (S,Aquamarine) >> {
+        + ID uuid.UUID
+
+    }
+}
+namespace repository {
+    class "Character" << (S,Aquamarine) >> {
+        + ID uuid.UUID
+        + UserID uuid.UUID
+        + SystemName string
+        + CharacterType string
+        + Name string
+        + Data json.RawMessage
+        + CreatedAt time.Time
+
+    }
+    class "Repository" << (S,Aquamarine) >> {
+        - pool *pgxpool.Pool
+
+        + InsertPlayerCreatedCharacter(ctx context.Context, rec service.Record) (uuid.UUID, error)
+
+    }
+}
+namespace service {
+    class "CharacterService" << (S,Aquamarine) >> {
+        - repository Repository
+        - systems <font color=blue>map</font>[string]system.Character
+
+        + Create(ctx context.Context, systemName string, raw json.RawMessage) (uuid.UUID, error)
+
+    }
+    class "Record" << (S,Aquamarine) >> {
+        + UserID uuid.UUID
+        + SystemName string
+        + CharacterType string
+        + Name string
+        + Data json.RawMessage
+
+    }
+    interface "Repository"  {
+        + InsertPlayerCreatedCharacter( context.Context,  Record) (uuid.UUID, error)
+
+    }
+    class "SaveError" << (S,Aquamarine) >> {
+        + Err error
+
+        + Error() string
+        + Unwrap() error
+
+    }
+}
+namespace system {
+    interface "Character"  {
+        + CreateCharacter(ctx context.Context, raw json.RawMessage) (CreatedCharacter, error)
+
+    }
+    class "CreatedCharacter" << (S,Aquamarine) >> {
+        + UserID uuid.UUID
+        + CharacterType string
+        + Name string
+        + Data json.RawMessage
+
+    }
+    class "InputError" << (S,Aquamarine) >> {
+        + Err error
+
+        + Error() string
+        + Unwrap() error
+
+    }
+    class "ValidationError" << (S,Aquamarine) >> {
+        + Violations []Violation
+
+        + Error() string
+
+    }
+    class "Violation" << (S,Aquamarine) >> {
+        + Field string
+        + Code string
+        + Message string
+
+    }
+    namespace tes {
+    class "Character" << (S,Aquamarine) >> {
+        + CreateCharacter(ctx context.Context, raw json.RawMessage) (system.CreatedCharacter, error)
+
+    }
+    class "armor" << (S,Aquamarine) >> {
+        + ArmorLevel int
+        + AgilityModifier int
+
+        - kind() string
+        - validate() error
+
+    }
+    class "bliss" << (S,Aquamarine) >> {
+        + Bliss int
+        + Permanent int
+
+    }
+    class "carTrait" << (S,Aquamarine) >> {
+        + Name string
+        + Stat string
+        + Bonus int
+
+    }
+    class "characterList" << (S,Aquamarine) >> {
+        + Name string
+        + Archetype string
+        + FavouriteSong string
+        + Description string
+        + Stats stats
+        + Derivatives derivatives
+        + Bliss bliss
+        + Talents []string
+        + Dream string
+        + Flaw string
+        + Inventory []gearDTO
+        + Cash int
+        + Journey journey
+        + Tension []tension
+        + Conditions conditions
+        + Vehicle vehicle
+
+    }
+    class "conditions" << (S,Aquamarine) >> {
+        + Injuries []string
+        + Traumas []string
+
+    }
+    class "createRequest" << (S,Aquamarine) >> {
+        + UserID uuid.UUID
+        + Type string
+        + Rules bool
+        + CharacterList characterList
+
+    }
+    class "derivatives" << (S,Aquamarine) >> {
+        + Health int
+        + Hope int
+
+    }
+    class "equipment" << (S,Aquamarine) >> {
+        + Bonus int
+
+        - kind() string
+        - validate() error
+
+    }
+    class "gearDTO" << (S,Aquamarine) >> {
+        + Name string
+        + Code string
+        + Type string
+        + Bonus int
+        + Price int
+        + Notes string
+        + DamageValue int
+        + DamageKind string
+        + RangeMin string
+        + RangeMax string
+        + Tags []string
+        + BlastPower int
+        + ArmorLevel int
+        + AgilityModifier int
+        + Processor int
+        + Network int
+        + Graphics int
+
+        + MarshalJSON() ([]byte, error)
+
+    }
+    interface "item"  {
+        - kind() string
+        - validate() error
+
+    }
+    class "itemBase" << (S,Aquamarine) >> {
+        + Name string
+        + Code string
+        + Price int
+        + Notes string
+
+    }
+    class "journey" << (S,Aquamarine) >> {
+        + Goal string
+        + Threat string
+
+    }
+    class "neurocaster" << (S,Aquamarine) >> {
+        + Processor int
+        + Network int
+        + Graphics int
+
+        - kind() string
+        - validate() error
+
+    }
+    class "services.character.internal.system.tes.validationPolicy" << (T, #FF7700) >>  {
+    }
+    class "stats" << (S,Aquamarine) >> {
+        + Strength int
+        + Agility int
+        + Wits int
+        + Empathy int
+
+        + Validate() error
+
+    }
+    class "storedCharacter" << (S,Aquamarine) >> {
+        + Type string
+        + Character characterList
+
+    }
+    class "tension" << (S,Aquamarine) >> {
+        + TravellerName string
+        + Tension int
+
+    }
+    class "vehicle" << (S,Aquamarine) >> {
+        + VehicleType string
+        + Model string
+        + Passengers int
+        + Fuel string
+        + Description string
+        + Stats vehicleStats
+        + SharedGear []gearDTO
+
+    }
+    class "vehicleStats" << (S,Aquamarine) >> {
+        + Maneuverability int
+        + Speed int
+        + Hull int
+        + Armor int
+        + Traits []carTrait
+        + Gear []gearDTO
+
+    }
+    class "weapon" << (S,Aquamarine) >> {
+        + Bonus int
+        + DamageValue int
+        + DamageKind string
+        + RangeMin string
+        + RangeMax string
+        + Tags []string
+        + BlastPower int
+
+        - kind() string
+        - validate() error
+
+    }
+    }
+}
+namespace resolve-service {
+}
+namespace config {
+    class "Config" << (S,Aquamarine) >> {
+        + HTTPAddr string
+        + DatabaseURL string
+        + LogMode string
+
+    }
+}
+namespace handler {
+    class "Handler" << (S,Aquamarine) >> {
+        - service ResolveService
+
+        + Resolve(w http.ResponseWriter, r *http.Request) 
+        + RegisterRoutes(r *httputil.Router) 
+
+    }
+    interface "ResolveService"  {
+        + Resolve( context.Context,  service.Command) (service.Result, error)
+
+    }
+}
+namespace repository {
+    class "Repository" << (S,Aquamarine) >> {
+        - pool *pgxpool.Pool
+
+        + InsertRollHistory(ctx context.Context, rec RollHistory) (uuid.UUID, error)
+        + GetRollHistoryByID(ctx context.Context, id uuid.UUID) (RollHistory, error)
+
+    }
+    class "RollHistory" << (S,Aquamarine) >> {
+        + ID uuid.UUID
+        + RequestID uuid.UUID
+        + SystemName string
+        + ActionType string
+        + StatePayload json.RawMessage
+        + RequestPayload json.RawMessage
+        + ResponsePayload json.RawMessage
+        + CampaignID *uuid.UUID
+        + CharacterID *uuid.UUID
+        + CreatedAt time.Time
+
+    }
+}
+namespace service {
+    class "Command" << (S,Aquamarine) >> {
+        + System string
+        + Action string
+        + Payload json.RawMessage
+        + RequestID uuid.UUID
+
+    }
+    interface "HistoryWriter"  {
+        + InsertRollHistory( context.Context,  repository.RollHistory) (uuid.UUID, error)
+
+    }
+    class "ResolveService" << (S,Aquamarine) >> {
+        - resolvers <font color=blue>map</font>[string]system.Resolver
+        - history HistoryWriter
+
+        + Resolve(ctx context.Context, cmd Command) (Result, error)
+
+    }
+    class "Result" << (S,Aquamarine) >> {
+        + RecordID uuid.UUID
+        + Payload json.RawMessage
+
+    }
+}
+namespace system {
+    interface "HistoryReader"  {
+        + GetRollHistoryByID( context.Context,  uuid.UUID) (repository.RollHistory, error)
+
+    }
+    class "Lineage" << (S,Aquamarine) >> {
+        + OriginalID uuid.UUID
+        + ParentID uuid.UUID
+
+        + Next(previous uuid.UUID) Lineage
+
+    }
+    class "RequestError" << (S,Aquamarine) >> {
+        + Kind ErrorKind
+        + Cause error
+
+        + Error() string
+        + Unwrap() error
+
+    }
+    interface "Resolver"  {
+        + Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error)
+
+    }
+    interface "StatefulResult"  {
+        + HistoryState() any
+
+    }
+    class "services.resolve.internal.system.ErrorKind" << (T, #FF7700) >>  {
+    }
+    namespace generic {
+    class "Resolver" << (S,Aquamarine) >> {
+        + Dice dice.Generator
+
+        + Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error)
+
+    }
+    class "request" << (S,Aquamarine) >> {
+        + Number int
+        + Size int
+
+    }
+    class "response" << (S,Aquamarine) >> {
+        + Expression string
+        + Rolls []int
+        + Sum int
+
+    }
+    }
+    namespace tes {
+    class "Resolver" << (S,Aquamarine) >> {
+        - history system.HistoryReader
+
+        + Dice dice.Generator
+
+        - resolveRoll(raw json.RawMessage) (rollResponse, error)
+        - resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, error)
+        - continueRoll(rec rollState) (pushResponse, error)
+
+        + Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error)
+
+    }
+    class "pushRequest" << (S,Aquamarine) >> {
+        + RecordID uuid.UUID
+
+    }
+    class "pushResponse" << (S,Aquamarine) >> {
+        - state rollState
+
+        + Expression string
+        + PushExpression string
+        + AttributeRolls []int
+        + GearRolls []int
+        + Successes int
+        + Success bool
+        + HopeLosses int
+        + GearDamage int
+
+        + HistoryState() any
+
+    }
+    class "rollRequest" << (S,Aquamarine) >> {
+        + Attr int
+        + Assist int
+        + Gear int
+        + Modificator int
+        + Target int
+
+    }
+    class "rollResponse" << (S,Aquamarine) >> {
+        - state rollState
+
+        + Expression string
+        + AttributeRolls []int
+        + GearRolls []int
+        + Successes int
+        + Success bool
+
+        + HistoryState() any
+
+    }
+    class "rollState" << (S,Aquamarine) >> {
+        + AttributeRolls []int
+        + GearRolls []int
+        + Target int
+
+    }
+    }
+    namespace vtmv5 {
+    class "Outcome" << (S,Aquamarine) >> {
+        + Successes int
+        + Success bool
+        + IsCritical bool
+        + CritType string
+
+    }
+    class "Resolver" << (S,Aquamarine) >> {
+        - history system.HistoryReader
+
+        + Dice dice.Generator
+
+        - resolveRoll(raw json.RawMessage) (rollResponse, error)
+        - resolveReroll(ctx context.Context, raw json.RawMessage) (rerollResponse, error)
+        - continueRoll(rec rollState, indices []int) (rerollResponse, error)
+        - resolveCheck(raw json.RawMessage) (checkResponse, error)
+
+        + Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error)
+
+    }
+    class "checkResponse" << (S,Aquamarine) >> {
+        + Expression string
+        + Result int
+        + Success bool
+
+    }
+    class "rerollRequest" << (S,Aquamarine) >> {
+        + RecordID uuid.UUID
+        + RerollIndex []int
+
+    }
+    class "rerollResponse" << (S,Aquamarine) >> {
+        - state rollState
+
+        + Expression string
+        + RerollExpression string
+        + MainRoll []int
+        + HungerRoll []int
+        + Successes int
+        + Success bool
+        + IsCritical bool
+        + CritType string
+
+        + HistoryState() any
+
+    }
+    class "rollRequest" << (S,Aquamarine) >> {
+        + Attribute int
+        + Skill int
+        + Hunger int
+        + Target int
+
+    }
+    class "rollResponse" << (S,Aquamarine) >> {
+        - state rollState
+
+        + Expression string
+        + MainRoll []int
+        + HungerRoll []int
+        + Successes int
+        + Success bool
+        + IsCritical bool
+        + CritType string
+
+        + HistoryState() any
+
+    }
+    class "rollState" << (S,Aquamarine) >> {
+        + MainRoll []int
+        + HungerRoll []int
+        + Target int
+
+    }
+    }
+}
+"__builtin__.string" #.. "services.resolve.internal.system.ErrorKind"
+"services.characterinternalsystemtesfontcolorbluefuncfontcharacterListsystemValidationError" #.. "services.character.internal.system.tes.validationPolicy"
+"jwt.RegisteredClaims" *-- "services.backend.internal.auth.jwtClaims"
+"services.character.internal.system.tes.itemBase" *-- "services.character.internal.system.tes.armor"
+"services.character.internal.system.tes.itemBase" *-- "services.character.internal.system.tes.equipment"
+"services.character.internal.system.tes.itemBase" *-- "services.character.internal.system.tes.neurocaster"
+"services.character.internal.system.tes.itemBase" *-- "services.character.internal.system.tes.weapon"
+"system.Lineage" *-- "services.resolve.internal.system.tes.rollState"
+"system.Lineage" *-- "services.resolve.internal.system.vtmv5.rollState"
+
+
+
+@enduml
