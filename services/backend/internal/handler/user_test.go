@@ -73,3 +73,7 @@ func (f creatorFunc) Refresh(context.Context, string) (auth.Tokens, error) {
 func (f creatorFunc) Logout(context.Context, string) error {
 	panic("unexpected Logout in registration test")
 }
+
+func (f creatorFunc) Authenticate(context.Context, string) (auth.AccessClaims, error) {
+	panic("unexpected Authenticate in registration test")
+}
