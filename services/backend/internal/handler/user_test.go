@@ -9,9 +9,15 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 type creatorFunc func(context.Context, auth.CreateInput) (auth.Created, error)
+
+func (f creatorFunc) GetProfile(context.Context, uuid.UUID) (auth.UserProfile, error) {
+	panic("unexpected GetProfile in registration test")
+}
 
 func (f creatorFunc) Register(ctx context.Context, input auth.CreateInput) (auth.Created, error) {
 	return f(ctx, input)

@@ -10,6 +10,7 @@ import (
 type UserStore interface {
 	CreateUser(ctx context.Context, rec CreateRecord) (uuid.UUID, error)
 	FindUserByUsername(ctx context.Context, username string) (Credentials, error)
+	FindUserByID(ctx context.Context, id uuid.UUID) (UserProfile, error)
 }
 
 type SessionStore interface {

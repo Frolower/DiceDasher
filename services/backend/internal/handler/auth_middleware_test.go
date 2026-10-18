@@ -173,7 +173,6 @@ func TestProtectedRoutesRequireAuth(t *testing.T) {
 	router := httputil.NewRouter()
 	h.RegisterRouters(router)
 	for _, route := range []struct{ method, path string }{
-		{http.MethodGet, "/me"},
 		{http.MethodPatch, "/user"},
 		{http.MethodDelete, "/user"},
 		{http.MethodPut, "/password"},

@@ -10,7 +10,7 @@ func (h *Handler) RegisterRouters(r *httputil.Router) {
 	r.Handle("/register").POST(h.HandleCreateUser)
 	r.Handle("/login").POST(h.HandleLogin)
 	r.Handle("/logout").POST(h.HandleLogout)
-	r.Handle("/me").GET(h.RequreAuth(notImplemented))
+	r.Handle("/me").GET(h.RequreAuth(h.HandleMe))
 	r.Handle("/user").PATCH(h.RequreAuth(notImplemented)).DELETE(h.RequreAuth(notImplemented))
 	r.Handle("/password").PUT(h.RequreAuth(notImplemented))
 	r.Handle("/refresh").POST(h.HandleRefresh)

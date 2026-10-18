@@ -13,6 +13,10 @@ import (
 
 type storeFunc func(context.Context, CreateRecord) (uuid.UUID, error)
 
+func (f storeFunc) FindUserByID(context.Context, uuid.UUID) (UserProfile, error) {
+	panic("unexpected profile lookup during registration")
+}
+
 func (f storeFunc) CreateUser(ctx context.Context, rec CreateRecord) (uuid.UUID, error) {
 	return f(ctx, rec)
 }

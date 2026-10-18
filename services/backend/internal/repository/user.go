@@ -45,3 +45,16 @@ func (r *Repository) FindUserByUsername(ctx context.Context, username string) (a
 	}
 	return credentials, nil
 }
+
+func (r *Repository) FindUserByID(ctx context.Context, id uuid.UUID) (auth.UserProfile, error) {
+	const q = `SELECT id, username, email FROM public.users WHERE id = $1`
+	var user auth.UserProfile
+	err := r.pool.QueryRow(ctx, q, id).Scan(&user.ID, &user.Username, &user.Email)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return auth.UserProfile{}, auth.ErrUserNotFound
+	}
+	if err != nil {
+		return auth.UserProfile{}, fmt.Errorf("find user: %w", err)
+	}
+	return user, nil
+}

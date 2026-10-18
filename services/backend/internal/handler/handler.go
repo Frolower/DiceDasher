@@ -3,6 +3,8 @@ package handler
 import (
 	"backend/internal/auth"
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Authenticator interface {
@@ -11,6 +13,7 @@ type Authenticator interface {
 	Refresh(context.Context, string) (auth.Tokens, error)
 	Logout(context.Context, string) error
 	Authenticate(context.Context, string) (auth.AccessClaims, error)
+	GetProfile(context.Context, uuid.UUID) (auth.UserProfile, error)
 }
 
 type Options struct {

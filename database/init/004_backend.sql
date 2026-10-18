@@ -39,7 +39,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_username_unique ON public.users (lower(u
 CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON public.users (lower(email));
 
 GRANT INSERT ON public.users TO user_service;
-GRANT SELECT (id, username, hash) ON public.users TO user_service;
+GRANT SELECT (id, username, email, hash) ON public.users TO user_service;
 GRANT DELETE ON public.users TO user_service;
 
 GRANT INSERT ON public.sessions TO user_service;
