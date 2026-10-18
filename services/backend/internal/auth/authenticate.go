@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"time"
 )
 
 func (s *Service) Authenticate(ctx context.Context, accessToken string) (AccessClaims, error) {
@@ -20,7 +19,7 @@ func (s *Service) Authenticate(ctx context.Context, accessToken string) (AccessC
 		return AccessClaims{}, err
 	}
 
-	now := time.Now().UTC()
+	now := s.now().UTC()
 	if session.RevokedAt != nil || !session.ExpiresAt.After(now) || session.UserID != claims.UserID {
 		return AccessClaims{}, ErrSessionNotFound
 	}
