@@ -7,12 +7,12 @@ import (
 
 func (h *Handler) RegisterRouters(r *httputil.Router) {
 	// auth specific routes
-	r.Handle("/register").POST(h.HandleCreateUser)
+	r.Handle("/register").POST(h.HandleCreateUser
 	r.Handle("/login").POST(h.HandleLogin)
-	r.Handle("/logout").POST(h.HandleLogout)
-	r.Handle("/me").GET(notImplemented)
-	r.Handle("/user").PATCH(notImplemented).DELETE(notImplemented)
-	r.Handle("/password").PUT(notImplemented)
+	r.Handle("/logout").POST(h.RequreAuth(h.HandleLogout))
+	r.Handle("/me").GET(h.RequreAuth(notImplemented))
+	r.Handle("/user").PATCH(h.RequreAuth(notImplemented)).DELETE(h.RequreAuth(notImplemented))
+	r.Handle("/password").PUT(h.RequreAuth(notImplemented))
 	r.Handle("/refresh").POST(h.HandleRefresh)
 
 	//health
