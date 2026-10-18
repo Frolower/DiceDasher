@@ -35,9 +35,9 @@ func (h *Handler) RequreAuth(next http.HandlerFunc) http.HandlerFunc {
 				errors.Is(err, auth.ErrSessionNotFound):
 				writeUnauthorized(w)
 			default:
-				logger.Logf(
+				logger.LogErrorf(
 					r.Context(),
-					"ERROR authentication failed internally",
+					"authentication failed internally",
 				)
 				http.Error(
 					w,

@@ -21,7 +21,7 @@ func (h *Handler) HandleMe(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, auth.ErrUserNotFound):
 			writeUnauthorized(w)
 		default:
-			logger.Logf(r.Context(), "ERROR loading user profile")
+			logger.LogErrorf(r.Context(), "loading user profile")
 			http.Error(w, "internal error", http.StatusInternalServerError)
 		}
 		return
@@ -31,6 +31,6 @@ func (h *Handler) HandleMe(w http.ResponseWriter, r *http.Request) {
 		ID:       profile.ID,
 		Username: profile.Username,
 		Email:    profile.Email}); err != nil {
-		logger.Logf(r.Context(), "ERROR writing profile response: %s", err)
+		logger.LogErrorf(r.Context(), "writing profile response: %s", err)
 	}
 }

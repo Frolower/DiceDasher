@@ -4,9 +4,9 @@ import (
 	"context"
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/dice"
+	"diceDasher/pkg/logger"
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/service"
-	"log"
 	"net"
 	"net/http"
 
@@ -22,13 +22,13 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 
 	// Initialize repository
 	repo, err := dbutil.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 	defer repo.Close()
 
@@ -51,9 +51,9 @@ func main() {
 
 	ln, err := net.Listen("tcp", cfg.HTTPAddr)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 
-	log.Printf("resolver service READY on %s", cfg.HTTPAddr)
-	log.Fatal(srv.Serve(ln))
+	logger.Logf(context.Background(), "resolver service READY on %s", cfg.HTTPAddr)
+	logger.LogFatalf(context.Background(), "%v", srv.Serve(ln))
 }

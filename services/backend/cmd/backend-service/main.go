@@ -8,7 +8,7 @@ import (
 	"context"
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/httputil"
-	"log"
+	"diceDasher/pkg/logger"
 	"net"
 	"net/http"
 	"time"
@@ -17,18 +17,18 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 
 	repo, err := dbutil.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 	defer repo.Close()
 
 	tokens, err := auth.NewJWTManager(cfg.JWTKey, cfg.JWTIssuer, cfg.JWTAudience)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 	store := repository.New(repo.Pool())
 	// A single repository implements both the user and session interfaces.
@@ -51,9 +51,9 @@ func main() {
 
 	ln, err := net.Listen("tcp", cfg.HTTPAddr)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 
-	log.Printf("backend service READY on %s", cfg.HTTPAddr)
-	log.Fatal(srv.Serve(ln))
+	logger.Logf(context.Background(), "backend service READY on %s", cfg.HTTPAddr)
+	logger.LogFatalf(context.Background(), "%v", srv.Serve(ln))
 }

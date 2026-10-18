@@ -41,7 +41,7 @@ func (h *Handler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 		if errors.Is(err, auth.ErrSessionNotFound) {
 			http.Error(w, "invalid refresh token", http.StatusUnauthorized)
 		} else {
-			logger.Logf(r.Context(), "ERROR refresh failed internally")
+			logger.LogErrorf(r.Context(), "refresh failed internally")
 			http.Error(w, "failed to refresh the token", http.StatusInternalServerError)
 		}
 		return
@@ -54,6 +54,6 @@ func (h *Handler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 		TokenType:   "Bearer",
 		ExpiresAt:   tokens.AccessExpiresAt,
 	}); err != nil {
-		logger.Logf(r.Context(), "ERROR writing refresh response: %s", err)
+		logger.LogErrorf(r.Context(), "writing refresh response: %s", err)
 	}
 }

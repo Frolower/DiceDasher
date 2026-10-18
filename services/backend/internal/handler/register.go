@@ -39,7 +39,7 @@ func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		default:
 			// Do not expose database details to the client. The repository also excludes
 			// PostgreSQL Detail from errors because it may contain the user's email.
-			logger.Logf(r.Context(), "ERROR registering user: %s", err)
+			logger.LogErrorf(r.Context(), "registering user: %s", err)
 			http.Error(w, "failed to create user", http.StatusInternalServerError)
 		}
 		return
@@ -49,6 +49,6 @@ func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	// a session, cookies, or tokens; the internal UUID does not need to be exposed.
 	if err := httputil.PackJSON(w, http.StatusCreated, createUserResponse{Status: "created"}); err != nil {
 		// Headers have already been sent: do not write a second HTTP response here.
-		logger.Logf(r.Context(), "ERROR writing registration response: %s", err)
+		logger.LogErrorf(r.Context(), "writing registration response: %s", err)
 	}
 }

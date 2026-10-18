@@ -30,13 +30,13 @@ func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
 		System: r.URL.Query().Get("system"), Action: r.URL.Query().Get("action"), Payload: raw, RequestID: requestID,
 	})
 	if err != nil {
-		logger.Logf(r.Context(), "ERROR: %s", err)
+		logger.LogErrorf(r.Context(), "%s", err)
 		status, message := errorResponse(err)
 		http.Error(w, message, status)
 		return
 	}
 	if err := httputil.PackJSON(w, http.StatusOK, result); err != nil {
-		logger.Logf(r.Context(), "ERROR writing response: %s", err)
+		logger.LogErrorf(r.Context(), "writing response: %s", err)
 	}
 }
 

@@ -2,7 +2,6 @@ package httputil
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"strings"
@@ -169,7 +168,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		ip := clientIP(r)
 
 		// Log on request
-		log.Printf("| %-71s | id=%s |%s%-6s%s| \"%s\"",
+		logger.Logf(context.Background(), "| %-71s | id=%s |%s%-6s%s| \"%s\"",
 			ip, id.String(), ms, r.Method,
 			cReset, r.URL.RequestURI())
 
@@ -183,7 +182,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		ss := styleForStatus(sw.status, colorMode)
 
 		// Log on response
-		log.Printf("|%s %3d %s| %22s | %40s | id=%s |%s%-6s%s| \"%s\"%s bytes=%d%s",
+		logger.Logf(context.Background(), "|%s %3d %s| %22s | %40s | id=%s |%s%-6s%s| \"%s\"%s bytes=%d%s",
 			ss, sw.status, cReset,
 			dur, r.UserAgent(), id.String(),
 			ms, r.Method, cReset,

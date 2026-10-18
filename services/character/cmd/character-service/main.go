@@ -4,13 +4,13 @@ import (
 	"context"
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/httputil"
+	"diceDasher/pkg/logger"
 	"diceDasher/services/character/internal/config"
 	"diceDasher/services/character/internal/handler"
 	"diceDasher/services/character/internal/repository"
 	"diceDasher/services/character/internal/service"
 	"diceDasher/services/character/internal/system"
 	"diceDasher/services/character/internal/system/tes"
-	"log"
 	"net"
 	"net/http"
 )
@@ -18,12 +18,12 @@ import (
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 
 	repo, err := dbutil.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 	defer repo.Close()
 
@@ -43,9 +43,9 @@ func main() {
 
 	ln, err := net.Listen("tcp", cfg.HTTPAddr)
 	if err != nil {
-		log.Fatal(err)
+		logger.LogFatalf(context.Background(), "%v", err)
 	}
 
-	log.Printf("character service READY on %s", cfg.HTTPAddr)
-	log.Fatal(srv.Serve(ln))
+	logger.Logf(context.Background(), "character service READY on %s", cfg.HTTPAddr)
+	logger.LogFatalf(context.Background(), "%v", srv.Serve(ln))
 }

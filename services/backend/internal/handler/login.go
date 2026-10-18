@@ -46,14 +46,14 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, auth.ErrUnableToLogin):
 			http.Error(w, "invalid username or password", http.StatusUnauthorized)
 		default:
-			logger.Logf(r.Context(), "ERROR: login failed internally")
+			logger.LogErrorf(r.Context(), "login failed internally")
 			http.Error(w, "failed to log in", http.StatusInternalServerError)
 		}
 		return
 	}
 	h.setRefreshCookie(w, tokens)
 	if err := httputil.PackJSON(w, http.StatusOK, tokenResponse{AccessToken: tokens.AccessToken, TokenType: "Bearer", ExpiresAt: tokens.AccessExpiresAt}); err != nil {
-		logger.Logf(r.Context(), "ERROR writing login response: %s", err)
+		logger.LogErrorf(r.Context(), "writing login response: %s", err)
 	}
 }
 
@@ -88,7 +88,7 @@ func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	if cookie != nil {
 		if err := h.authenticator.Logout(r.Context(), cookie.Value); err != nil {
 			if !errors.Is(err, auth.ErrSessionNotFound) {
-				logger.Logf(r.Context(), "ERROR logout failed internally")
+				logger.LogErrorf(r.Context(), "logout failed internally")
 				http.Error(w, "failed to logout", http.StatusInternalServerError)
 				return
 			}

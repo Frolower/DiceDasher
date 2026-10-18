@@ -38,7 +38,7 @@ func (h *Handler) postUserCreatedCharacterHandler(w http.ResponseWriter, r *http
 	}
 	id, err := h.characters.Create(r.Context(), sys, raw)
 	if err != nil {
-		logger.Logf(r.Context(), "ERROR creating character: %s", err)
+		logger.LogErrorf(r.Context(), "creating character: %s", err)
 		var input *system.InputError
 		var validation *system.ValidationError
 		var save *service.SaveError
@@ -52,7 +52,7 @@ func (h *Handler) postUserCreatedCharacterHandler(w http.ResponseWriter, r *http
 			http.Error(w, input.Error(), http.StatusBadRequest)
 		case errors.As(err, &validation):
 			if err := httputil.PackJSON(w, http.StatusUnprocessableEntity, validation); err != nil {
-				logger.Logf(r.Context(), "ERROR encoding validation response: %s", err)
+				logger.LogErrorf(r.Context(), "encoding validation response: %s", err)
 			}
 		default:
 			http.Error(w, "internal error", http.StatusInternalServerError)
@@ -60,6 +60,6 @@ func (h *Handler) postUserCreatedCharacterHandler(w http.ResponseWriter, r *http
 		return
 	}
 	if err := httputil.PackJSON(w, http.StatusCreated, createCharacterResponse{ID: id}); err != nil {
-		logger.Logf(r.Context(), "ERROR encoding creation response: %s", err)
+		logger.LogErrorf(r.Context(), "encoding creation response: %s", err)
 	}
 }
