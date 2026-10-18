@@ -3,6 +3,7 @@ package logger
 import (
 	"context"
 	"log"
+	"os"
 )
 
 const (
@@ -12,7 +13,10 @@ const (
 	cBlack        = "\033[30m"
 	cWhite        = "\033[97m"
 	cGray         = "\033[90m"
+	cRed          = "\033[31m"
 	cBrightYellow = "\033[93m"
+
+	bgBrightRed = "\033[101m"
 )
 
 func Logf(ctx context.Context, format string, args ...any) {
@@ -27,6 +31,15 @@ func LogWarning(message string) {
 	log.Printf("%sWARNING: %s%s", cBrightYellow, message, cReset)
 }
 
-func LogWarningf(format string, args ...any) {
-	log.Printf(cBrightYellow+"WARNING: "+format+cReset, args...)
+func LogWarningf(ctx context.Context, format string, args ...any) {
+	Logf(ctx, cBrightYellow+"WARNING: "+format+cReset, args...)
+}
+
+func LogErrorf(ctx context.Context, format string, args ...any) {
+	Logf(ctx, cRed+"ERROR: "+format+cReset, args...)
+}
+
+func LogFatalf(ctx context.Context, format string, args ...any) {
+	Logf(ctx, bgBrightRed+cWhite+"FATAL: "+format+cReset, args...)
+	os.Exit(1)
 }

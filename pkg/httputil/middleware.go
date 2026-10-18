@@ -1,6 +1,7 @@
 package httputil
 
 import (
+	"context"
 	"log"
 	"net"
 	"net/http"
@@ -84,7 +85,7 @@ func styleForStatus(code int, mode string) string {
 	case "default", "":
 		// keep defaults
 	default:
-		logger.LogWarningf("unexpected mode for status style: %s", mode)
+		logger.LogWarningf(context.Background(), "unexpected mode for status style: %s", mode)
 		// unknown mode -> default palette
 	}
 
@@ -110,7 +111,7 @@ func styleForMethod(method, mode string) string {
 	case "default", "":
 		// keep defaults
 	default:
-		logger.LogWarningf("unexpected mode for method style: %s", mode)
+		logger.LogWarningf(context.Background(), "unexpected mode for method style: %s", mode)
 		// unknown mode -> default palette
 	}
 
@@ -145,7 +146,7 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 			colorMode = "default"
 		}
 	default:
-		logger.LogWarningf("unexpected mode for request logger: %s", mode)
+		logger.LogWarningf(context.Background(), "unexpected mode for request logger: %s", mode)
 		mode = "default"
 		colorMode = "default"
 	}
