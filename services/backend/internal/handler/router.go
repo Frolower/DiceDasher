@@ -7,7 +7,7 @@ import (
 
 func (h *Handler) RegisterRouters(r *httputil.Router) {
 	// auth specific routes
-	r.Handle("/register").POST(h.HandleCreateUser
+	r.Handle("/register").POST(h.HandleCreateUser)
 	r.Handle("/login").POST(h.HandleLogin)
 	r.Handle("/logout").POST(h.RequreAuth(h.HandleLogout))
 	r.Handle("/me").GET(h.RequreAuth(notImplemented))
