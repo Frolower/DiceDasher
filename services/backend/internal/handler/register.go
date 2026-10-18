@@ -9,24 +9,24 @@ import (
 )
 
 func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
-	// Ограничиваем тело до декодирования. Для трёх полей 16 КиБ достаточно;
-	// слишком большой запрос не должен занимать неограниченную память.
+	// Limit the body before decoding. 16 KiB is enough for three fields;
+	// an oversized request must not consume unbounded memory.
 	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	var req createUserRequest
-	// Декодируем сразу в структуру: UnpackJSON отклоняет неизвестные поля,
-	// некорректный JSON и несколько JSON-значений в одном теле.
+	// Decode directly into a struct: UnpackJSON rejects unknown fields,
+	// invalid JSON, and multiple JSON values in one body.
 	if err := httputil.UnpackJSON(r, &req); err != nil {
 		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
 		} else {
-			// Не возвращаем текст декодера: он может содержать присланные значения.
+			// Do not return the decoder error text: it may contain submitted values.
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 		}
 		return
 	}
 
-	// HTTP-модель превращается во входные данные сценария регистрации.
-	// Проверка полей, хеширование и запись выполняются внутри auth.Service.
+	// Convert the HTTP model into input for the registration flow.
+	// Field validation, hashing, and persistence happen inside auth.Service.
 	_, err := h.authenticator.Register(r.Context(), auth.CreateInput{
 		Username: req.Username, Email: req.Email, Password: req.Password,
 	})
@@ -37,18 +37,18 @@ func (h *Handler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 		case errors.Is(err, auth.ErrAlreadyExists):
 			http.Error(w, "username or email already exists", http.StatusConflict)
 		default:
-			// Клиент не получает детали БД. Репозиторий также не переносит
-			// PostgreSQL Detail в ошибки: там может оказаться email пользователя.
+			// Do not expose database details to the client. The repository also excludes
+			// PostgreSQL Detail from errors because it may contain the user's email.
 			logger.Logf(r.Context(), "ERROR registering user: %s", err)
 			http.Error(w, "failed to create user", http.StatusInternalServerError)
 		}
 		return
 	}
 
-	// 201 означает, что пользователь уже сохранён. Сессию, cookie и токены
-	// регистрация пока не создаёт; внутренний UUID наружу не требуется.
+	// 201 means the user has been saved. Registration does not yet create
+	// a session, cookies, or tokens; the internal UUID does not need to be exposed.
 	if err := httputil.PackJSON(w, http.StatusCreated, createUserResponse{Status: "created"}); err != nil {
-		// Заголовки уже отправлены: второй HTTP-ответ здесь писать нельзя.
+		// Headers have already been sent: do not write a second HTTP response here.
 		logger.Logf(r.Context(), "ERROR writing registration response: %s", err)
 	}
 }

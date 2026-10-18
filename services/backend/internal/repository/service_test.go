@@ -14,7 +14,7 @@ func TestMapCreateError(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	// Другие ограничения не должны выглядеть как занятый email/username.
+	// Other constraint violations must not be reported as an email or username already in use.
 	err := mapCreateError(&pgconn.PgError{Code: "23505", ConstraintName: "users_pkey", Detail: "private", Message: "private"})
 	if errors.Is(err, auth.ErrAlreadyExists) || strings.Contains(err.Error(), "private") {
 		t.Fatal(err)

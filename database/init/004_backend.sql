@@ -1,6 +1,6 @@
 \set ON_ERROR_STOP on
--- Повторное применение к существующему volume не удаляет данные.
--- Скрипт также можно запустить отдельно от 000 (под администратором).
+-- Reapplying this script to an existing volume does not delete data.
+-- This script can also run independently of 000 (as an administrator).
 SELECT 'CREATE ROLE user_service LOGIN PASSWORD ''user_password'''
 WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'user_service')
 \gexec
@@ -46,6 +46,6 @@ GRANT INSERT ON public.sessions TO user_service;
 GRANT SELECT ON public.sessions TO user_service;
 GRANT UPDATE (refresh_token_hash, revoked_at) ON public.sessions TO user_service;
 
--- Хеш однозначно определяет сессию; user_id нужен для списка сессий пользователя.
+-- The hash uniquely identifies a session; user_id is used to list a user's sessions.
 CREATE UNIQUE INDEX IF NOT EXISTS sessions_refresh_token_hash_unique ON public.sessions (refresh_token_hash);
 CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON public.sessions (user_id);

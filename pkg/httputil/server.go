@@ -1,6 +1,6 @@
-//мам можно мне https://github.com/gorilla/mux
-//у нас есть https://github.com/gorilla/mux дома
-//https://github.com/gorilla/mux дома:
+// Mom, can we have https://github.com/gorilla/mux?
+// We have https://github.com/gorilla/mux at home.
+// https://github.com/gorilla/mux at home:
 
 package httputil
 

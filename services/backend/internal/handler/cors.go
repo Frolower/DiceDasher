@@ -2,8 +2,8 @@ package handler
 
 import "net/http"
 
-// Credentials разрешены только конкретному Origin из конфигурации.
-// Браузерному fetch также нужен credentials: "include" для сохранения cookie.
+// Credentials are allowed only for the specific Origin configured.
+// Browser fetch requests also need credentials: "include" to save the cookie.
 func CORS(allowedOrigin string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

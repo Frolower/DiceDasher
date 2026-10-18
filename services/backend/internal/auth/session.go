@@ -24,8 +24,8 @@ func (s *Service) createSession(ctx context.Context, userID uuid.UUID, userAgent
 	if err != nil {
 		return Tokens{}, fmt.Errorf("issue access token: %w", err)
 	}
-	// Подготовка JWT до INSERT не оставляет сессию при ошибке подписи.
-	// Но клиент получает токены только после успешного сохранения сессии.
+	// Preparing the JWT before INSERT avoids leaving a session behind if signing fails.
+	// The client receives tokens only after the session is successfully saved.
 	if err := s.sessions.CreateSession(ctx, session); err != nil {
 		return Tokens{}, fmt.Errorf("save session: %w", err)
 	}

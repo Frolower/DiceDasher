@@ -37,19 +37,19 @@ type Service struct {
 	now       func() time.Time
 }
 
-// NewService создаёт сервис для существующей регистрации.
-// Для входа main передаёт сессии и JWT через NewServiceWithDependencies.
+// NewService creates a service for the existing registration flow.
+// For login, main supplies sessions and JWT support through NewServiceWithDependencies.
 func NewService(users UserStore) *Service {
 	return NewServiceWithDependencies(users, nil, nil, nil)
 }
 
-// NewServiceWithPasswords позволяет подменить bcrypt в тестах регистрации.
+// NewServiceWithPasswords allows replacing bcrypt in registration tests.
 func NewServiceWithPasswords(users UserStore, passwords PasswordManager) *Service {
 	return NewServiceWithDependencies(users, nil, passwords, nil)
 }
 
-// Все зависимости сохраняются один раз при сборке приложения в main.
-// nil для passwords выбирает стандартный bcrypt; сессии и токены пока необязательны для Register.
+// All dependencies are stored once when main wires up the application.
+// A nil passwords dependency selects the default bcrypt implementation; sessions and tokens are optional for Register.
 func NewServiceWithDependencies(users UserStore, sessions SessionStore, passwords PasswordManager, tokens TokenManager) *Service {
 	if passwords == nil {
 		passwords = NewBcryptHasher()

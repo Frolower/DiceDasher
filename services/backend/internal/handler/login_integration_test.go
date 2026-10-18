@@ -16,8 +16,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Весь путь HTTP → auth → SQL проверяется с реальными JWT и bcrypt.
-// Рабочую БД тест не использует: URL отдельной тестовой БД задаётся явно.
+// Test the full HTTP → auth → SQL flow with real JWTs and bcrypt.
+// The test uses an explicitly configured URL for a separate test database instead of the application database.
 func TestLoginPostgres(t *testing.T) {
 	serviceURL, adminURL := os.Getenv("BACKEND_TEST_DATABASE_URL"), os.Getenv("BACKEND_TEST_ADMIN_URL")
 	if serviceURL == "" || adminURL == "" {
@@ -45,7 +45,7 @@ func TestLoginPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// ON DELETE CASCADE удалит только сессии созданного тестом пользователя.
+	// ON DELETE CASCADE deletes only sessions belonging to the user created by the test.
 	defer func() {
 		if _, err := admin.Exec(ctx, "DELETE FROM public.users WHERE id=$1", created.ID); err != nil {
 			t.Error(err)
@@ -105,7 +105,7 @@ func TestLoginPostgres(t *testing.T) {
 	if err := admin.QueryRow(ctx, "SELECT count(*) FROM public.sessions WHERE user_id=$1", created.ID).Scan(&count); err != nil || count != 2 {
 		t.Fatalf("unexpected sessions: %d %v", count, err)
 	}
-	// Если PostgreSQL недоступен, клиент не получает токены или cookie.
+	// If PostgreSQL is unavailable, the client receives no tokens or cookies.
 	pool.Close()
 	w := request(name, "StrongPass1")
 	if w.Code != 500 || len(w.Result().Cookies()) != 0 || strings.Contains(w.Body.String(), "pool") {

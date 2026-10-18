@@ -45,15 +45,15 @@ type Credentials struct {
 	PasswordHash string
 }
 
-// Session описывает долгоживущую сессию. Access JWT в БД не хранится:
-// он содержит sid и собственный exp; одна сессия может выдавать много JWT.
+// Session describes a long-lived session. Access JWTs are not stored in the database:
+// each contains a sid and its own exp; one session can issue multiple JWTs.
 type Session struct {
 	ID               uuid.UUID
 	UserID           uuid.UUID
 	RefreshTokenHash string
 	CreatedAt        time.Time
 	ExpiresAt        time.Time
-	// nil означает SQL NULL: сессия ещё не отозвана.
+	// nil represents SQL NULL: the session has not been revoked.
 	RevokedAt *time.Time
 	UserAgent string
 }

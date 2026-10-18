@@ -22,7 +22,7 @@ func validateCreateInput(input CreateInput) error {
 		errs = append(errs, errors.New("username must be between 5 and 64 characters"))
 	}
 
-	// Проверяем все Unicode-пробелы, включая табуляцию и неразрывный пробел.
+	// Check all Unicode whitespace, including tabs and non-breaking spaces.
 	if strings.ContainsFunc(input.Username, unicode.IsSpace) {
 		errs = append(errs, errors.New("username must not contain whitespace"))
 	}
@@ -75,8 +75,8 @@ func normalizeCreateInput(input CreateInput) CreateInput {
 	return input
 }
 
-// При входе проверяем только форму запроса. Новые правила сложности пароля
-// не должны запрещать вход с паролем, который был установлен раньше.
+// Login validates only the request format. New password complexity rules
+// must not prevent login with a previously set password.
 func validateLoginInput(input LoginInput) error {
 	if input.Username == "" || input.Password == "" {
 		return errors.New("username and password are required")

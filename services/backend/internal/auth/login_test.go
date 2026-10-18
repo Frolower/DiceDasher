@@ -51,7 +51,7 @@ func (t brokenTokens) IssueAccess(u, s uuid.UUID, exp time.Time) (string, error)
 
 func TestLoginCreatesSession(t *testing.T) {
 	passwords := BcryptHasher{Cost: bcrypt.MinCost}
-	// Существующий пароль может не удовлетворять сегодняшним правилам регистрации.
+	// An existing password may not satisfy the current registration rules.
 	hash, _ := passwords.Hash("old")
 	id := uuid.New()
 	store := &sessionCapture{}

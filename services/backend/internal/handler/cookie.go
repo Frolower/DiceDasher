@@ -8,8 +8,8 @@ import (
 
 func (h *Handler) setRefreshCookie(w http.ResponseWriter, tokens auth.Tokens) {
 	name := "refresh_token"
-	// __Host- не позволяет расширить cookie на соседние поддомены.
-	// Локальный HTTP использует другое имя, потому что __Host- требует Secure.
+	// __Host- prevents the cookie from being scoped to sibling subdomains.
+	// Local HTTP uses a different name because __Host- requires Secure.
 	if h.options.CookieSecure {
 		name = "__Host-refresh_token"
 	}

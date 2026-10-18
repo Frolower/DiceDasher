@@ -111,7 +111,7 @@ func TestPasswordAtBcryptLimit(t *testing.T) {
 	}
 }
 
-// Проверяем сценарий целиком, чтобы нормализация не скрыла пробелы по краям.
+// Test the full flow to ensure normalization does not hide leading or trailing whitespace.
 func TestWhitespaceRejectedBeforeHashing(t *testing.T) {
 	s := NewServiceWithPasswords(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
 		t.Fatal("whitespace reached store")
@@ -147,7 +147,7 @@ func TestWhitespaceRejectedBeforeHashing(t *testing.T) {
 	}
 }
 
-// Регистрационные тесты не должны обращаться к поиску пользователя или Verify.
+// Registration tests must not call user lookup or Verify.
 func (f storeFunc) FindUserByUsername(context.Context, string) (Credentials, error) {
 	panic("unexpected credential lookup during registration")
 }

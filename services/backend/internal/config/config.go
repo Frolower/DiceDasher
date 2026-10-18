@@ -34,7 +34,7 @@ func Load() (*Config, error) {
 		logMode = "default"
 	}
 
-	// JWT_SECRET — base64 от минимум 32 случайных байт, не обычный пароль.
+	// JWT_SECRET is the base64 encoding of at least 32 random bytes, not a regular password.
 	key, err := base64.StdEncoding.DecodeString(os.Getenv("JWT_SECRET"))
 	if err != nil || len(key) < 32 {
 		return nil, errors.New("JWT_SECRET must be base64 encoding of at least 32 random bytes")

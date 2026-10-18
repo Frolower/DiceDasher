@@ -31,7 +31,7 @@ func main() {
 		log.Fatal(err)
 	}
 	store := repository.New(repo.Pool())
-	// Один repository реализует интерфейсы пользователей и сессий.
+	// A single repository implements both the user and session interfaces.
 	authentication := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), tokens)
 	r := httputil.NewRouter()
 	handler.NewWithOptions(authentication, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigin: cfg.AllowedOrigin}).RegisterRouters(r)
