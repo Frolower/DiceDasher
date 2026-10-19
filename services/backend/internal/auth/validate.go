@@ -13,9 +13,10 @@ var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+
 func validateCreateInput(input CreateInput) error {
 	var errs []error
 	var (
-		hasLower bool
-		hasUpper bool
-		hasDigit bool
+		hasLower   bool
+		hasUpper   bool
+		hasDigit   bool
+		hasSpecial bool
 	)
 
 	if n := utf8.RuneCountInString(input.Username); n < 5 || n > 64 {
@@ -31,8 +32,8 @@ func validateCreateInput(input CreateInput) error {
 		errs = append(errs, errors.New("username must not contain control characters"))
 	}
 
-	if len(input.Email) < 3 || len(input.Email) > 254 {
-		errs = append(errs, errors.New("email must be between 3 and 254 characters"))
+	if len(input.Email) < 5 || len(input.Email) > 254 {
+		errs = append(errs, errors.New("email must be between 5 and 254 characters"))
 	} else if !emailRegex.MatchString(input.Email) {
 		errs = append(errs, errors.New("email is incorrect"))
 	}
@@ -57,14 +58,16 @@ func validateCreateInput(input CreateInput) error {
 			hasUpper = true
 		case unicode.IsDigit(r):
 			hasDigit = true
+		case unicode.IsPunct(r):
+			hasSpecial = true
 		}
 		if hasLower && hasUpper && hasDigit {
 			break
 		}
 	}
 
-	if !hasLower || !hasUpper || !hasDigit {
-		errs = append(errs, errors.New("password must contain lower case letters, upper case letters and digits"))
+	if !hasLower || !hasUpper || !hasDigit || !hasSpecial {
+		errs = append(errs, errors.New("password must contain lower case letters, upper case letters, special symbols and digits"))
 	}
 
 	return errors.Join(errs...)
