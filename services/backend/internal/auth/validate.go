@@ -75,6 +75,7 @@ func validateCreateInput(input CreateInput) error {
 
 func normalizeCreateInput(input CreateInput) CreateInput {
 	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
+	input.Username = strings.TrimSpace(input.Username)
 	return input
 }
 
@@ -84,6 +85,8 @@ func validateLoginInput(input LoginInput) error {
 	if input.Username == "" || input.Password == "" {
 		return errors.New("username and password are required")
 	}
+	input.Username = strings.TrimSpace(input.Username)
+	input.Password = strings.TrimSpace(input.Password)
 	if utf8.RuneCountInString(input.Username) > 64 || len(input.Password) > 72 {
 		return errors.New("username or password is too long")
 	}
