@@ -74,8 +74,7 @@ func validateCreateInput(input CreateInput) error {
 }
 
 func normalizeCreateInput(input CreateInput) CreateInput {
-	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
-	input.Username = strings.TrimSpace(input.Username)
+	input.Email = strings.ToLower(input.Email)
 	return input
 }
 
