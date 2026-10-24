@@ -5,6 +5,7 @@ import (
 	"backend/internal/config"
 	"backend/internal/handler"
 	"backend/internal/repository"
+	"backend/internal/user"
 	"context"
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/httputil"
@@ -33,8 +34,9 @@ func main() {
 	store := repository.New(repo.Pool())
 	// A single repository implements both the user and session interfaces.
 	authentication := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), tokens)
+	users := user.NewServiceWithDependencies(store, user.NewBcryptHasher())
 	r := httputil.NewRouter()
-	handler.NewWithOptions(authentication, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigin: cfg.AllowedOrigin}).RegisterRouters(r)
+	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigin: cfg.AllowedOrigin}).RegisterRouters(r)
 
 	// Wrap with middlewares
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)

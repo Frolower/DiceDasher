@@ -32,3 +32,8 @@ type meResponse struct {
 	Username string    `json:"username"`
 	Email    string    `json:"email"`
 }
+
+type updateUserRequest struct {
+	Username string `json:"username"`
+	Email    string `json:"email"`
+}

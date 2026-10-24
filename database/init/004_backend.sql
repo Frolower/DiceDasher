@@ -1,13 +1,3 @@
-\set ON_ERROR_STOP on
--- Reapplying this script to an existing volume does not delete data.
--- This script can also run independently of 000 (as an administrator).
-SELECT 'CREATE ROLE user_service LOGIN PASSWORD ''user_password'''
-WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'user_service')
-\gexec
-SELECT 'CREATE DATABASE user_db'
-WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'user_db')
-\gexec
-
 \connect user_db
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -21,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     email VARCHAR(254) NOT NULL,
     hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ DEFAULT NULL
 );
 
 CREATE TABLE IF NOT EXISTS public.sessions (
@@ -41,6 +31,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique ON public.users (lower(emai
 GRANT INSERT ON public.users TO user_service;
 GRANT SELECT (id, username, email, hash) ON public.users TO user_service;
 GRANT DELETE ON public.users TO user_service;
+GRANT UPDATE ON public.users TO user_service;
 
 GRANT INSERT ON public.sessions TO user_service;
 GRANT SELECT ON public.sessions TO user_service;

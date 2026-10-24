@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend/internal/auth"
+	"backend/internal/user"
 	"context"
 	"errors"
 	"fmt"
@@ -20,17 +21,6 @@ func (r *Repository) CreateUser(ctx context.Context, rec auth.CreateRecord) (uui
 		return uuid.Nil, mapCreateError(err)
 	}
 	return id, nil
-}
-
-func mapCreateError(err error) error {
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		if pgErr.Code == "23505" && (pgErr.ConstraintName == "users_username_unique" || pgErr.ConstraintName == "users_email_unique") {
-			return auth.ErrAlreadyExists
-		}
-		return fmt.Errorf("insert user: PostgreSQL error %s", pgErr.Code)
-	}
-	return fmt.Errorf("insert user: %w", err)
 }
 
 func (r *Repository) FindUserByUsername(ctx context.Context, username string) (auth.Credentials, error) {
@@ -57,4 +47,53 @@ func (r *Repository) FindUserByID(ctx context.Context, id uuid.UUID) (auth.UserP
 		return auth.UserProfile{}, fmt.Errorf("find user: %w", err)
 	}
 	return user, nil
+}
+
+func (r *Repository) UpdateUser(ctx context.Context, u user.UserUpdateRecord) error {
+	const q = `UPDATE public.users
+	SET
+    	username = COALESCE(NULLIF($1, ''), username),
+    	email = COALESCE(NULLIF($2, ''), email),
+		updated_at = NOW()
+	WHERE id = $3;`
+	tag, err := r.pool.Exec(ctx, q, u.Username, u.Email, u.ID)
+	if err != nil {
+		return mapUpdateError(err)
+	}
+
+	if tag.RowsAffected() == 0 {
+		return user.ErrUserNotFound
+	}
+
+	return nil
+}
+
+func (r *Repository) DeleteUser(ctx context.Context, id string) error {
+	return nil
+}
+
+func (r *Repository) UpdatePassword(ctx context.Context, id, hash string) error {
+	return nil
+}
+
+func mapCreateError(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == "23505" && (pgErr.ConstraintName == "users_username_unique" || pgErr.ConstraintName == "users_email_unique") {
+			return auth.ErrAlreadyExists
+		}
+		return fmt.Errorf("insert user: PostgreSQL error %s", pgErr.Code)
+	}
+	return fmt.Errorf("insert user: %w", err)
+}
+
+func mapUpdateError(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr.Code == "23505" && (pgErr.ConstraintName == "users_username_unique" || pgErr.ConstraintName == "users_email_unique") {
+			return user.ErrAlreadyExists
+		}
+		return fmt.Errorf("update user: PostgreSQL error %s", pgErr.Code)
+	}
+	return fmt.Errorf("update user: %w", err)
 }
