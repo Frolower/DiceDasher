@@ -36,17 +36,17 @@ func (r *Repository) FindUserByUsername(ctx context.Context, username string) (a
 	return credentials, nil
 }
 
-func (r *Repository) FindUserByID(ctx context.Context, id uuid.UUID) (auth.UserProfile, error) {
+func (r *Repository) FindUserByID(ctx context.Context, id uuid.UUID) (user.UserProfile, error) {
 	const q = `SELECT id, username, email FROM public.users WHERE id = $1`
-	var user auth.UserProfile
-	err := r.pool.QueryRow(ctx, q, id).Scan(&user.ID, &user.Username, &user.Email)
+	var profile user.UserProfile
+	err := r.pool.QueryRow(ctx, q, id).Scan(&profile.ID, &profile.Username, &profile.Email)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return auth.UserProfile{}, auth.ErrUserNotFound
+		return user.UserProfile{}, user.ErrUserNotFound
 	}
 	if err != nil {
-		return auth.UserProfile{}, fmt.Errorf("find user: %w", err)
+		return user.UserProfile{}, fmt.Errorf("find user: %w", err)
 	}
-	return user, nil
+	return profile, nil
 }
 
 func (r *Repository) UpdateUser(ctx context.Context, u user.UserUpdateRecord) error {

@@ -13,3 +13,9 @@ type PasswordUpdateRecord struct {
 	OldPassword string
 	NewPassword string
 }
+
+type UserProfile struct {
+	ID       uuid.UUID
+	Username string
+	Email    string
+}

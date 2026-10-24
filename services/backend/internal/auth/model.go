@@ -57,9 +57,3 @@ type Session struct {
 	RevokedAt *time.Time
 	UserAgent string
 }
-
-type UserProfile struct {
-	ID       uuid.UUID
-	Username string
-	Email    string
-}

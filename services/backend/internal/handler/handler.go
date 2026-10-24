@@ -14,10 +14,10 @@ type Authenticator interface {
 	Refresh(context.Context, string) (auth.Tokens, error)
 	Logout(context.Context, string) error
 	Authenticate(context.Context, string) (auth.AccessClaims, error)
-	GetProfile(context.Context, uuid.UUID) (auth.UserProfile, error)
 }
 
 type User interface {
+	GetProfile(context.Context, uuid.UUID) (user.UserProfile, error)
 	UpdateUser(ctx context.Context, record user.UserUpdateRecord) error
 	DeleteUser(ctx context.Context, id string) error
 	UpdatePassword(ctx context.Context, record user.PasswordUpdateRecord) error

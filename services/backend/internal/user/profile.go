@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 
 func (s *Service) GetProfile(ctx context.Context, userID uuid.UUID) (UserProfile, error) {
 	if s.users == nil {
-		return UserProfile{}, ErrAuthNotConfigured
+		return UserProfile{}, ErrStoreNotConfigured
 	}
 	if userID == uuid.Nil {
 		return UserProfile{}, ErrUserNotFound

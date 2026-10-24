@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"backend/internal/auth"
+	"backend/internal/user"
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
 	"errors"
@@ -15,10 +15,10 @@ func (h *Handler) HandleMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profile, err := h.authenticator.GetProfile(r.Context(), claims.UserID)
+	profile, err := h.user.GetProfile(r.Context(), claims.UserID)
 	if err != nil {
 		switch {
-		case errors.Is(err, auth.ErrUserNotFound):
+		case errors.Is(err, user.ErrUserNotFound):
 			writeUnauthorized(w)
 		default:
 			logger.LogErrorf(r.Context(), "loading user profile")

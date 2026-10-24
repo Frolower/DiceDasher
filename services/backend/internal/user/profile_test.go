@@ -1,4 +1,4 @@
-package auth
+package user
 
 import (
 	"context"
@@ -31,7 +31,7 @@ func TestGetProfile(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			calls := 0
-			service := NewService(profileStore{find: func(received context.Context, id uuid.UUID) (UserProfile, error) {
+			service := NewServiceWithDependencies(profileStore{find: func(received context.Context, id uuid.UUID) (UserProfile, error) {
 				calls++
 				if received != ctx || id != want.ID {
 					t.Fatal("wrong lookup arguments")
@@ -40,7 +40,7 @@ func TestGetProfile(t *testing.T) {
 					return UserProfile{}, tc.err
 				}
 				return want, nil
-			}})
+			}}, nil)
 			got, err := service.GetProfile(ctx, want.ID)
 			if !errors.Is(err, tc.err) || calls != 1 {
 				t.Fatalf("err=%v calls=%d", err, calls)
@@ -55,14 +55,14 @@ func TestGetProfile(t *testing.T) {
 	}
 }
 func TestGetProfileInvalidInput(t *testing.T) {
-	service := NewService(profileStore{find: func(context.Context, uuid.UUID) (UserProfile, error) {
+	service := NewServiceWithDependencies(profileStore{find: func(context.Context, uuid.UUID) (UserProfile, error) {
 		t.Fatal("lookup with nil ID")
 		return UserProfile{}, nil
-	}})
+	}}, nil)
 	if got, err := service.GetProfile(context.Background(), uuid.Nil); !errors.Is(err, ErrUserNotFound) || got != (UserProfile{}) {
 		t.Fatalf("got=%v err=%v", got, err)
 	}
-	if got, err := NewService(nil).GetProfile(context.Background(), uuid.New()); !errors.Is(err, ErrAuthNotConfigured) || got != (UserProfile{}) {
+	if got, err := NewServiceWithDependencies(nil, nil).GetProfile(context.Background(), uuid.New()); !errors.Is(err, ErrStoreNotConfigured) || got != (UserProfile{}) {
 		t.Fatalf("got=%v err=%v", got, err)
 	}
 }

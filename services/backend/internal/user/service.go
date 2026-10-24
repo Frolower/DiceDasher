@@ -3,9 +3,12 @@ package user
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type UserStore interface {
+	FindUserByID(ctx context.Context, id uuid.UUID) (UserProfile, error)
 	UpdateUser(ctx context.Context, rec UserUpdateRecord) error
 	DeleteUser(ctx context.Context, id string) error
 	UpdatePassword(ctx context.Context, id, hash string) error

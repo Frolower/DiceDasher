@@ -2,6 +2,7 @@ package handler
 
 import (
 	"backend/internal/auth"
+	"backend/internal/user"
 	"context"
 	"diceDasher/pkg/httputil"
 	"encoding/json"
@@ -15,15 +16,11 @@ import (
 )
 
 type profileFunc struct {
-	Authenticator
-	authenticate func(context.Context, string) (auth.AccessClaims, error)
-	profile      func(context.Context, uuid.UUID) (auth.UserProfile, error)
+	User
+	profile func(context.Context, uuid.UUID) (user.UserProfile, error)
 }
 
-func (f profileFunc) Authenticate(ctx context.Context, token string) (auth.AccessClaims, error) {
-	return f.authenticate(ctx, token)
-}
-func (f profileFunc) GetProfile(ctx context.Context, id uuid.UUID) (auth.UserProfile, error) {
+func (f profileFunc) GetProfile(ctx context.Context, id uuid.UUID) (user.UserProfile, error) {
 	return f.profile(ctx, id)
 }
 
@@ -37,14 +34,14 @@ func TestMeHTTP(t *testing.T) {
 		{name: "success", authorized: true, status: 200, authCalls: 1, profileCalls: 1},
 		{name: "missing token", status: 401},
 		{name: "invalid token", authorized: true, authErr: auth.ErrInvalidToken, status: 401, authCalls: 1},
-		{name: "deleted user", authorized: true, profileErr: fmt.Errorf("lookup: %w", auth.ErrUserNotFound), status: 401, authCalls: 1, profileCalls: 1},
+		{name: "deleted user", authorized: true, profileErr: fmt.Errorf("lookup: %w", user.ErrUserNotFound), status: 401, authCalls: 1, profileCalls: 1},
 		{name: "database failure", authorized: true, profileErr: errors.New("private database details"), status: 500, authCalls: 1, profileCalls: 1},
-		{name: "unconfigured", authorized: true, profileErr: auth.ErrAuthNotConfigured, status: 500, authCalls: 1, profileCalls: 1},
+		{name: "unconfigured", authorized: true, profileErr: user.ErrStoreNotConfigured, status: 500, authCalls: 1, profileCalls: 1},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			profile := auth.UserProfile{ID: uuid.New(), Username: "Alice", Email: "alice@example.com"}
+			profile := user.UserProfile{ID: uuid.New(), Username: "Alice", Email: "alice@example.com"}
 			authCalls, profileCalls := 0, 0
-			h := New(profileFunc{
+			h := New(authenticateFunc{
 				authenticate: func(ctx context.Context, token string) (auth.AccessClaims, error) {
 					authCalls++
 					if token != "secret-token" {
@@ -52,7 +49,8 @@ func TestMeHTTP(t *testing.T) {
 					}
 					return auth.AccessClaims{UserID: profile.ID, SessionID: uuid.New()}, tc.authErr
 				},
-				profile: func(ctx context.Context, id uuid.UUID) (auth.UserProfile, error) {
+			}, profileFunc{
+				profile: func(ctx context.Context, id uuid.UUID) (user.UserProfile, error) {
 					profileCalls++
 					if id != profile.ID {
 						t.Fatal("handler did not use authenticated user ID")
@@ -62,7 +60,7 @@ func TestMeHTTP(t *testing.T) {
 					}
 					return profile, tc.profileErr
 				},
-			}, nil)
+			})
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			// Untrusted IDs must not override the identity from middleware.
@@ -107,10 +105,10 @@ func TestMeHTTP(t *testing.T) {
 	}
 }
 func TestMeWithoutAuthenticationContext(t *testing.T) {
-	h := New(profileFunc{profile: func(context.Context, uuid.UUID) (auth.UserProfile, error) {
+	h := New(nil, profileFunc{profile: func(context.Context, uuid.UUID) (user.UserProfile, error) {
 		t.Fatal("lookup without authenticated identity")
-		return auth.UserProfile{}, nil
-	}}, nil)
+		return user.UserProfile{}, nil
+	}})
 	w := httptest.NewRecorder()
 	h.HandleMe(w, httptest.NewRequest(http.MethodGet, "/me", nil))
 	if w.Code != http.StatusInternalServerError {

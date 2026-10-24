@@ -8,9 +8,11 @@ and a refresh cookie.
 
 | File / package | Responsibility |
 |---|---|
-| `cmd/backend-service/main.go` | Wiring the repository, bcrypt, JWTManager, auth.Service, and handler |
+| `cmd/backend-service/main.go` | Wiring the repository, bcrypt, JWTManager, auth.Service, user.Service, and handler |
 | `internal/handler/handler.go` | HTTP Authenticator interface, dependencies, and cookie settings |
 | `internal/handler/register.go` | Registration HTTP contract |
+| `internal/handler/me.go` | Authenticated profile HTTP contract; delegates to user.Service |
+| `internal/user/profile.go`, `model.go` | Profile lookup and public user model |
 | `internal/handler/login.go` | Login and logout HTTP handling, Origin validation, tokens, and cookie removal |
 | `internal/handler/cookie.go` | Refresh cookie |
 | `internal/handler/cors.go` | CORS for a specific Origin with credentials |
@@ -27,6 +29,16 @@ and a refresh cookie.
 The HTTP layer does not execute SQL or bcrypt operations. The service does not set
 cookies. The repository does not issue tokens. Context carries request cancellation
 and logging data.
+
+## GET /me
+
+Requires a Bearer access token validated by the auth middleware. The handler passes
+only the authenticated user ID to `user.Service.GetProfile`; profile data and
+lookup errors belong to the user package. Registration remains in auth.
+
+Success: `200` with `id`, `username`, and `email`. Missing/invalid authentication
+or a missing user returns `401`; storage failures return `500`. Responses use
+`Cache-Control: no-store` and do not change cookies.
 
 ## POST /register
 
