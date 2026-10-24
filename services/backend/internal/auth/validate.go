@@ -61,7 +61,7 @@ func validateCreateInput(input CreateInput) error {
 		case unicode.IsPunct(r):
 			hasSpecial = true
 		}
-		if hasLower && hasUpper && hasDigit {
+		if hasLower && hasUpper && hasDigit && hasSpecial {
 			break
 		}
 	}
