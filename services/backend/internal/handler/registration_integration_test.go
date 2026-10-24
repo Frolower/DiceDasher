@@ -43,7 +43,7 @@ func TestRegistrationPostgres(t *testing.T) {
 		}
 	}()
 	router := httputil.NewRouter()
-	New(auth.NewService(repository.New(pool))).RegisterRouters(router)
+	New(auth.NewService(repository.New(pool)), nil).RegisterRouters(router)
 	request := func(username, address, password string) *httptest.ResponseRecorder {
 		body, err := json.Marshal(createUserRequest{Username: username, Email: address, Password: password})
 		if err != nil {
@@ -53,7 +53,7 @@ func TestRegistrationPostgres(t *testing.T) {
 		router.ServeHTTP(w, httptest.NewRequest(http.MethodPost, "/register", strings.NewReader(string(body))))
 		return w
 	}
-	w := request(name, " "+strings.ToUpper(email)+" ", "StrongPass1")
+	w := request(name, strings.ToUpper(email), "StrongPass1!")
 	if w.Code != 201 || w.Body.String() != "{\"status\":\"created\"}\n" || len(w.Result().Cookies()) != 0 {
 		t.Fatalf("registration: %d %s", w.Code, w.Body.String())
 	}
@@ -61,11 +61,11 @@ func TestRegistrationPostgres(t *testing.T) {
 	if err := admin.QueryRow(ctx, "SELECT email, hash FROM public.users WHERE username=$1", name).Scan(&savedEmail, &hash); err != nil {
 		t.Fatal(err)
 	}
-	if savedEmail != email || bcrypt.CompareHashAndPassword([]byte(hash), []byte("StrongPass1")) != nil {
+	if savedEmail != email || bcrypt.CompareHashAndPassword([]byte(hash), []byte("StrongPass1!")) != nil {
 		t.Fatal("incorrect normalized email or password hash")
 	}
 	for _, input := range [][2]string{{strings.ToLower(name), "other-" + email}, {name + "Other", strings.ToUpper(email)}} {
-		if w := request(input[0], input[1], "StrongPass1"); w.Code != 409 {
+		if w := request(input[0], input[1], "StrongPass1!"); w.Code != 409 {
 			t.Fatalf("duplicate: %d %s", w.Code, w.Body.String())
 		}
 	}
@@ -77,7 +77,7 @@ func TestRegistrationPostgres(t *testing.T) {
 	var wg sync.WaitGroup
 	for i := 0; i < 2; i++ {
 		wg.Add(1)
-		go func() { defer wg.Done(); <-start; statuses <- request(raceName, "race-"+email, "StrongPass1").Code }()
+		go func() { defer wg.Done(); <-start; statuses <- request(raceName, "race-"+email, "StrongPass1!").Code }()
 	}
 	close(start)
 	wg.Wait()

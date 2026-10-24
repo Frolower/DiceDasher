@@ -41,7 +41,7 @@ func TestLoginPostgres(t *testing.T) {
 	}
 	service := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), jwtManager)
 	name := "Login" + strings.ReplaceAll(uuid.NewString(), "-", "")
-	created, err := service.Register(ctx, auth.CreateInput{Username: name, Email: name + "@example.com", Password: "StrongPass1"})
+	created, err := service.Register(ctx, auth.CreateInput{Username: name, Email: name + "@example.com", Password: "StrongPass1!"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -52,7 +52,7 @@ func TestLoginPostgres(t *testing.T) {
 		}
 	}()
 	router := httputil.NewRouter()
-	NewWithOptions(service, Options{CookieSecure: false, AllowedOrigin: "http://localhost:8082"}).RegisterRouters(router)
+	NewWithOptions(service, nil, Options{CookieSecure: false, AllowedOrigin: "http://localhost:8082"}).RegisterRouters(router)
 	request := func(username, password string) *httptest.ResponseRecorder {
 		raw, _ := json.Marshal(loginRequest{Username: username, Password: password})
 		req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(string(raw)))
@@ -64,7 +64,7 @@ func TestLoginPostgres(t *testing.T) {
 	}
 	var firstRefresh string
 	for i := 0; i < 2; i++ {
-		w := request(strings.ToLower(name), "StrongPass1")
+		w := request(strings.ToLower(name), "StrongPass1!")
 		if w.Code != 200 {
 			t.Fatalf("login %d: %s", w.Code, w.Body.String())
 		}
@@ -97,7 +97,7 @@ func TestLoginPostgres(t *testing.T) {
 		}
 	}
 	bad := request(name, "WrongPass1")
-	missing := request(name+"Missing", "StrongPass1")
+	missing := request(name+"Missing", "StrongPass1!")
 	if bad.Code != 401 || missing.Code != 401 || bad.Body.String() != missing.Body.String() || len(bad.Result().Cookies()) != 0 || len(missing.Result().Cookies()) != 0 {
 		t.Fatal("credential failures reveal user or return cookie")
 	}
@@ -107,7 +107,7 @@ func TestLoginPostgres(t *testing.T) {
 	}
 	// If PostgreSQL is unavailable, the client receives no tokens or cookies.
 	pool.Close()
-	w := request(name, "StrongPass1")
+	w := request(name, "StrongPass1!")
 	if w.Code != 500 || len(w.Result().Cookies()) != 0 || strings.Contains(w.Body.String(), "pool") {
 		t.Fatal("incorrect storage failure response")
 	}

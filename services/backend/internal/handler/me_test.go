@@ -62,7 +62,7 @@ func TestMeHTTP(t *testing.T) {
 					}
 					return profile, tc.profileErr
 				},
-			})
+			}, nil)
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			// Untrusted IDs must not override the identity from middleware.
@@ -110,7 +110,7 @@ func TestMeWithoutAuthenticationContext(t *testing.T) {
 	h := New(profileFunc{profile: func(context.Context, uuid.UUID) (auth.UserProfile, error) {
 		t.Fatal("lookup without authenticated identity")
 		return auth.UserProfile{}, nil
-	}})
+	}}, nil)
 	w := httptest.NewRecorder()
 	h.HandleMe(w, httptest.NewRequest(http.MethodGet, "/me", nil))
 	if w.Code != http.StatusInternalServerError {

@@ -45,7 +45,7 @@ func TestRefreshHTTPWithAuthService(t *testing.T) {
 		ExpiresAt: time.Now().UTC().Truncate(time.Second).Add(time.Hour),
 	}}
 	service := auth.NewServiceWithDependencies(nil, store, nil, manager)
-	h := NewWithOptions(service, Options{CookieSecure: true})
+	h := NewWithOptions(service, nil, Options{CookieSecure: true})
 	router := httputil.NewRouter()
 	h.RegisterRouters(router)
 	refresh := func(token string) *httptest.ResponseRecorder {
@@ -116,7 +116,7 @@ func TestRefreshHTTP(t *testing.T) {
 					t.Fatalf("wrong token: %q", token)
 				}
 				return tokens, tc.err
-			}}, Options{CookieSecure: tc.secure, AllowedOrigin: "https://app.example"})
+			}}, nil, Options{CookieSecure: tc.secure, AllowedOrigin: "https://app.example"})
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			req := httptest.NewRequest(http.MethodPost, "/refresh", nil)

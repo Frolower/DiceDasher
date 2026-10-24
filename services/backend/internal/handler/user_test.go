@@ -49,7 +49,7 @@ func TestRegistrationHTTPContract(t *testing.T) {
 					t.Fatal("lost request fields")
 				}
 				return auth.Created{}, tc.err
-			}))
+			}), nil)
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			w := httptest.NewRecorder()

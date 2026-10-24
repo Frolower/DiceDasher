@@ -62,7 +62,7 @@ func TestAuthMiddleware(t *testing.T) {
 					t.Fatal("wrong authentication arguments")
 				}
 				return claims, tc.err
-			}})
+			}}, nil)
 			next := func(w http.ResponseWriter, r *http.Request) {
 				nextCalls++
 				got, ok := AccessClaimsFromContext(r.Context())
@@ -141,7 +141,7 @@ func TestAuthMiddlewareWithJWTAndSessionRevocation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	h := New(auth.NewServiceWithDependencies(nil, store, nil, manager))
+	h := New(auth.NewServiceWithDependencies(nil, store, nil, manager), nil)
 	calls := 0
 	protected := h.RequreAuth(func(w http.ResponseWriter, r *http.Request) {
 		calls++
@@ -169,7 +169,7 @@ func TestAuthMiddlewareWithJWTAndSessionRevocation(t *testing.T) {
 func TestProtectedRoutesRequireAuth(t *testing.T) {
 	h := New(authenticateFunc{authenticate: func(context.Context, string) (auth.AccessClaims, error) {
 		return auth.AccessClaims{UserID: uuid.New(), SessionID: uuid.New()}, nil
-	}})
+	}}, nil)
 	router := httputil.NewRouter()
 	h.RegisterRouters(router)
 	for _, route := range []struct{ method, path string }{
@@ -184,6 +184,10 @@ func TestProtectedRoutesRequireAuth(t *testing.T) {
 				if authorized {
 					req.Header.Set("Authorization", "Bearer valid")
 					want = http.StatusNotImplemented
+					if route.method == http.MethodPatch {
+						// The implemented PATCH handler rejects the empty body after authentication.
+						want = http.StatusBadRequest
+					}
 				}
 				w := httptest.NewRecorder()
 				router.ServeHTTP(w, req)

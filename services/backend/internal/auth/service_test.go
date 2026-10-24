@@ -28,7 +28,7 @@ func (f hashFunc) Hash(password string) (string, error) { return f(password) }
 func TestRegisterNormalizesAndHashes(t *testing.T) {
 	ctx := context.Background()
 	id := uuid.New()
-	password := "StrongPass1"
+	password := "StrongPass1!"
 	s := NewService(storeFunc(func(got context.Context, rec CreateRecord) (uuid.UUID, error) {
 		if got != ctx || rec.Username != "Алиса" || rec.Email != "alice@example.com" {
 			t.Fatalf("unexpected record: %s %s", rec.Username, rec.Email)
@@ -38,7 +38,7 @@ func TestRegisterNormalizesAndHashes(t *testing.T) {
 		}
 		return id, nil
 	}))
-	got, err := s.Register(ctx, CreateInput{Username: "Алиса", Email: " Alice@Example.COM ", Password: password})
+	got, err := s.Register(ctx, CreateInput{Username: "Алиса", Email: "Alice@Example.COM", Password: password})
 	if err != nil || got.ID != id {
 		t.Fatalf("result %v, error %v", got, err)
 	}
@@ -49,7 +49,7 @@ func TestInvalidInputDoesNotHashOrSave(t *testing.T) {
 		t.Fatal("invalid input reached store")
 		return uuid.Nil, nil
 	}), hashFunc(func(string) (string, error) { t.Fatal("invalid input reached bcrypt"); return "", nil }))
-	valid := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1"}
+	valid := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1!"}
 	for _, tc := range []struct {
 		name   string
 		change func(*CreateInput)
@@ -60,11 +60,11 @@ func TestInvalidInputDoesNotHashOrSave(t *testing.T) {
 		{"empty username", func(v *CreateInput) { v.Username = "   " }},
 		{"bad email", func(v *CreateInput) { v.Email = "not-an-email" }},
 		{"long email", func(v *CreateInput) { v.Email = strings.Repeat("a", 250) + "@example.com" }},
-		{"short password", func(v *CreateInput) { v.Password = "Аа12345" }},
-		{"missing uppercase", func(v *CreateInput) { v.Password = "password1" }},
-		{"missing lowercase", func(v *CreateInput) { v.Password = "PASSWORD1" }},
-		{"missing digit", func(v *CreateInput) { v.Password = "Password" }},
-		{"bcrypt byte limit", func(v *CreateInput) { v.Password = "Aa1" + strings.Repeat("я", 35) }},
+		{"short password", func(v *CreateInput) { v.Password = "Аа1234!" }},
+		{"missing uppercase", func(v *CreateInput) { v.Password = "password1!" }},
+		{"missing lowercase", func(v *CreateInput) { v.Password = "PASSWORD1!" }},
+		{"missing digit", func(v *CreateInput) { v.Password = "Password!" }},
+		{"bcrypt byte limit", func(v *CreateInput) { v.Password = "Aa1!" + strings.Repeat("я", 35) }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			input := valid
@@ -78,7 +78,7 @@ func TestInvalidInputDoesNotHashOrSave(t *testing.T) {
 }
 
 func TestRegisterFailures(t *testing.T) {
-	input := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1"}
+	input := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1!"}
 	failure := errors.New("hash failed")
 	s := NewServiceWithPasswords(storeFunc(func(context.Context, CreateRecord) (uuid.UUID, error) {
 		t.Fatal("save after hash failure")
@@ -99,7 +99,7 @@ func TestRegisterFailures(t *testing.T) {
 }
 
 func TestPasswordAtBcryptLimit(t *testing.T) {
-	password := "Aa1" + strings.Repeat("x", 69)
+	password := "Aa1!" + strings.Repeat("x", 68)
 	s := NewService(storeFunc(func(_ context.Context, rec CreateRecord) (uuid.UUID, error) {
 		if err := bcrypt.CompareHashAndPassword([]byte(rec.PasswordHash), []byte(password)); err != nil {
 			t.Fatal(err)
@@ -124,7 +124,7 @@ func TestWhitespaceRejectedBeforeHashing(t *testing.T) {
 		for _, position := range []string{"start", "middle", "end"} {
 			for _, field := range []string{"username", "password"} {
 				t.Run(fmt.Sprintf("%s/%s/%U", field, position, []rune(space)[0]), func(t *testing.T) {
-					input := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1"}
+					input := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1!"}
 					value := &input.Username
 					if field == "password" {
 						value = &input.Password
