@@ -14,7 +14,7 @@ func (h *Handler) RegisterRouters(r *httputil.Router) {
 	r.Handle("/refresh").POST(h.HandleRefresh)
 
 	// user specific routes
-	r.Handle("/user").PATCH(h.RequreAuth(h.HandleUpdateUser)).DELETE(h.RequreAuth(notImplemented))
+	r.Handle("/user").PATCH(h.RequreAuth(h.HandleUpdateUser)).DELETE(h.RequreAuth(h.HandleDeleteUser))
 	r.Handle("/password").PUT(h.RequreAuth(notImplemented))
 
 	//health

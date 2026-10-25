@@ -23,6 +23,15 @@ func (f authenticateFunc) Authenticate(ctx context.Context, token string) (auth.
 	return f.authenticate(ctx, token)
 }
 
+type deleteUserFunc struct {
+	User
+	delete func(context.Context, uuid.UUID) error
+}
+
+func (f deleteUserFunc) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	return f.delete(ctx, id)
+}
+
 func TestAuthMiddleware(t *testing.T) {
 	for _, tc := range []struct {
 		name    string
@@ -167,9 +176,18 @@ func TestAuthMiddlewareWithJWTAndSessionRevocation(t *testing.T) {
 	}
 }
 func TestProtectedRoutesRequireAuth(t *testing.T) {
+	id := uuid.New()
+	deleteCalls := 0
 	h := New(authenticateFunc{authenticate: func(context.Context, string) (auth.AccessClaims, error) {
-		return auth.AccessClaims{UserID: uuid.New(), SessionID: uuid.New()}, nil
-	}}, nil)
+		return auth.AccessClaims{UserID: id, SessionID: uuid.New()}, nil
+	}}, deleteUserFunc{delete: func(ctx context.Context, gotID uuid.UUID) error {
+		deleteCalls++
+		claims, ok := AccessClaimsFromContext(ctx)
+		if !ok || claims.UserID != id || gotID != id {
+			t.Fatal("delete did not use authenticated identity")
+		}
+		return nil
+	}})
 	router := httputil.NewRouter()
 	h.RegisterRouters(router)
 	for _, route := range []struct{ method, path string }{
@@ -179,6 +197,7 @@ func TestProtectedRoutesRequireAuth(t *testing.T) {
 	} {
 		t.Run(route.method+route.path, func(t *testing.T) {
 			for _, authorized := range []bool{false, true} {
+				deleteCalls = 0
 				req := httptest.NewRequest(route.method, route.path, nil)
 				want := http.StatusUnauthorized
 				if authorized {
@@ -187,12 +206,21 @@ func TestProtectedRoutesRequireAuth(t *testing.T) {
 					if route.method == http.MethodPatch {
 						// The implemented PATCH handler rejects the empty body after authentication.
 						want = http.StatusBadRequest
+					} else if route.method == http.MethodDelete {
+						want = http.StatusOK
 					}
 				}
 				w := httptest.NewRecorder()
 				router.ServeHTTP(w, req)
 				if w.Code != want {
 					t.Fatalf("authorized=%v status=%d want=%d", authorized, w.Code, want)
+				}
+				wantDeleteCalls := 0
+				if authorized && route.method == http.MethodDelete {
+					wantDeleteCalls = 1
+				}
+				if deleteCalls != wantDeleteCalls {
+					t.Fatalf("authorized=%v delete calls=%d want=%d", authorized, deleteCalls, wantDeleteCalls)
 				}
 			}
 		})

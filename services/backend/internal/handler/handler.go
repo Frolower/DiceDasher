@@ -19,8 +19,8 @@ type Authenticator interface {
 type User interface {
 	GetProfile(context.Context, uuid.UUID) (user.UserProfile, error)
 	UpdateUser(ctx context.Context, record user.UserUpdateRecord) error
-	DeleteUser(ctx context.Context, id string) error
-	UpdatePassword(ctx context.Context, record user.PasswordUpdateRecord) error
+	DeleteUser(ctx context.Context, id uuid.UUID) error
+	UpdatePassword(ctx context.Context, id uuid.UUID, record user.PasswordUpdateRecord) error
 }
 
 type Options struct {

@@ -2,6 +2,8 @@ package user
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 func (s *Service) UpdateUser(ctx context.Context, rec UserUpdateRecord) error {
@@ -22,6 +24,14 @@ func (s *Service) UpdateUser(ctx context.Context, rec UserUpdateRecord) error {
 	return nil
 }
 
-func (s *Service) DeleteUser(ctx context.Context, id string) error {
-	return ErrNotImplemented
+func (s *Service) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	if s.users == nil {
+		return ErrStoreNotConfigured
+	}
+	err := s.users.DeleteUser(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

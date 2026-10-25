@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -36,6 +37,6 @@ func (h BcryptHasher) Verify(hash, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
-func (s *Service) UpdatePassword(ctx context.Context, rec PasswordUpdateRecord) error {
+func (s *Service) UpdatePassword(ctx context.Context, id uuid.UUID, rec PasswordUpdateRecord) error {
 	return ErrNotImplemented
 }

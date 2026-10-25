@@ -68,11 +68,20 @@ func (r *Repository) UpdateUser(ctx context.Context, u user.UserUpdateRecord) er
 	return nil
 }
 
-func (r *Repository) DeleteUser(ctx context.Context, id string) error {
+func (r *Repository) DeleteUser(ctx context.Context, id uuid.UUID) error {
+	const q = `DELETE FROM public.users WHERE id = $1;`
+	tag, err := r.pool.Exec(ctx, q, id)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return user.ErrUserNotFound
+	}
+
 	return nil
 }
 
-func (r *Repository) UpdatePassword(ctx context.Context, id, hash string) error {
+func (r *Repository) UpdatePassword(ctx context.Context, id uuid.UUID, rec user.PasswordUpdateRecord) error {
 	return nil
 }
 
