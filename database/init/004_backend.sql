@@ -1,5 +1,7 @@
 \connect user_db
 
+\ir functions/set_updated_at.sql
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 GRANT CONNECT ON DATABASE user_db TO user_service;
@@ -13,6 +15,11 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NULL
 );
+
+CREATE TRIGGER users_set_updated_at
+BEFORE UPDATE ON public.users
+FOR EACH ROW
+EXECUTE FUNCTION public.set_updated_at();
 
 CREATE TABLE IF NOT EXISTS public.sessions (
     id UUID PRIMARY KEY DEFAULT uuidv7(),

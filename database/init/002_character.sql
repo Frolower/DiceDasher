@@ -1,6 +1,8 @@
 -- Character service database schema
 \connect character_db
 
+\ir functions/set_updated_at.sql
+
 -- gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
@@ -22,6 +24,11 @@ CREATE TABLE public.characters (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+CREATE TRIGGER characters_set_updated_at
+BEFORE UPDATE ON public.characters
+FOR EACH ROW
+EXECUTE FUNCTION public.set_updated_at();
 
 -- Pregenerated characters table
 CREATE TABLE public.pregen_characters (

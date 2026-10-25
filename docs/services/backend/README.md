@@ -242,21 +242,19 @@ Compose reads `services/backend/.env`, but overrides the database address with t
 internal `postgres:5432/user_db` address and the user_service role.
 Running Go directly does not automatically read .env.
 
-For an existing PostgreSQL volume:
+Start PostgreSQL and the backend:
 
 ```sh
 docker compose up -d postgres
-docker compose exec -T postgres psql -U postgres -d postgres < database/init/004_backend.sql
 docker compose up -d --build backend
 ```
 
-004 can be reapplied to an existing user_db with the user_service role: it creates
-missing tables and indexes and reapplies permissions, including UPDATE on users.
-It requires the database and role created by 000. `CREATE TABLE IF NOT EXISTS`
-does not migrate existing column definitions; schema changes need explicit
-migrations. New tables allow NULL in updated_at until the first update. Data from
-the former backend_db is not transferred automatically. A new volume is initialized automatically through 000 and 004.
-Do not delete the volume just to apply new GRANT statements or indexes.
+On a new volume, PostgreSQL runs the scripts in database/init in filename order.
+Script 000 creates the databases and roles; 004 creates the backend tables,
+indexes, permissions, and the users timestamp trigger. Script 002 creates the
+characters timestamp trigger. The database sets updated_at on every matching
+UPDATE, including assignments of unchanged values. NOW() uses the transaction
+start time. Users start with NULL in updated_at until the first update.
 
 In production, use HTTPS, COOKIE_SECURE=true, and your own Origin.
 The HS256 key allows both verifying and issuing JWTs; do not share it with clients.

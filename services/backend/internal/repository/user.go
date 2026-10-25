@@ -52,9 +52,8 @@ func (r *Repository) FindUserByID(ctx context.Context, id uuid.UUID) (user.UserP
 func (r *Repository) UpdateUser(ctx context.Context, u user.UserUpdateRecord) error {
 	const q = `UPDATE public.users
 	SET
-    	username = COALESCE(NULLIF($1, ''), username),
-    	email = COALESCE(NULLIF($2, ''), email),
-		updated_at = NOW()
+		username = COALESCE(NULLIF($1, ''), username),
+		email = COALESCE(NULLIF($2, ''), email)
 	WHERE id = $3;`
 	tag, err := r.pool.Exec(ctx, q, u.Username, u.Email, u.ID)
 	if err != nil {
