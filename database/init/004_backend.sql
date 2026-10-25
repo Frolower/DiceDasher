@@ -6,7 +6,7 @@ GRANT CONNECT ON DATABASE user_db TO user_service;
 GRANT USAGE ON SCHEMA public TO user_service;
 
 CREATE TABLE IF NOT EXISTS public.users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     username VARCHAR(64) NOT NULL CHECK (char_length(username) BETWEEN 5 AND 64),
     email VARCHAR(254) NOT NULL,
     hash TEXT NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 
 CREATE TABLE IF NOT EXISTS public.sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
     refresh_token_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

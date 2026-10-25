@@ -13,7 +13,17 @@ const SessionLifetime = 30 * 24 * time.Hour
 
 func (s *Service) createSession(ctx context.Context, userID uuid.UUID, userAgent string) (Tokens, error) {
 	now := s.now().UTC().Truncate(time.Second)
-	session := Session{ID: uuid.New(), UserID: userID, CreatedAt: now, ExpiresAt: now.Add(SessionLifetime), UserAgent: userAgent}
+	id, err := uuid.NewV7()
+	if err != nil {
+		return Tokens{}, err
+	}
+	session := Session{
+		ID: id,
+		UserID: userID,
+		CreatedAt: now,
+		ExpiresAt: now.Add(SessionLifetime),
+		UserAgent: userAgent,
+	}
 	refresh, err := s.tokens.GenerateRefresh()
 	if err != nil {
 		return Tokens{}, fmt.Errorf("generate refresh token: %w", err)

@@ -11,7 +11,7 @@ CREATE TYPE tes.item_type AS ENUM ('weapon', 'neurocaster', 'armor', 'gear', 'dr
 -- TES specific schemas
 
 CREATE TABLE tes.player_cars (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     type VARCHAR(255) NOT NULL,
     model VARCHAR(255) NOT NULL,
     passengers INT NOT NULL,

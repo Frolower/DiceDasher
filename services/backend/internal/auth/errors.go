@@ -12,6 +12,7 @@ var (
 	ErrAlreadyExists      = errors.New("username or email already exists")
 	ErrInvalidInput       = errors.New("invalid user input")
 	ErrStoreNotConfigured = errors.New("user store is not configured")
+	ErrCantGenerateUUID   = errors.New("can't generate uuid")
 )
 
 type InvalidInputError struct {

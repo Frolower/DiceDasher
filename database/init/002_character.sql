@@ -13,7 +13,7 @@ CREATE TYPE character_type AS ENUM ('pc', 'npc');
 
 -- Characters table
 CREATE TABLE public.characters (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     user_id UUID NOT NULL,
     system_name ttrpg_system NOT NULL,
     character_type character_type NOT NULL,
