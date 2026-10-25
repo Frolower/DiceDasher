@@ -156,6 +156,33 @@ into docker containers and won't require any additional downloads
   make down
   ```
 
+### Make commands
+
+Run `make` or `make help` to list all available commands.
+
+| Command | Description |
+| --- | --- |
+| `make up` / `make down` | Start / stop the Docker stack |
+| `make dev` | Build and run the Docker stack with attached logs |
+| `make build` / `make rebuild` | Build images / rebuild without cache |
+| `make logs SERVICE=backend` | Follow logs for a specific service |
+| `make ps` / `make restart` | Check status / restart containers |
+| `make install` | Install frontend dependencies from the lockfile |
+| `make frontend-dev` | Start Vite with live reload |
+| `make frontend-build` | Type-check and build the frontend |
+| `make test` | Run Go and frontend tests |
+| `make lint` | Run Go vet and frontend lint |
+| `make fmt` / `make fmt-check` | Format files / check formatting |
+
+Local Go commands require the Go version specified in `go.work`; frontend commands
+require Node.js and npm. Run `make install` before local frontend commands.
+Before `make frontend-dev`, stop the frontend container with
+`docker compose stop frontend` and start the API with `make up SERVICE=backend`.
+Both Vite and the frontend container use port 5174.
+
+**Destructive commands:** `make clean` and `make nuke` delete database volumes and
+all stored data. `make down` keeps volumes.
+
 ## Usage
 
 So far there is no user interface to access project functionality. The recommended
