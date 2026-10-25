@@ -61,3 +61,14 @@ npm run build
 npm test
 npm run lint
 ```
+
+## Formatting
+
+```sh
+npm run format        # Format frontend source, styles and configuration
+npm run format:check  # Check formatting without changing files
+```
+
+Prettier uses `.prettierrc.json`: 2-space indentation, single quotes, no semicolons,
+and a 100-character line width. Generated output, dependencies, and lockfiles are excluded.
+For formatting on save, select the Prettier extension in your editor and enable format on save.

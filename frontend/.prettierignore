@@ -1,0 +1,7 @@
+node_modules/
+dist/
+package-lock.json
+src/assets/
+public/icons.svg
+.env
+.env.*
