@@ -81,10 +81,6 @@ func (r *Repository) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-func (r *Repository) UpdatePassword(ctx context.Context, id uuid.UUID, rec user.PasswordUpdateRecord) error {
-	return nil
-}
-
 func mapCreateError(err error) error {
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) {

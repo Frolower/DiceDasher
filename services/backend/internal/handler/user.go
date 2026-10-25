@@ -13,18 +13,18 @@ func (h *Handler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 16<<10)
 	var req updateUserRequest
 
+	claims, ok := AccessClaimsFromContext(r.Context())
+	if !ok {
+		http.Error(w, "invalid request", http.StatusInternalServerError)
+		return
+	}
+
 	if err := httputil.UnpackJSON(r, &req); err != nil {
 		if _, ok := errors.AsType[*http.MaxBytesError](err); ok {
 			http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
 		} else {
 			http.Error(w, "invalid request body", http.StatusBadRequest)
 		}
-		return
-	}
-
-	claims, ok := AccessClaimsFromContext(r.Context())
-	if !ok {
-		http.Error(w, "invalid request", http.StatusInternalServerError)
 		return
 	}
 

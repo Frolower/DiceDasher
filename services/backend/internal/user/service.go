@@ -11,7 +11,8 @@ type UserStore interface {
 	FindUserByID(ctx context.Context, id uuid.UUID) (UserProfile, error)
 	UpdateUser(ctx context.Context, rec UserUpdateRecord) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
-	UpdatePassword(ctx context.Context, id uuid.UUID, rec PasswordUpdateRecord) error
+	UpdatePassword(ctx context.Context, id uuid.UUID, oldHash, newHash string) error
+	GetHashByID(ctx context.Context, id uuid.UUID) (string, error)
 }
 
 type Service struct {

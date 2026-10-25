@@ -202,9 +202,8 @@ func TestProtectedRoutesRequireAuth(t *testing.T) {
 				want := http.StatusUnauthorized
 				if authorized {
 					req.Header.Set("Authorization", "Bearer valid")
-					want = http.StatusNotImplemented
-					if route.method == http.MethodPatch {
-						// The implemented PATCH handler rejects the empty body after authentication.
+					if route.method == http.MethodPatch || route.method == http.MethodPut {
+						// Implemented update handlers reject the empty body after authentication.
 						want = http.StatusBadRequest
 					} else if route.method == http.MethodDelete {
 						want = http.StatusOK

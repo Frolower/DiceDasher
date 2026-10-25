@@ -52,6 +52,55 @@ func validateUserUpdateRequest(input UserUpdateRecord) error {
 	return errors.Join(errs...)
 }
 
+func validatePassword(input string) error {
+	var errs []error
+
+	var (
+		hasLower   bool
+		hasUpper   bool
+		hasDigit   bool
+		hasSpecial bool
+	)
+
+	if utf8.RuneCountInString(input) < 8 {
+		errs = append(errs, errors.New("password must be at least 8 characters"))
+	}
+
+	if len(input) > 72 {
+		errs = append(errs, errors.New("password must be at most 72 characters"))
+	}
+
+	if strings.ContainsFunc(input, unicode.IsSpace) {
+		errs = append(errs, errors.New("password must not contain whitespace"))
+	}
+
+	validASCII := true
+	for _, r := range input {
+		switch {
+		case r >= 'a' && r <= 'z':
+			hasLower = true
+		case r >= 'A' && r <= 'Z':
+			hasUpper = true
+		case r >= '0' && r <= '9':
+			hasDigit = true
+		case r >= '!' && r <= '~':
+			hasSpecial = true
+		default:
+			validASCII = false
+		}
+	}
+
+	if !validASCII {
+		errs = append(errs, errors.New("password must contain only English letters, digits and ASCII special characters, with no spaces"))
+	}
+
+	if !hasLower || !hasUpper || !hasDigit || !hasSpecial {
+		errs = append(errs, errors.New("password must contain lower case letters, upper case letters, special symbols and digits"))
+	}
+
+	return errors.Join(errs...)
+}
+
 func normalizeUserUpdateInput(input UserUpdateRecord) UserUpdateRecord {
 	input.Email = strings.ToLower(strings.TrimSpace(input.Email))
 	input.Username = strings.TrimSpace(input.Username)
