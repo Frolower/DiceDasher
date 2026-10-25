@@ -49,7 +49,7 @@ Currently supported systems:
 - The Electric State
 
 Currently existing services:
-- backend service: registers users and signs them in with JWT access tokens and database sessions ([documentation](docs/services/backend/README.md))
+- backend service: handles registration, JWT authentication, session refresh, and profile lookup/updates ([documentation](docs/services/backend/README.md))
 - resolve service: resolves dice rolls according to the system rules
 - character service: creates and stores system-specific characters
 

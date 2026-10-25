@@ -1,4 +1,4 @@
-# Backend: Registration, Login, and Logout
+# Backend: Authentication and User Profiles
 
 Backend: `http://localhost:8083`. Registration does not create a session. Signing in
 with a username and password creates a separate session and issues an access JWT
@@ -9,10 +9,15 @@ and a refresh cookie.
 | File / package | Responsibility |
 |---|---|
 | `cmd/backend-service/main.go` | Wiring the repository, bcrypt, JWTManager, auth.Service, user.Service, and handler |
-| `internal/handler/handler.go` | HTTP Authenticator interface, dependencies, and cookie settings |
+| `internal/handler/handler.go` | HTTP Authenticator and User interfaces, dependencies, and cookie settings |
 | `internal/handler/register.go` | Registration HTTP contract |
 | `internal/handler/me.go` | Authenticated profile HTTP contract; delegates to user.Service |
+| `internal/handler/user.go` | Profile update HTTP contract |
+| `internal/handler/auth_middleware.go` | Bearer token and session validation; authenticated claims in context |
+| `internal/handler/refresh.go` | Token refresh HTTP contract and cookie rotation |
 | `internal/user/profile.go`, `model.go` | Profile lookup and public user model |
+| `internal/user/user.go`, `validate.go` | Profile update, normalization, and validation |
+| `internal/user/service.go`, `errors.go` | User storage interface, dependencies, and domain errors |
 | `internal/handler/login.go` | Login and logout HTTP handling, Origin validation, tokens, and cookie removal |
 | `internal/handler/cookie.go` | Refresh cookie |
 | `internal/handler/cors.go` | CORS for a specific Origin with credentials |
@@ -20,6 +25,7 @@ and a refresh cookie.
 | `internal/auth/register.go` | Registration and bcrypt hash storage |
 | `internal/auth/login.go` | User lookup and password verification |
 | `internal/auth/logout.go` | Session revocation by refresh token hash |
+| `internal/auth/refresh.go`, `authenticate.go` | Refresh rotation and access/session validation |
 | `internal/auth/session.go` | Session creation after password verification |
 | `internal/auth/jwt.go` | Access JWT issuance and verification |
 | `internal/auth/refresh_token.go` | Cryptographically random refresh tokens and SHA-256 hashing |
@@ -30,7 +36,18 @@ The HTTP layer does not execute SQL or bcrypt operations. The service does not s
 cookies. The repository does not issue tokens. Context carries request cancellation
 and logging data.
 
+`auth` owns registration, login, logout, refresh, and authentication. `user` owns
+profile lookup and updates. Both use the same repository through their own storage
+interfaces. Protected routes authenticate through auth before invoking user.
+
 ## GET /me
+
+Set `ACCESS_TOKEN` to the `access_token` returned by login or refresh.
+
+```sh
+curl -i http://localhost:8083/me \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
 
 Requires a Bearer access token validated by the auth middleware. The handler passes
 only the authenticated user ID to `user.Service.GetProfile`; profile data and
@@ -40,13 +57,50 @@ Success: `200` with `id`, `username`, and `email`. Missing/invalid authenticatio
 or a missing user returns `401`; storage failures return `500`. Responses use
 `Cache-Control: no-store` and do not change cookies.
 
+## PATCH /user
+
+Requires the same Bearer authentication as `/me`. The target user ID comes from
+verified claims, never from the request body or query string.
+
+```sh
+curl -i -X PATCH http://localhost:8083/user \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"AliceNew","email":"alice.new@example.com"}'
+```
+
+Send `username`, `email`, or both. Missing fields, empty strings, and JSON `null`
+leave the corresponding field unchanged. At least one field must be nonempty
+after normalization; `{}` and two blank values return `400`. Unknown fields,
+including `id`, are rejected.
+
+- Username is trimmed, then checked for 5–64 ASCII characters (English letters, digits and printable ASCII symbols) and no whitespace
+  or control characters.
+- Email is trimmed, lowercased, and checked for format and 5–254 bytes.
+- PostgreSQL unique indexes on `lower(username)` and `lower(email)` reject
+  conflicts with other users. Keeping one's own current values is allowed.
+- Both changes are made in one SQL statement. A conflict rejects the entire
+  update; `updated_at` changes only when the update succeeds.
+
+Success: `200` with the JSON string `"success"`. Responses use
+`Cache-Control: no-store` and do not change cookies. Errors use `text/plain`.
+
+| Status | Reason |
+|---|---|
+| 400 | Invalid JSON, invalid fields, or no values to update |
+| 401 | Missing/invalid access token or inactive session |
+| 404 | Authenticated user no longer exists |
+| 409 | Username or email is already in use |
+| 413 | Body exceeds 16 KiB |
+| 500 | Internal failure; storage details are hidden |
+
 ## POST /register
 
 Input: `username`, `email`, `password`. Success: `201 {"status":"created"}` without cookies.
 
-- Username: 5–64 Unicode characters, with no whitespace or control characters; not trimmed.
-- Email: 3–254 bytes; format checked, trimmed, and converted to lowercase.
-- Password: at least 8 characters and at most 72 UTF-8 bytes; must include lowercase and uppercase letters and a digit, with no whitespace. Passed unchanged.
+- Username: 5–64 ASCII characters; English letters, digits and printable ASCII symbols only, with no whitespace or control characters. Cyrillic, accented letters and emoji are rejected. Not trimmed.
+- Email: 5–254 bytes; format checked (the domain must contain at least one dot, e.g. `example.com`) and converted to lowercase; surrounding whitespace is rejected.
+- Password: 8–72 ASCII characters; only English letters (`a-z`, `A-Z`), digits (`0-9`), and printable ASCII special characters are allowed. Must include a lowercase letter, an uppercase letter, a digit, and a special character (including `$`, `^`, or `~`). Whitespace, control characters, Cyrillic, accented letters, and emoji are rejected. Passed unchanged.
 - Username and email are case-insensitively unique through PostgreSQL `lower(...)`.
 - Errors: 400 — invalid input, 409 — duplicate, 413 — body exceeds 16 KiB, 500 — internal failure.
 
@@ -55,7 +109,7 @@ Input: `username`, `email`, `password`. Success: `201 {"status":"created"}` with
 ```sh
 curl -i -c /tmp/dicedasher-cookies.txt http://localhost:8083/login \
   -H 'Content-Type: application/json' \
-  -d '{"username":"Alice","password":"StrongPass1"}'
+  -d '{"username":"Alice","password":"StrongPass1!"}'
 ```
 
 Success: HTTP `200`, `Cache-Control: no-store`:
@@ -90,7 +144,7 @@ HTTP header; it is used for display, not as proof of device identity.
 | 415 | Content-Type is not application/json |
 | 500 | Internal error; no tokens or cookies issued |
 
-Login does not enforce the new registration password complexity rules: existing
+Login accepts only English letters, digits and printable ASCII symbols in usernames and passwords, without spaces. Login does not enforce the new registration password complexity rules: existing
 passwords must continue to work. Passwords are verified through
 bcrypt.CompareHashAndPassword rather than by hashing them again. For a missing
 user, a dummy hash is also checked with bcrypt to reduce response timing differences.
@@ -120,6 +174,28 @@ removed so the client can retry. This handler does not remove the access JWT:
 the client must clear it locally. JWT signature verification alone does not
 account for session revocation in the database.
 
+## POST /refresh
+
+```sh
+curl -i -X POST -b /tmp/dicedasher-cookies.txt -c /tmp/dicedasher-cookies.txt \
+  http://localhost:8083/refresh
+```
+
+No body or Content-Type is required. Refresh reads the same HttpOnly cookie as
+logout and applies the same Origin and cross-site request checks. Browser requests
+must use `credentials: "include"`.
+
+Success: `200` with `access_token`, `token_type`, and `expires_at`, as for login,
+and a rotated refresh cookie. The old refresh token stops working. Rotation uses
+a conditional SQL update so concurrent requests with the same token cannot both
+succeed. The session's original expiry is retained; the new access token lasts
+up to 10 minutes, capped at that expiry.
+
+Errors: `400` — invalid cookie; `401` — absent/unknown refresh token or an expired,
+revoked, or concurrently rotated session; `403` — request origin not allowed;
+`500` — internal failure. Responses use `Cache-Control: no-store` and
+`Pragma: no-cache`.
+
 ## Tokens and Sessions
 
 An access JWT (HS256) is valid for 10 minutes. It contains sub, sid, iss, aud, iat,
@@ -137,13 +213,12 @@ A signing failure does not create a database row; a storage failure does not iss
 tokens. A network interruption after a successful INSERT can leave a session that
 the client never received; login is not idempotent.
 
-Logout is implemented and revokes the session in the database. Refresh currently
-returns ErrNotImplemented at the service level, and its route is not wired yet.
-The SQL method for rotation is ready, but a history of used refresh tokens and
-protection against their reuse have not been implemented. Once an access JWT
-expires, another login is currently required. JWT verification is implemented as
-a component, but middleware protecting `/me` and other routes is the next step.
-A signed JWT does not itself check revoked_at in the database.
+Protected requests verify the access JWT and load its session by `sid`. Revoked
+or expired sessions and mismatched user IDs are rejected. Logout therefore blocks
+subsequent protected requests even when their access JWT has not expired.
+
+Refresh rotation is implemented. Used refresh tokens are not retained in a
+history, so an old token is rejected without revoking the entire session family.
 
 ## Configuration and Startup
 
@@ -175,10 +250,12 @@ docker compose exec -T postgres psql -U postgres -d postgres < database/init/004
 docker compose up -d --build backend
 ```
 
-004 can be reapplied: it creates any missing user_db/role, tables, indexes, and
-permissions. It does not change an existing role's password or migrate arbitrary
-legacy table structures. Data from the former backend_db is not transferred
-automatically. A new volume is initialized automatically through 000 and 004.
+004 can be reapplied to an existing user_db with the user_service role: it creates
+missing tables and indexes and reapplies permissions, including UPDATE on users.
+It requires the database and role created by 000. `CREATE TABLE IF NOT EXISTS`
+does not migrate existing column definitions; schema changes need explicit
+migrations. New tables allow NULL in updated_at until the first update. Data from
+the former backend_db is not transferred automatically. A new volume is initialized automatically through 000 and 004.
 Do not delete the volume just to apply new GRANT statements or indexes.
 
 In production, use HTTPS, COOKIE_SECURE=true, and your own Origin.
@@ -193,7 +270,8 @@ go test ./services/backend/...
 go vet ./services/backend/...
 ```
 
-For integration tests, apply 004 to a separate test database and set:
+For integration tests, create a separate test database and service role, apply 004
+(adjust its database name if needed), and set:
 
 ```sh
 BACKEND_TEST_DATABASE_URL='postgres://user_service:user_password@localhost:55439/user_db?sslmode=disable' \
@@ -205,6 +283,13 @@ Logout unit tests cover token hashing, session revocation, cookie removal,
 repeated logout, service errors, and Origin validation. There is no logout
 integration test yet.
 
-Tests also cover registration, bcrypt, JWTs, cookies, repeated login, password
-errors, concurrent registration, and the role's actual SQL permissions.
-Test users have random names and are deleted along with their sessions.
+Tests also cover registration, bcrypt, JWTs, refresh rotation, session revocation,
+profile lookup, update validation/normalization, and protected-route HTTP contracts.
+Update tests check authenticated identity, malformed/oversized JSON, and
+400/404/409/500 responses without internal error details.
+
+PostgreSQL integration tests cover registration, login, and profile updates under
+the service role. Update tests check one-field and two-field changes, uniqueness,
+atomicity on conflicts, updated_at, and unchanged profiles of other users.
+They are skipped unless both database URLs are set. Test users have random names
+and are deleted along with their sessions.

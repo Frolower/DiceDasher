@@ -82,6 +82,10 @@ Base URL: `http://localhost:8083`
 |---|---|---|
 | POST | `/login` | Login with username/password; access JWT in JSON, refresh token in HttpOnly cookie |
 | POST | `/register` | Register username, email and password; returns `201 {"status":"created"}` without a session |
+| POST | `/logout` | Revoke the current session and clear its refresh cookie; returns 204 |
+| POST | `/refresh` | Rotate the refresh cookie and issue a new access JWT |
+| GET | `/me` | Read the authenticated user's profile; requires Bearer authentication |
+| PATCH | `/user` | Update username, email, or both; requires Bearer authentication |
 | GET | `/health` | Health check |
 
-[Registration rules, errors and setup](../services/backend/README.md).
+[Authentication, profile updates, errors and setup](../services/backend/README.md).

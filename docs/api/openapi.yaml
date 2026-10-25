@@ -3,7 +3,7 @@ info:
   title: DiceDasher API
   version: 0.1.0
   description: |
-    API for DiceDasher's dice resolution and character services.
+    API for DiceDasher's dice resolution, character, authentication, and profile services.
     Use the schema selector in Swagger UI to choose the request body that matches
     the `system` and `action` query parameters.
   license:
@@ -15,7 +15,7 @@ tags:
   - name: Resolve
     description: System-specific dice resolution
   - name: Backend
-    description: User registration, login and logout
+    description: Registration, authentication, sessions, and user profiles
   - name: Character
     description: Character creation and storage
 paths:
@@ -26,7 +26,7 @@ paths:
       description: |
         Creates a 30-day session and issues a 10-minute access JWT.
         Refresh token is sent only in an HttpOnly SameSite=Strict cookie.
-        Browser requests must include credentials. Logout is available; refresh is not implemented yet.
+        Browser requests must include credentials to save the cookie. Use /refresh to rotate it and obtain a new access JWT.
       operationId: loginUser
       servers:
         - url: http://localhost:8083
@@ -52,7 +52,7 @@ paths:
                   description: At most 72 UTF-8 bytes; passed unchanged to bcrypt.
             example:
               username: Alice
-              password: StrongPass1
+              password: StrongPass1!
       responses:
         "200":
           description: Session saved. Refresh token is in Set-Cookie, not the response body.
@@ -156,17 +156,18 @@ paths:
                   type: string
                   format: email
                   maxLength: 254
-                  description: Trimmed and lowercased; at most 254 UTF-8 bytes; unique ignoring case.
+                  minLength: 5
+                  description: Lowercased without trimming; 5–254 UTF-8 bytes; surrounding whitespace is rejected; unique ignoring case.
                 password:
                   type: string
                   format: password
                   minLength: 8
                   maxLength: 72
-                  description: At most 72 UTF-8 bytes; requires lowercase, uppercase and a digit. No Unicode whitespace, including at the edges. Not trimmed.
+                  description: At most 72 UTF-8 bytes; requires lowercase, uppercase, a digit, and punctuation (Unicode IsPunct). No Unicode whitespace, including at the edges. Not trimmed.
             example:
               username: Alice
               email: alice@example.com
-              password: StrongPass1
+              password: StrongPass1!
       responses:
         "201":
           description: User persisted; no session or cookie created.
@@ -187,6 +188,135 @@ paths:
           description: Request body exceeds 16 KiB (text/plain).
         "500":
           description: Registration failed (text/plain); internal details are hidden.
+  /me:
+    get:
+      tags: [Backend]
+      summary: Read the authenticated user's profile
+      description: |
+        Auth middleware verifies the Bearer JWT and its active database session.
+        user.Service loads the profile using only the authenticated ID.
+        Query parameters cannot override the target user. Does not change cookies.
+      operationId: getMyProfile
+      servers:
+        - url: http://localhost:8083
+          description: Backend Service
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Authenticated user's profile.
+          headers:
+            Cache-Control:
+              schema: {type: string, const: no-store}
+            Pragma:
+              schema: {type: string, const: no-cache}
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Missing/invalid token, inactive session, or missing user (text/plain).
+          headers:
+            WWW-Authenticate:
+              schema: {type: string}
+              description: Bearer authentication challenge.
+        "500":
+          description: Profile lookup failed internally (text/plain).
+  /user:
+    patch:
+      tags: [Backend]
+      summary: Update the authenticated user's profile
+      description: |
+        Send username, email, or both. Fields are trimmed; email is lowercased.
+        Missing fields, empty strings, and null leave that field unchanged.
+        At least one field must be nonempty after normalization.
+        The target ID is taken from verified Bearer claims; an id field in JSON is rejected.
+        Username and email are unique ignoring case. Both changes are atomic:
+        a conflict rejects the entire update. Successful updates set updated_at.
+        Responses use Cache-Control no-store and Pragma no-cache; cookies are unchanged.
+      operationId: updateMyProfile
+      servers:
+        - url: http://localhost:8083
+          description: Backend Service
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                username:
+                  type: [string, "null"]
+                  description: After trimming, a nonempty username must be 5–64 Unicode characters with no whitespace or control characters.
+                email:
+                  type: [string, "null"]
+                  description: After trimming and lowercasing, a nonempty email must pass format validation and be 5–254 UTF-8 bytes.
+            examples:
+              bothFields:
+                value: {username: AliceNew, email: alice.new@example.com}
+              usernameOnly:
+                value: {username: AliceNew}
+              emailOnly:
+                value: {email: alice.new@example.com}
+      responses:
+        "200":
+          description: Profile updated; the response is a JSON string.
+          content:
+            application/json:
+              schema: {type: string, const: success}
+              example: success
+        "400":
+          description: Invalid JSON/fields, unknown fields, or no nonempty values to update (text/plain).
+        "401":
+          description: Missing/invalid token or inactive session (text/plain).
+        "404":
+          description: Authenticated user no longer exists (text/plain).
+        "409":
+          description: Username or email is already in use (text/plain); no changes saved.
+        "413":
+          description: Request body exceeds 16 KiB (text/plain).
+        "500":
+          description: Update failed internally (text/plain); storage details are hidden.
+  /refresh:
+    post:
+      tags: [Backend]
+      summary: Rotate the refresh token and issue an access JWT
+      description: |
+        No body or Content-Type is required. Reads __Host-refresh_token when
+        COOKIE_SECURE=true, otherwise refresh_token. Browsers must include credentials.
+        Applies the same Origin and cross-site checks as login/logout.
+        Rotates the stored token hash conditionally; the old token stops working.
+        The session expiry is retained. Access expiry is at most 10 minutes,
+        capped at the session expiry. Responses use Cache-Control no-store and Pragma no-cache.
+      operationId: refreshSession
+      servers:
+        - url: http://localhost:8083
+          description: Backend Service
+      security:
+        - SecureRefreshCookie: []
+        - LocalRefreshCookie: []
+      responses:
+        "200":
+          description: New access JWT and rotated refresh cookie.
+          headers:
+            Set-Cookie:
+              schema: {type: string}
+              description: Rotated HttpOnly SameSite=Strict refresh cookie; Secure in HTTPS mode.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          description: Invalid cookie (text/plain).
+        "401":
+          description: Cookie absent, token unknown, or session expired/revoked/already rotated.
+        "403":
+          description: Origin is not allowed or cross-site request has no Origin (text/plain).
+        "500":
+          description: Refresh failed internally (text/plain).
   /health:
     get:
       tags: [Health]
@@ -407,6 +537,21 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    SecureRefreshCookie:
+      type: apiKey
+      in: cookie
+      name: __Host-refresh_token
+      description: HttpOnly cookie used when COOKIE_SECURE=true; sent by the browser.
+    LocalRefreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+      description: HttpOnly cookie used when COOKIE_SECURE=false; sent by the browser.
   responses:
     BadRequest:
       description: Missing parameter, malformed JSON, or invalid action.
@@ -433,6 +578,30 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
   schemas:
+    UserProfile:
+      type: object
+      required: [id, username, email]
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_at]
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          const: Bearer
+        expires_at:
+          type: string
+          format: date-time
     Error:
       type: string
       example: validation failed
