@@ -114,3 +114,22 @@ func TestLoginFailuresDoNotReturnTokens(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestLoginRejectsNonASCIIInput(t *testing.T) {
+	for _, value := range []string{"Алиса", "Alicе", "Alicé", "Alice🎲", "Alice Smith", "Alice\x00"} {
+		for _, field := range []string{"username", "password"} {
+			input := LoginInput{Username: "Alice", Password: "old"}
+			if field == "username" {
+				input.Username = value
+			} else {
+				input.Password = value
+			}
+			if err := validateLoginInput(input); err == nil {
+				t.Errorf("accepted invalid %s", field)
+			}
+		}
+	}
+	if err := validateLoginInput(LoginInput{Username: "Alice_123", Password: "old"}); err != nil {
+		t.Fatalf("valid ASCII credentials rejected: %v", err)
+	}
+}

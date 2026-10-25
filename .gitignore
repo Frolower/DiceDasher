@@ -30,3 +30,6 @@ go.work.sum
 # editors
 .idea/
 .vscode/
+
+# Project-local agent skills
+/.agents/skills/

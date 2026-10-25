@@ -24,10 +24,10 @@ func TestUpdateUserNormalizesAndSaves(t *testing.T) {
 	for _, tc := range []struct {
 		name, username, email, wantUsername, wantEmail string
 	}{
-		{"both fields", " \tАлиса\n", " Alice@Example.COM ", "Алиса", "alice@example.com"},
+		{"both fields", " \tAlice\n", " Alice@Example.COM ", "Alice", "alice@example.com"},
 		{"username only", "Alice", "", "Alice", ""},
 		{"email only", "", "alice@example.com", "", "alice@example.com"},
-		{"maximum Unicode username", strings.Repeat("я", 64), "", strings.Repeat("я", 64), ""},
+		{"maximum ASCII username", strings.Repeat("a", 64), "", strings.Repeat("a", 64), ""},
 		{"maximum email", "", strings.Repeat("a", 64) + "@" + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 61), "", strings.Repeat("a", 64) + "@" + strings.Repeat("b", 63) + "." + strings.Repeat("c", 63) + "." + strings.Repeat("d", 61)},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -65,9 +65,15 @@ func TestUpdateUserInvalidInputDoesNotSave(t *testing.T) {
 		{"long Unicode username", UserUpdateRecord{ID: id, Username: strings.Repeat("я", 65)}, "username must be between"},
 		{"internal Unicode whitespace", UserUpdateRecord{ID: id, Username: "Ali\u00a0ce"}, "username must not contain whitespace"},
 		{"control character", UserUpdateRecord{ID: id, Username: "Ali\x00ce"}, "username must not contain control"},
+
+		{"Cyrillic username", UserUpdateRecord{ID: id, Username: "Алиса"}, "username must use only English letters"},
+		{"mixed alphabet username", UserUpdateRecord{ID: id, Username: "Alicе"}, "username must use only English letters"},
+		{"accented username", UserUpdateRecord{ID: id, Username: "Alicé"}, "username must use only English letters"},
+		{"emoji username", UserUpdateRecord{ID: id, Username: "Alice🎲"}, "username must use only English letters"},
 		{"short email", UserUpdateRecord{ID: id, Email: "a@b"}, "email must be between"},
 		{"long email", UserUpdateRecord{ID: id, Email: strings.Repeat("a", 243) + "@example.com"}, "email must be between"},
 		{"malformed email", UserUpdateRecord{ID: id, Email: "not-an-email"}, "email is incorrect"},
+		{"email without domain suffix", UserUpdateRecord{ID: id, Email: "frolowir@gmail"}, "email is incorrect"},
 		{"valid username and invalid email", UserUpdateRecord{ID: id, Username: "Alice", Email: "invalid"}, "email is incorrect"},
 		{"invalid username and valid email", UserUpdateRecord{ID: id, Username: "abc", Email: "alice@example.com"}, "username must be between"},
 	} {

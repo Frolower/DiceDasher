@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9.!#$%&'*+/=?^_` + "`" + `{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$`)
 
 func validateUserUpdateRequest(input UserUpdateRecord) error {
 	var errs []error
@@ -31,6 +31,10 @@ func validateUserUpdateRequest(input UserUpdateRecord) error {
 		if strings.ContainsFunc(input.Username, unicode.IsControl) {
 			errs = append(errs, errors.New("username must not contain control characters"))
 		}
+	}
+
+	if strings.ContainsFunc(input.Username, func(r rune) bool { return r > unicode.MaxASCII }) {
+		errs = append(errs, errors.New("username must use only English letters, digits and ASCII symbols"))
 	}
 
 	if len(input.Email) != 0 {

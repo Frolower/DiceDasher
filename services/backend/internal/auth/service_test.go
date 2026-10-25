@@ -26,7 +26,7 @@ func TestRegisterNormalizesAndHashes(t *testing.T) {
 	id := uuid.New()
 	password := "StrongPass1!"
 	s := NewService(storeFunc(func(got context.Context, rec CreateRecord) (uuid.UUID, error) {
-		if got != ctx || rec.Username != "Алиса" || rec.Email != "alice@example.com" {
+		if got != ctx || rec.Username != "Alice" || rec.Email != "alice@example.com" {
 			t.Fatalf("unexpected record: %s %s", rec.Username, rec.Email)
 		}
 		if rec.PasswordHash == password || bcrypt.CompareHashAndPassword([]byte(rec.PasswordHash), []byte(password)) != nil {
@@ -34,7 +34,7 @@ func TestRegisterNormalizesAndHashes(t *testing.T) {
 		}
 		return id, nil
 	}))
-	got, err := s.Register(ctx, CreateInput{Username: "Алиса", Email: "Alice@Example.COM", Password: password})
+	got, err := s.Register(ctx, CreateInput{Username: "Alice", Email: "Alice@Example.COM", Password: password})
 	if err != nil || got.ID != id {
 		t.Fatalf("result %v, error %v", got, err)
 	}
@@ -54,12 +54,24 @@ func TestInvalidInputDoesNotHashOrSave(t *testing.T) {
 		{"long username", func(v *CreateInput) { v.Username = strings.Repeat("я", 65) }},
 		{"control in username", func(v *CreateInput) { v.Username = "Ali\x00ce" }},
 		{"empty username", func(v *CreateInput) { v.Username = "   " }},
+		{"Cyrillic username", func(v *CreateInput) { v.Username = "Алиса" }},
+		{"mixed alphabet username", func(v *CreateInput) { v.Username = "Alicе" }},
+		{"accented username", func(v *CreateInput) { v.Username = "Alicé" }},
+		{"emoji username", func(v *CreateInput) { v.Username = "Alice🎲" }},
 		{"bad email", func(v *CreateInput) { v.Email = "not-an-email" }},
+		{"email without domain suffix", func(v *CreateInput) { v.Email = "frolowir@gmail" }},
 		{"long email", func(v *CreateInput) { v.Email = strings.Repeat("a", 250) + "@example.com" }},
-		{"short password", func(v *CreateInput) { v.Password = "Аа1234!" }},
+		{"short password", func(v *CreateInput) { v.Password = "Aa1234!" }},
 		{"missing uppercase", func(v *CreateInput) { v.Password = "password1!" }},
 		{"missing lowercase", func(v *CreateInput) { v.Password = "PASSWORD1!" }},
 		{"missing digit", func(v *CreateInput) { v.Password = "Password!" }},
+		{"missing special", func(v *CreateInput) { v.Password = "Password1" }},
+		{"Cyrillic letters", func(v *CreateInput) { v.Password = "StrongPass1!Я" }},
+		{"emoji", func(v *CreateInput) { v.Password = "StrongPass1!🎲" }},
+		{"accented letter", func(v *CreateInput) { v.Password = "StrongPass1!é" }},
+		{"Unicode digit", func(v *CreateInput) { v.Password = "StrongPass!١" }},
+		{"control character", func(v *CreateInput) { v.Password = "StrongPass1!\x00" }},
+		{"long ASCII password", func(v *CreateInput) { v.Password = "Aa1!" + strings.Repeat("x", 69) }},
 		{"bcrypt byte limit", func(v *CreateInput) { v.Password = "Aa1!" + strings.Repeat("я", 35) }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -163,5 +175,14 @@ func TestBcryptVerify(t *testing.T) {
 	}
 	if err := passwords.Verify(hash, "WrongPass1"); !errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestASCIIPasswordSpecialCharacters(t *testing.T) {
+	for _, special := range "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~" {
+		input := CreateInput{Username: "Alice", Email: "alice@example.com", Password: "StrongPass1" + string(special)}
+		if err := validateCreateInput(input); err != nil {
+			t.Errorf("ASCII special %q rejected: %v", special, err)
+		}
 	}
 }
