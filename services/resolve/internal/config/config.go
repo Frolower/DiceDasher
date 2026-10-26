@@ -14,7 +14,7 @@ type Config struct {
 func Load() (*Config, error) {
 	addr := os.Getenv("HTTP_ADDR")
 	if addr == "" {
-		addr = ":8080"
+		addr = ":8081"
 	}
 
 	databaseURL := os.Getenv("DATABASE_URL")
