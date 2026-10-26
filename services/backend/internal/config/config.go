@@ -1,28 +1,28 @@
 package config
 
 import (
+	"diceDasher/pkg/httputil"
 	"encoding/base64"
 	"errors"
-	"net/url"
 	"os"
 	"strconv"
 )
 
 type Config struct {
-	HTTPAddr      string
-	DatabaseURL   string
-	LogMode       string
-	JWTKey        []byte
-	JWTIssuer     string
-	JWTAudience   string
-	CookieSecure  bool
-	AllowedOrigin string
+	HTTPAddr       string
+	DatabaseURL    string
+	LogMode        string
+	JWTKey         []byte
+	JWTIssuer      string
+	JWTAudience    string
+	CookieSecure   bool
+	AllowedOrigins []string
 }
 
 func Load() (*Config, error) {
 	addr := os.Getenv("HTTP_ADDR")
 	if addr == "" {
-		addr = ":8080"
+		addr = ":8000"
 	}
 
 	databaseURL := os.Getenv("DATABASE_URL")
@@ -54,19 +54,15 @@ func Load() (*Config, error) {
 	if audience == "" {
 		audience = "dicedasher-api"
 	}
-	origin := os.Getenv("ALLOWED_ORIGIN")
-	if origin == "" {
-		origin = "http://localhost:8082"
-	}
-	parsed, err := url.Parse(origin)
-	if err != nil || parsed.Host == "" || (parsed.Scheme != "http" && parsed.Scheme != "https") || parsed.User != nil || parsed.Path != "" || parsed.RawQuery != "" || parsed.Fragment != "" {
-		return nil, errors.New("ALLOWED_ORIGIN must be an http(s) origin without path")
+	origins, err := httputil.ParseAllowedOrigins(os.Getenv("ALLOWED_ORIGINS"), "http://localhost:8888,http://localhost:5174")
+	if err != nil {
+		return nil, err
 	}
 
 	return &Config{
 		HTTPAddr:    addr,
 		DatabaseURL: databaseURL,
 		LogMode:     logMode,
-		JWTKey:      key, JWTIssuer: issuer, JWTAudience: audience, CookieSecure: secure, AllowedOrigin: origin,
+		JWTKey:      key, JWTIssuer: issuer, JWTAudience: audience, CookieSecure: secure, AllowedOrigins: origins,
 	}, nil
 }

@@ -1,6 +1,6 @@
 # Resolve Service Endpoints
 
-Base URL (local): `http://localhost:8080`
+Base URL (local): `http://localhost:8081`
 
 ---
 
@@ -19,7 +19,7 @@ Health check endpoint.
 **Example:**
 
 ```bash
-curl -i http://localhost:8080/health
+curl -i http://localhost:8081/health
 ```
 
 ---

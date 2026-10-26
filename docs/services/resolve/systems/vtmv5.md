@@ -53,7 +53,7 @@ Perform a standard VTM v5 dice pool roll.
 ### Example
 
 ```bash
-curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=roll" \
+curl -X POST "http://localhost:8081/resolve?system=vtmv5&action=roll" \
   -H "Content-Type: application/json" \
   -d '{"attribute": 3, "skill": 2, "hunger": 2, "target": 3}'
 ```
@@ -105,7 +105,7 @@ Reroll specific dice from a previous roll (Willpower reroll). Only main dice can
 ### Example
 
 ```bash
-curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=reroll" \
+curl -X POST "http://localhost:8081/resolve?system=vtmv5&action=reroll" \
   -H "Content-Type: application/json" \
   -d '{
     "record_id": "923a67f6-a421-41cf-b323-f71c0e7caffc",
@@ -151,7 +151,7 @@ Empty body required.
 ### Example
 
 ```bash
-curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=check" \
+curl -X POST "http://localhost:8081/resolve?system=vtmv5&action=check" \
   -H "Content-Type: application/json" \
   -d '{}'
 ```

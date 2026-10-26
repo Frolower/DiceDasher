@@ -42,7 +42,7 @@ go run cmd/resolve-service/main.go
 
 ```bash
 docker build -t resolve-service -f services/resolve/Dockerfile .
-docker run --env-file services/resolve/.env -p 8080:8080 resolve-service
+docker run --env-file services/resolve/.env -p 8081:8081 resolve-service
 ```
 
 ## Configuration
@@ -51,7 +51,8 @@ The service is configured via environment variables:
 
 | Variable       | Description                               | Default   |
 |----------------|-------------------------------------------|-----------|
-| `HTTP_ADDR`    | HTTP listen address                       | `:8080`   |
+| `HTTP_ADDR`    | HTTP listen address                       | `:8081`   |
+| `ALLOWED_ORIGINS` | Comma-separated exact browser origins | `http://localhost:8888,http://localhost:8000` |
 | `DATABASE_URL` | PostgreSQL connection URL                 | —         |
 | `LOG_MODE`     | `default`, `debug`, or `contrast` logging | `default` |
 
@@ -65,15 +66,15 @@ Full endpoint documentation: [endpoints.md](endpoints.md)
 
 ```bash
 # Health check
-curl http://localhost:8080/health
+curl http://localhost:8081/health
 
 # Generic roll (2d6)
-curl -X POST "http://localhost:8080/resolve?system=generic" \
+curl -X POST "http://localhost:8081/resolve?system=generic" \
   -H "Content-Type: application/json" \
   -d '{"number": 2, "size": 6}'
 
 # VTM v5 roll
-curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=roll" \
+curl -X POST "http://localhost:8081/resolve?system=vtmv5&action=roll" \
   -H "Content-Type: application/json" \
   -d '{"attribute": 3, "skill": 2, "hunger": 2, "target": 3}'
 ```

@@ -1,6 +1,6 @@
 # Backend: Authentication and User Management
 
-Backend: `http://localhost:8083`. Registration does not create a session. Signing in
+Backend: `http://localhost:8000`. Registration does not create a session. Signing in
 with a username and password creates a separate session and issues an access JWT
 and a refresh cookie.
 
@@ -48,7 +48,7 @@ interfaces. Protected routes authenticate through auth before invoking user.
 Set `ACCESS_TOKEN` to the `access_token` returned by login or refresh.
 
 ```sh
-curl -i http://localhost:8083/me \
+curl -i http://localhost:8000/me \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
@@ -66,7 +66,7 @@ Requires the same Bearer authentication as `/me`. The target user ID comes from
 verified claims, never from the request body or query string.
 
 ```sh
-curl -i -X PATCH http://localhost:8083/user \
+curl -i -X PATCH http://localhost:8000/user \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"username":"AliceNew","email":"alice.new@example.com"}'
@@ -103,7 +103,7 @@ Requires Bearer authentication. The target ID comes from verified claims. No
 request body is required.
 
 ```sh
-curl -i -X DELETE http://localhost:8083/user \
+curl -i -X DELETE http://localhost:8000/user \
   -H "Authorization: Bearer $ACCESS_TOKEN"
 ```
 
@@ -125,7 +125,7 @@ Requires Bearer authentication. Send both passwords; the user ID comes from
 verified claims, and unknown JSON fields are rejected.
 
 ```sh
-curl -i -X PUT http://localhost:8083/password \
+curl -i -X PUT http://localhost:8000/password \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"old_password":"StrongPass1!","new_password":"NewStrongPass2!"}'
@@ -167,7 +167,7 @@ Input: `username`, `email`, `password`. Success: `201 {"status":"created"}` with
 ## POST /login
 
 ```sh
-curl -i -c /tmp/dicedasher-cookies.txt http://localhost:8083/login \
+curl -i -c /tmp/dicedasher-cookies.txt http://localhost:8000/login \
   -H 'Content-Type: application/json' \
   -d '{"username":"Alice","password":"StrongPass1!"}'
 ```
@@ -189,7 +189,7 @@ The refresh token is sent only through `Set-Cookie`, not in JSON:
 - Expires and Max-Age are limited to the session lifetime.
 
 Browser requests must use `credentials: "include"`, including the first login.
-CORS allows only `ALLOWED_ORIGIN`. Login accepts only `application/json` and rejects
+CORS allows only `ALLOWED_ORIGINS`. Login accepts only `application/json` and rejects
 an unapproved Origin or cross-site Fetch Metadata without an Origin.
 curl/Postman requests without an Origin are allowed. User-Agent is read from the
 HTTP header; it is used for display, not as proof of device identity.
@@ -213,7 +213,7 @@ user, a dummy hash is also checked with bcrypt to reduce response timing differe
 
 ```sh
 curl -i -X POST -b /tmp/dicedasher-cookies.txt -c /tmp/dicedasher-cookies.txt \
-  http://localhost:8083/logout
+  http://localhost:8000/logout
 ```
 
 No request body or Content-Type is required. The refresh token is read from the
@@ -238,7 +238,7 @@ account for session revocation in the database.
 
 ```sh
 curl -i -X POST -b /tmp/dicedasher-cookies.txt -c /tmp/dicedasher-cookies.txt \
-  http://localhost:8083/refresh
+  http://localhost:8000/refresh
 ```
 
 No body or Content-Type is required. Refresh reads the same HttpOnly cookie as
@@ -291,19 +291,20 @@ invalidates existing access JWTs. An empty or too-short key prevents startup.
 | Variable | Value |
 |---|---|
 | DATABASE_URL | Required URL for user_db |
-| HTTP_ADDR | Defaults to :8083 |
+| HTTP_ADDR | Defaults to :8000 |
 | JWT_SECRET | Required base64 secret containing at least 32 random bytes |
 | JWT_ISSUER | dicedasher-backend |
 | JWT_AUDIENCE | dicedasher-api |
 | COOKIE_SECURE | Defaults to true; false only for local HTTP |
-| ALLOWED_ORIGIN | http://localhost:8082, without a trailing slash |
+| ALLOWED_ORIGINS | `http://localhost:8888,http://localhost:5174`, without trailing slashes |
 | LOG_MODE | default |
 
 Compose reads `services/backend/.env`, but overrides the database address with the
-internal `postgres:5432/user_db` address and the user_service role. It also sets
-`ALLOWED_ORIGIN` to `${FRONTEND_ORIGIN:-http://localhost:5174}`. For a local backend
-used with the frontend outside Compose, set `ALLOWED_ORIGIN=http://localhost:5174`
-and `COOKIE_SECURE=false`; the example file uses the Swagger Origin on port 8082.
+internal `postgres:5432/user_db` address and the user_service role. It does not
+override `ALLOWED_ORIGINS`. Set it to a comma-separated list of exact browser
+origins without paths or trailing slashes. The default is `http://localhost:8888,http://localhost:5174`
+(Swagger and frontend). Resolve and character default to `http://localhost:8888,http://localhost:8000`.
+Use `COOKIE_SECURE=false` for local HTTP.
 Running Go directly does not automatically read .env.
 
 Start PostgreSQL and the backend:

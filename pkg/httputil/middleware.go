@@ -4,6 +4,7 @@ import (
 	"context"
 	"net"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -191,14 +192,15 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 	})
 }
 
-func CORS(allowedOrigin string) func(http.Handler) http.Handler {
+func CORS(allowedOrigins []string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.Header.Get("Origin") == allowedOrigin {
-				w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+			w.Header().Add("Vary", "Origin")
+			origin := r.Header.Get("Origin")
+			if origin != "" && slices.Contains(allowedOrigins, origin) {
+				w.Header().Set("Access-Control-Allow-Origin", origin)
 				w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
 				w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-				w.Header().Set("Vary", "Origin")
 			}
 
 			if r.Method == http.MethodOptions {

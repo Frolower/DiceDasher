@@ -39,14 +39,15 @@ go run cmd/character-service/main.go
 
 ```bash
 docker build -t character-service -f services/character/Dockerfile .
-docker run --env-file services/character/.env -p 8081:8081 character-service
+docker run --env-file services/character/.env -p 8082:8082 character-service
 ```
 
 ## Configuration
 
 | Variable       | Description                               | Default   |
 |----------------|-------------------------------------------|-----------|
-| `HTTP_ADDR`    | HTTP listen address                       | `:8081`   |
+| `HTTP_ADDR`    | HTTP listen address                       | `:8082`   |
+| `ALLOWED_ORIGINS` | Comma-separated exact browser origins | `http://localhost:8888,http://localhost:8000` |
 | `DATABASE_URL` | PostgreSQL connection URL                 | —         |
 | `LOG_MODE`     | `default`, `debug`, or `contrast` logging | `default` |
 
@@ -61,9 +62,9 @@ See [endpoints.md](endpoints.md) for the HTTP contract and [systems/tes.md](syst
 ### Quick Start
 
 ```bash
-curl http://localhost:8081/health
+curl http://localhost:8082/health
 
-curl -X POST "http://localhost:8081/character?system=tes" \
+curl -X POST "http://localhost:8082/character?system=tes" \
   -H "Content-Type: application/json" \
   --data @character.json
 ```

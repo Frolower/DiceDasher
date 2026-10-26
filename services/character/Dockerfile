@@ -22,5 +22,5 @@ RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build /app/character-service /app/character-service
 
-EXPOSE 8083
+EXPOSE 8082
 CMD ["/app/character-service"]

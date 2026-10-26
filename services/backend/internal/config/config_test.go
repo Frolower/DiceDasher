@@ -10,7 +10,7 @@ func TestLoadJWTSettings(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://test")
 	t.Setenv("JWT_SECRET", base64.StdEncoding.EncodeToString([]byte(strings.Repeat("k", 32))))
 	t.Setenv("COOKIE_SECURE", "")
-	t.Setenv("ALLOWED_ORIGIN", "")
+	t.Setenv("ALLOWED_ORIGINS", "")
 	c, err := Load()
 	if err != nil || !c.CookieSecure || len(c.JWTKey) != 32 {
 		t.Fatalf("config %v", err)

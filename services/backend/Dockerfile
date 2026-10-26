@@ -12,5 +12,5 @@ FROM alpine:3.21
 RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build /app/backend-service /app/backend-service
-EXPOSE 8083
+EXPOSE 8000
 CMD ["/app/backend-service"]

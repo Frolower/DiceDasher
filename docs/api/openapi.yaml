@@ -29,7 +29,7 @@ paths:
         Browser requests must include credentials to save the cookie. Use /refresh to rotate it and obtain a new access JWT.
       operationId: loginUser
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       requestBody:
         required: true
@@ -106,7 +106,7 @@ paths:
         check session revocation in the database.
       operationId: logoutUser
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       responses:
         "204":
@@ -136,7 +136,7 @@ paths:
       summary: Register a user without creating a session
       operationId: registerUser
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       requestBody:
         required: true
@@ -198,7 +198,7 @@ paths:
         Query parameters cannot override the target user. Does not change cookies.
       operationId: getMyProfile
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       security:
         - BearerAuth: []
@@ -236,7 +236,7 @@ paths:
         Responses use Cache-Control no-store and Pragma no-cache; cookies are unchanged.
       operationId: updateMyProfile
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       security:
         - BearerAuth: []
@@ -292,7 +292,7 @@ paths:
         Responses use Cache-Control no-store and Pragma no-cache.
       operationId: deleteMyAccount
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       security:
         - BearerAuth: []
@@ -325,7 +325,7 @@ paths:
         Responses use Cache-Control no-store and Pragma no-cache.
       operationId: updateMyPassword
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       security:
         - BearerAuth: []
@@ -374,7 +374,7 @@ paths:
         capped at the session expiry. Responses use Cache-Control no-store and Pragma no-cache.
       operationId: refreshSession
       servers:
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       security:
         - SecureRefreshCookie: []
@@ -404,11 +404,11 @@ paths:
       summary: Check service health
       operationId: health
       servers:
-        - url: http://localhost:8080
-          description: Resolve Service
         - url: http://localhost:8081
+          description: Resolve Service
+        - url: http://localhost:8082
           description: Character Service
-        - url: http://localhost:8083
+        - url: http://localhost:8000
           description: Backend Service
       responses:
         "200":
@@ -429,7 +429,7 @@ paths:
         Roll history is persisted when the database is available.
       operationId: resolveDice
       servers:
-        - url: http://localhost:8080
+        - url: http://localhost:8081
           description: Resolve Service
       parameters:
         - name: system
@@ -513,7 +513,7 @@ paths:
       description: Validates a system-specific character, stores it in PostgreSQL, and returns its UUID.
       operationId: createCharacter
       servers:
-        - url: http://localhost:8081
+        - url: http://localhost:8082
           description: Character Service
       parameters:
         - name: system

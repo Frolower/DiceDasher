@@ -6,13 +6,15 @@ import (
 	"diceDasher/pkg/logger"
 	"errors"
 	"net/http"
+	"slices"
 )
 
 func (h *Handler) HandleRefresh(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
 
-	if origin := r.Header.Get("Origin"); origin != "" && (h.options.AllowedOrigin == "" || origin != h.options.AllowedOrigin) {
+	if origin := r.Header.Get("Origin"); origin != "" &&
+		!slices.Contains(h.options.AllowedOrigins, origin) {
 		http.Error(w, "origin is not allowed", http.StatusForbidden)
 		return
 	}

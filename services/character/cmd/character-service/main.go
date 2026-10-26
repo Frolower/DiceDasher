@@ -34,7 +34,7 @@ func main() {
 
 	// Wrap with middlewares
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
-	wrapped = httputil.CORS("http://localhost:8082")(wrapped)
+	wrapped = httputil.CORS(cfg.AllowedOrigins)(wrapped)
 
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,

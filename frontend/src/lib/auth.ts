@@ -73,7 +73,7 @@ export async function authenticate(mode: AuthMode, fields: AuthFields, signal: A
         : response.status === 401
           ? 'Your username or password is incorrect.'
           : response.status === 403
-            ? 'Sign-in is not allowed from this address. Check the backend ALLOWED_ORIGIN setting.'
+            ? 'Sign-in is not allowed from this address. Check the backend ALLOWED_ORIGINS setting.'
             : response.status === 400
               ? 'The server could not accept these details. Check the fields and try again.'
               : response.status === 429

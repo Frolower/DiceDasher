@@ -42,7 +42,7 @@ Perform a standard TES dice pool roll.
 ### Example
 
 ```bash
-curl -X POST "http://localhost:8080/resolve?system=tes&action=roll" \
+curl -X POST "http://localhost:8081/resolve?system=tes&action=roll" \
   -H "Content-Type: application/json" \
   -d '{"attr": 4, "assist": 1, "gear": 2, "modificator": 0, "target": 2}'
 ```
@@ -89,7 +89,7 @@ Push a previous roll. Re-rolls all dice that aren't 1 or 6. Tracks hope loss and
 ### Example
 
 ```bash
-curl -X POST "http://localhost:8080/resolve?system=tes&action=push" \
+curl -X POST "http://localhost:8081/resolve?system=tes&action=push" \
   -H "Content-Type: application/json" \
   -d '{"record_id": "90e8e1f0-c213-4fa3-9a64-7d7ce3115e04"}'
 ```

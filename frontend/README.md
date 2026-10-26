@@ -33,15 +33,16 @@ Open http://localhost:5174. The port is fixed so the backend Origin check stays 
 Stop the frontend container first (`docker compose stop frontend` from the repository root)
 when using Vite locally, because both use port 5174.
 
-The Vite development proxy forwards `/api/*` to `http://localhost:8083/*`.
+The Vite development proxy forwards `/api/*` to `http://localhost:8000/*`.
 From the repository root, start or recreate the backend with the updated Compose configuration:
 
 ```sh
 docker compose up -d --build backend
 ```
 
-Compose sets `ALLOWED_ORIGIN` to `http://localhost:5174`; override with `FRONTEND_ORIGIN` when needed.
-For a backend running outside Compose, set `ALLOWED_ORIGIN=http://localhost:5174` and `COOKIE_SECURE=false` for local HTTP.
+Compose reads `ALLOWED_ORIGINS` from `services/backend/.env` without overriding it.
+The default backend allowlist contains Swagger at `http://localhost:8888` and the frontend at `http://localhost:5174`.
+For a backend running outside Compose, set `ALLOWED_ORIGINS=http://localhost:8888,http://localhost:5174` and `COOKIE_SECURE=false` for local HTTP.
 The Docker image includes the `/api` reverse proxy; Vite's development proxy is not included in `dist`.
 For deployment on a domain, set `FRONTEND_ORIGIN` to the public HTTPS Origin,
 terminate HTTPS at your ingress, and set `COOKIE_SECURE=true` in the backend environment.

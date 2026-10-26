@@ -150,7 +150,8 @@ run in containers, so local Go and Node.js installations are optional.
   ```
   Set `JWT_SECRET` in `services/backend/.env` to the output of
   `openssl rand -base64 32`. Keep `COOKIE_SECURE=false` for local HTTP.
-  Compose sets the frontend Origin to `http://localhost:5174`.
+  The backend allows Swagger at `http://localhost:8888` and the frontend at
+  `http://localhost:5174` by default.
 3. Build and run Docker containers
   ```sh
   make build
@@ -162,12 +163,12 @@ run in containers, so local Go and Node.js installations are optional.
   ```
 5. Check if services are healthy
   ```sh
-  curl http://localhost:8080/health
   curl http://localhost:8081/health
-  curl http://localhost:8083/health
+  curl http://localhost:8082/health
+  curl http://localhost:8000/health
   curl http://localhost:5174/health
   ```
-6. Open the frontend at [http://localhost:5174](http://localhost:5174) and Swagger UI at [http://localhost:8082](http://localhost:8082).
+6. Open the frontend at [http://localhost:5174](http://localhost:5174) and Swagger UI at [http://localhost:8888](http://localhost:8888).
 7. Stop containers
   ```sh
   make down

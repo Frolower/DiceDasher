@@ -1,6 +1,6 @@
 # Character Service Endpoints
 
-Base URL (local): `http://localhost:8081`
+Base URL (local): `http://localhost:8082`
 
 ## GET /health
 
@@ -14,7 +14,7 @@ Health check endpoint.
 - Body: `OK` (`text/plain`)
 
 ```bash
-curl -i http://localhost:8081/health
+curl -i http://localhost:8082/health
 ```
 
 ## POST /character
@@ -50,7 +50,7 @@ The returned `id` is the UUID of the new row in the character database.
 ### Example
 
 ```bash
-curl -X POST "http://localhost:8081/character?system=tes" \
+curl -X POST "http://localhost:8082/character?system=tes" \
   -H "Content-Type: application/json" \
   --data @character.json
 ```

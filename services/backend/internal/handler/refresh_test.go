@@ -102,6 +102,7 @@ func TestRefreshHTTP(t *testing.T) {
 		{name: "database failure", cookie: true, called: true, err: errors.New("private database details"), status: 500},
 		{name: "unconfigured", cookie: true, called: true, err: auth.ErrAuthNotConfigured, status: 500},
 		{name: "allowed origin", origin: "https://app.example", cookie: true, called: true, status: 200},
+		{name: "second allowed origin", origin: "https://swagger.example", cookie: true, called: true, status: 200},
 		{name: "foreign origin", origin: "https://evil.example", cookie: true, status: 403},
 		{name: "opaque origin", origin: "null", cookie: true, status: 403},
 		{name: "cross site without origin", fetchSite: "cross-site", cookie: true, status: 403},
@@ -116,7 +117,7 @@ func TestRefreshHTTP(t *testing.T) {
 					t.Fatalf("wrong token: %q", token)
 				}
 				return tokens, tc.err
-			}}, nil, Options{CookieSecure: tc.secure, AllowedOrigin: "https://app.example"})
+			}}, nil, Options{CookieSecure: tc.secure, AllowedOrigins: []string{"https://app.example", "https://swagger.example"}})
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			req := httptest.NewRequest(http.MethodPost, "/refresh", nil)

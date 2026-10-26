@@ -37,6 +37,7 @@ func TestLoginHTTP(t *testing.T) {
 		{name: "unknown field", body: `{"user_agent":"fake"}`, status: 400},
 		{name: "wrong type", body: `{"password":12}`, status: 400},
 		{name: "large", body: `{"password":"` + strings.Repeat("x", 17000) + `"}`, status: 413},
+		{name: "second allowed origin", body: `{"username":"Alice","password":"StrongPass1"}`, origin: "https://swagger.example", called: true, status: 200},
 		{name: "foreign origin", body: `{}`, origin: "https://evil.example", status: 403},
 		{name: "opaque origin", body: `{}`, origin: "null", status: 403},
 		{name: "form CSRF", body: `username=Alice`, contentType: "application/x-www-form-urlencoded", status: 415},
@@ -53,7 +54,7 @@ func TestLoginHTTP(t *testing.T) {
 					t.Fatal("lost credentials")
 				}
 				return auth.Tokens{AccessToken: "access", RefreshToken: "secret-refresh", AccessExpiresAt: now.Add(time.Minute), RefreshExpiresAt: now.Add(time.Hour)}, tc.err
-			}}, nil, Options{CookieSecure: true, AllowedOrigin: "https://app.example"})
+			}}, nil, Options{CookieSecure: true, AllowedOrigins: []string{"https://app.example", "https://swagger.example"}})
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(tc.body))
@@ -69,7 +70,7 @@ func TestLoginHTTP(t *testing.T) {
 			}
 			req.Header.Set("Origin", origin)
 			w := httptest.NewRecorder()
-			CORS("https://app.example")(router).ServeHTTP(w, req)
+			CORS([]string{"https://app.example", "https://swagger.example"})(router).ServeHTTP(w, req)
 			if w.Code != tc.status || called != tc.called {
 				t.Fatalf("code=%d called=%v body=%s", w.Code, called, w.Body.String())
 			}

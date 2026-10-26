@@ -2,11 +2,11 @@
 
 This document provides a general list of all API endpoints across DiceDasher services.
 
-Interactive API documentation is available through Swagger UI at `http://localhost:8082` after running `make up`. The source specification is [openapi.yaml](openapi.yaml).
+Interactive API documentation is available through Swagger UI at `http://localhost:8888` after running `make up`. The source specification is [openapi.yaml](openapi.yaml).
 
 ## Resolve Service
 
-Base URL: `http://localhost:8080`
+Base URL: `http://localhost:8081`
 
 Full documentation: [/docs/services/resolve/](../services/resolve/)
 
@@ -29,27 +29,27 @@ Full documentation: [/docs/services/resolve/](../services/resolve/)
 
 ```sh
 # Health check
-curl http://localhost:8080/health
+curl http://localhost:8081/health
 
 # Generic: Roll 2d8
-curl -X POST "http://localhost:8080/resolve?system=generic" \
+curl -X POST "http://localhost:8081/resolve?system=generic" \
   -H "Content-Type: application/json" \
   -d '{"number": 2, "size": 8}'
 
 # VTM v5: Dice pool roll
-curl -X POST "http://localhost:8080/resolve?system=vtmv5&action=roll" \
+curl -X POST "http://localhost:8081/resolve?system=vtmv5&action=roll" \
   -H "Content-Type: application/json" \
   -d '{"attribute": 3, "skill": 2, "hunger": 2, "target": 3}'
 
 # TES: Attribute + gear roll
-curl -X POST "http://localhost:8080/resolve?system=tes&action=roll" \
+curl -X POST "http://localhost:8081/resolve?system=tes&action=roll" \
   -H "Content-Type: application/json" \
   -d '{"attr": 4, "assist": 1, "gear": 2, "modificator": 0, "target": 2}'
 ```
 
 ## Character Service
 
-Base URL: `http://localhost:8081`
+Base URL: `http://localhost:8082`
 
 Full documentation: [/docs/services/character/](../services/character/)
 
@@ -69,14 +69,14 @@ Full documentation: [/docs/services/character/](../services/character/)
 ### Quick Example
 
 ```sh
-curl -X POST "http://localhost:8081/character?system=tes" \
+curl -X POST "http://localhost:8082/character?system=tes" \
   -H "Content-Type: application/json" \
   --data @character.json
 ```
 
 ## Backend Service
 
-Base URL: `http://localhost:8083`
+Base URL: `http://localhost:8000`
 
 | Method | Endpoint | Description |
 |---|---|---|

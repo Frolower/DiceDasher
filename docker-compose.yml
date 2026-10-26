@@ -61,16 +61,15 @@ services:
       - services/backend/.env
     environment:
       DATABASE_URL: postgres://user_service:user_password@postgres:5432/user_db?sslmode=disable
-      HTTP_ADDR: ":8080"
+      HTTP_ADDR: ":8000"
       LOG_MODE: default
-      ALLOWED_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5174}
     ports:
-      - "8080:8080"
+      - "8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8083/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5

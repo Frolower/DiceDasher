@@ -31,7 +31,7 @@ Roll N dice of size M and return individual results with sum.
 ### Example
 
 ```bash
-curl -X POST "http://localhost:8080/resolve?system=generic&action=roll" \
+curl -X POST "http://localhost:8081/resolve?system=generic&action=roll" \
   -H "Content-Type: application/json" \
   -d '{"number": 3, "size": 6}'
 ```

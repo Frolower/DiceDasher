@@ -36,6 +36,7 @@ func TestLogoutHTTP(t *testing.T) {
 		{name: "database failure", secure: true, cookie: true, called: true, err: errors.New("private database details"), status: 500},
 		{name: "unconfigured service", cookie: true, called: true, err: auth.ErrAuthNotConfigured, status: 500},
 		{name: "allowed origin", origin: "https://app.example", allowedOrigin: "https://app.example", cookie: true, called: true, cleared: true, status: 204},
+		{name: "second allowed origin", origin: "https://swagger.example", allowedOrigin: "https://app.example", cookie: true, called: true, cleared: true, status: 204},
 		{name: "foreign origin", origin: "https://evil.example", allowedOrigin: "https://app.example", cookie: true, status: 403},
 		{name: "opaque origin", origin: "null", cookie: true, status: 403},
 		{name: "origin without configuration", origin: "https://app.example", cookie: true, status: 403},
@@ -49,7 +50,7 @@ func TestLogoutHTTP(t *testing.T) {
 					t.Fatalf("wrong refresh token: %q", token)
 				}
 				return tc.err
-			}}, nil, Options{CookieSecure: tc.secure, AllowedOrigin: tc.allowedOrigin})
+			}}, nil, Options{CookieSecure: tc.secure, AllowedOrigins: []string{tc.allowedOrigin, "https://swagger.example"}})
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			req := httptest.NewRequest(http.MethodPost, "/logout", nil)

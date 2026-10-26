@@ -42,7 +42,7 @@ func main() {
 	r := httputil.NewRouter()
 	handler.New(resolveService).RegisterRoutes(r)
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
-	wrapped = httputil.CORS("http://localhost:8081")(wrapped)
+	wrapped = httputil.CORS(cfg.AllowedOrigins)(wrapped)
 
 	srv := &http.Server{
 		Addr:    cfg.HTTPAddr,

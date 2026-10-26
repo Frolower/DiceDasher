@@ -24,8 +24,8 @@ type User interface {
 }
 
 type Options struct {
-	CookieSecure  bool
-	AllowedOrigin string
+	CookieSecure   bool
+	AllowedOrigins []string
 }
 type Handler struct {
 	authenticator Authenticator

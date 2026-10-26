@@ -112,7 +112,7 @@ Because TES rule validation covers the full sheet, the easiest way to call the e
 ```
 
 ```bash
-curl -X POST "http://localhost:8081/character?system=tes" \
+curl -X POST "http://localhost:8082/character?system=tes" \
   -H "Content-Type: application/json" \
   --data @character.json
 ```

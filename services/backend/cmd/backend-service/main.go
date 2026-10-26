@@ -36,11 +36,11 @@ func main() {
 	authentication := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), tokens)
 	users := user.NewServiceWithDependencies(store, user.NewBcryptHasher())
 	r := httputil.NewRouter()
-	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigin: cfg.AllowedOrigin}).RegisterRouters(r)
+	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins}).RegisterRouters(r)
 
 	// Wrap with middlewares
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
-	wrapped = handler.CORS(cfg.AllowedOrigin)(wrapped)
+	wrapped = handler.CORS(cfg.AllowedOrigins)(wrapped)
 
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,

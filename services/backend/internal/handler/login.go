@@ -7,6 +7,7 @@ import (
 	"errors"
 	"mime"
 	"net/http"
+	"slices"
 	"time"
 )
 
@@ -15,7 +16,8 @@ func (h *Handler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Pragma", "no-cache")
 
 	// verifying origin
-	if origin := r.Header.Get("Origin"); origin != "" && (h.options.AllowedOrigin == "" || origin != h.options.AllowedOrigin) {
+	if origin := r.Header.Get("Origin"); origin != "" &&
+		!slices.Contains(h.options.AllowedOrigins, origin) {
 		http.Error(w, "origin is not allowed", http.StatusForbidden)
 		return
 	}
@@ -61,7 +63,8 @@ func (h *Handler) HandleLogout(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Pragma", "no-cache")
 
-	if origin := r.Header.Get("Origin"); origin != "" && (h.options.AllowedOrigin == "" || origin != h.options.AllowedOrigin) {
+	if origin := r.Header.Get("Origin"); origin != "" &&
+		!slices.Contains(h.options.AllowedOrigins, origin) {
 		http.Error(w, "origin is not allowed", http.StatusForbidden)
 		return
 	}
