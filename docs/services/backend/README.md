@@ -1,4 +1,4 @@
-# Backend: Authentication and User Profiles
+# Backend: Authentication and User Management
 
 Backend: `http://localhost:8083`. Registration does not create a session. Signing in
 with a username and password creates a separate session and issues an access JWT
@@ -12,7 +12,10 @@ and a refresh cookie.
 | `internal/handler/handler.go` | HTTP Authenticator and User interfaces, dependencies, and cookie settings |
 | `internal/handler/register.go` | Registration HTTP contract |
 | `internal/handler/me.go` | Authenticated profile HTTP contract; delegates to user.Service |
-| `internal/handler/user.go` | Profile update HTTP contract |
+| `internal/handler/user.go` | Profile update and account deletion HTTP contracts |
+| `internal/handler/password.go` | Password change HTTP contract |
+| `internal/user/password.go` | Password validation, bcrypt verification, and hashing |
+| `internal/repository/password.go` | Password hash lookup and conditional update |
 | `internal/handler/auth_middleware.go` | Bearer token and session validation; authenticated claims in context |
 | `internal/handler/refresh.go` | Token refresh HTTP contract and cookie rotation |
 | `internal/user/profile.go`, `model.go` | Profile lookup and public user model |
@@ -37,7 +40,7 @@ cookies. The repository does not issue tokens. Context carries request cancellat
 and logging data.
 
 `auth` owns registration, login, logout, refresh, and authentication. `user` owns
-profile lookup and updates. Both use the same repository through their own storage
+profile lookup, updates, password changes, and account deletion. Both use the same repository through their own storage
 interfaces. Protected routes authenticate through auth before invoking user.
 
 ## GET /me
@@ -91,6 +94,63 @@ Success: `200` with the JSON string `"success"`. Responses use
 | 401 | Missing/invalid access token or inactive session |
 | 404 | Authenticated user no longer exists |
 | 409 | Username or email is already in use |
+| 413 | Body exceeds 16 KiB |
+| 500 | Internal failure; storage details are hidden |
+
+## DELETE /user
+
+Requires Bearer authentication. The target ID comes from verified claims. No
+request body is required.
+
+```sh
+curl -i -X DELETE http://localhost:8083/user \
+  -H "Authorization: Bearer $ACCESS_TOKEN"
+```
+
+Success: `200` with the JSON string `"success"`. The user is deleted, all their
+sessions are deleted by the database foreign key cascade, and the refresh cookie
+is expired using the configured name and security attributes. The client must
+clear its access token locally. Subsequent protected requests fail authentication.
+Character records in the separate character database are not deleted.
+
+Responses use `Cache-Control: no-store` and `Pragma: no-cache`. Errors use
+`text/plain`: `401` for missing/invalid authentication or an inactive session,
+`404` if the user disappears after authentication, and `500` for internal failures.
+Repeated deletion with the same token normally returns `401` because its session
+has already been deleted.
+
+## PUT /password
+
+Requires Bearer authentication. Send both passwords; the user ID comes from
+verified claims, and unknown JSON fields are rejected.
+
+```sh
+curl -i -X PUT http://localhost:8083/password \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"old_password":"StrongPass1!","new_password":"NewStrongPass2!"}'
+```
+
+Both passwords currently undergo the registration complexity checks: 8–72 ASCII
+characters, with a lowercase letter, uppercase letter, digit, and printable special
+character; no whitespace or control characters. Neither password is trimmed.
+This means an older password that fails today's complexity rules cannot be used
+here, even if login still accepts it.
+
+The service verifies the old password with bcrypt, hashes the new password, and
+updates the stored hash only if it still matches the hash read for verification.
+A concurrent password change that replaces that hash results in `404`. The database
+trigger updates `updated_at`. Existing sessions, access JWTs, and refresh cookies
+remain valid; this operation does not revoke sessions or rotate tokens.
+
+Success: `200` with the JSON string `"success"`, `Cache-Control: no-store`, and
+`Pragma: no-cache`. Cookies are unchanged. Errors use `text/plain`.
+
+| Status | Reason |
+|---|---|
+| 400 | Invalid JSON, unknown/missing fields, password validation failure, or incorrect old password |
+| 401 | Missing/invalid access token or inactive session |
+| 404 | User not found or stored password hash changed concurrently |
 | 413 | Body exceeds 16 KiB |
 | 500 | Internal failure; storage details are hidden |
 
@@ -205,7 +265,8 @@ The JWT is signed, but its contents are not encrypted.
 
 A refresh token consists of 32 random bytes encoded as base64url. Only its SHA-256
 hash is stored in the database, not the original token. Sessions last 30 days.
-Each login creates a new session. The service generates the session ID before
+Each login creates a new session. User IDs default to PostgreSQL 18 `uuidv7()`.
+The service generates a UUID v7 session ID before
 signing the JWT and performing the INSERT.
 
 Tokens are prepared first, then the session is saved, then the response is sent.
@@ -239,7 +300,10 @@ invalidates existing access JWTs. An empty or too-short key prevents startup.
 | LOG_MODE | default |
 
 Compose reads `services/backend/.env`, but overrides the database address with the
-internal `postgres:5432/user_db` address and the user_service role.
+internal `postgres:5432/user_db` address and the user_service role. It also sets
+`ALLOWED_ORIGIN` to `${FRONTEND_ORIGIN:-http://localhost:5174}`. For a local backend
+used with the frontend outside Compose, set `ALLOWED_ORIGIN=http://localhost:5174`
+and `COOKIE_SECURE=false`; the example file uses the Swagger Origin on port 8082.
 Running Go directly does not automatically read .env.
 
 Start PostgreSQL and the backend:
@@ -286,7 +350,12 @@ profile lookup, update validation/normalization, and protected-route HTTP contra
 Update tests check authenticated identity, malformed/oversized JSON, and
 400/404/409/500 responses without internal error details.
 
-PostgreSQL integration tests cover registration, login, and profile updates under
+Password tests cover validation, old-password verification, hashing, conditional
+storage updates, authenticated HTTP handling, and errors. The password PostgreSQL
+integration test checks rejected changes, persisted bcrypt hashes, old-password
+rejection after a change, and rejection of a stale hash update.
+
+PostgreSQL integration tests cover registration, login, password changes, and profile updates under
 the service role. Update tests check one-field and two-field changes, uniqueness,
 atomicity on conflicts, updated_at, and unchanged profiles of other users.
 They are skipped unless both database URLs are set. Test users have random names

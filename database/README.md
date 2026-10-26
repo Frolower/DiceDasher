@@ -3,6 +3,23 @@
 Scripts in `init/` run in filename order when PostgreSQL starts with a new volume.
 They do not run automatically for an existing volume.
 
+## IDs and PostgreSQL version
+
+Compose uses PostgreSQL 18. UUID primary keys in the roll history, character, TES
+player-car, user, and session tables default to PostgreSQL's built-in `uuidv7()`.
+The backend generates session IDs before insertion with Go's `uuid.NewV7()` so
+it can sign the access JWT first. IDs remain UUID strings in API responses.
+Integer IDs in reference and pregenerated-character tables remain integers.
+
+Changing init scripts does not migrate an existing volume. Existing databases
+need PostgreSQL 18 and explicit schema updates for the new defaults and timestamp
+triggers; existing UUID values can remain unchanged. Recreating a disposable
+volume applies all init scripts, but deletes its data.
+
+Deleting a user from `user_db.public.users` deletes their sessions through
+`ON DELETE CASCADE`. Characters live in a separate database; account deletion
+does not delete character data.
+
 ## Automatic update timestamps
 
 `init/004_backend.sql` and `init/002_character.sql` create a

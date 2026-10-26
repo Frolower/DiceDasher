@@ -86,6 +86,11 @@ Base URL: `http://localhost:8083`
 | POST | `/refresh` | Rotate the refresh cookie and issue a new access JWT |
 | GET | `/me` | Read the authenticated user's profile; requires Bearer authentication |
 | PATCH | `/user` | Update username, email, or both; requires Bearer authentication |
+| DELETE | `/user` | Delete the authenticated account and its sessions; clear the refresh cookie |
+| PUT | `/password` | Change the authenticated user's password using `old_password` and `new_password` |
 | GET | `/health` | Health check |
 
-[Authentication, profile updates, errors and setup](../services/backend/README.md).
+Account deletion and password changes require Bearer authentication and return
+`200` with the JSON string `"success"`. Password changes retain existing sessions.
+
+[Authentication, user management, errors and setup](../services/backend/README.md).

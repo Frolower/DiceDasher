@@ -40,8 +40,9 @@
 
 ---
 ## Status
-Early development. Backend API is available; UI is not implemented yet. 
-Use Postman/cURL for now.
+Early development. Backend APIs and a minimal React landing page with registration
+and login are available. Open the frontend at http://localhost:5174. Dice rolls,
+character creation, and profile management currently use the API or Swagger UI.
 <br>
 Currently supported systems:
 - General
@@ -49,7 +50,7 @@ Currently supported systems:
 - The Electric State
 
 Currently existing services:
-- backend service: handles registration, JWT authentication, session refresh, and profile lookup/updates ([documentation](docs/services/backend/README.md))
+- backend service: handles registration, JWT authentication, session refresh, profile lookup/updates, password changes, and account deletion ([documentation](docs/services/backend/README.md))
 - resolve service: resolves dice rolls according to the system rules
 - character service: creates and stores system-specific characters
 
@@ -61,8 +62,8 @@ It is designed to have both system agnostic and system specific tools for variou
 ### Built With
 
 - Backend: Go 1.26, net/http
-- Frontend: React
-- DB: PostgreSQL
+- Frontend: React, TypeScript, Vite, Nginx
+- DB: PostgreSQL 18 (UUID v7 defaults)
 - Infra: Docker Compose, Makefile
 
 ## Architecture
@@ -77,6 +78,7 @@ This project is designed to use microservice architecture.
 ├── docs/
 │   ├── api/                      Existing API endpoints overview
 │   ├── services/
+│   │   ├── backend/             Authentication and user management documentation
 │   │   ├── character/           Character service documentation
 │   │   └── resolve/             Resolve service documentation
 │   ├── CODE_OF_CONDUCT.md
@@ -94,6 +96,7 @@ This project is designed to use microservice architecture.
 │   └── go.mod
 │
 ├── services/                      Backend services
+│   ├── backend/                   Authentication, sessions, and user management
 │   ├── character/                 Character service
 │   │   ├── cmd/character-service  Entrypoint
 │   │   ├── internal/
@@ -128,8 +131,9 @@ This project is designed to use microservice architecture.
 
 ### Prerequisites
 
-The only current requirement is the latest release of Docker, all services are packed
-into docker containers and won't require any additional downloads
+The Docker setup requires Docker with Compose. The commands below also use Make;
+without Make, run the corresponding `docker compose` commands directly. Services
+run in containers, so local Go and Node.js installations are optional.
 
 ### Installation
 
@@ -137,21 +141,34 @@ into docker containers and won't require any additional downloads
   ```sh
   git clone https://github.com/Frolower/DiceDasher
   ```
-2. Run docker containers
+2. Enter the repository and create service environment files
   ```sh
+  cd DiceDasher
+  cp services/resolve/.env.example services/resolve/.env
+  cp services/character/.env.example services/character/.env
+  cp services/backend/.env.example services/backend/.env
+  ```
+  Set `JWT_SECRET` in `services/backend/.env` to the output of
+  `openssl rand -base64 32`. Keep `COOKIE_SECURE=false` for local HTTP.
+  Compose sets the frontend Origin to `http://localhost:5174`.
+3. Build and run Docker containers
+  ```sh
+  make build
   make up
   ```
-3. Display logs
+4. Display logs
   ```sh
   make logs
   ```
-4. Check if services are healthy
+5. Check if services are healthy
   ```sh
   curl http://localhost:8080/health
   curl http://localhost:8081/health
+  curl http://localhost:8083/health
+  curl http://localhost:5174/health
   ```
-5. Open Swagger UI at [http://localhost:8082](http://localhost:8082).
-6. Stop containers
+6. Open the frontend at [http://localhost:5174](http://localhost:5174) and Swagger UI at [http://localhost:8082](http://localhost:8082).
+7. Stop containers
   ```sh
   make down
   ```
@@ -185,9 +202,10 @@ all stored data. `make down` keeps volumes.
 
 ## Usage
 
-So far there is no user interface to access project functionality. The recommended
-way is to use Postman to access API endpoints. All currently supported requests are
-listed in the [documentation](/docs/api/README.md).
+The [frontend](frontend/README.md) provides registration and login. Its access token
+is held in memory; reloading clears the displayed login state. Use Swagger UI,
+Postman, or cURL for the other endpoints listed in the
+[API reference](docs/api/README.md).
 
 ## Roadmap
 

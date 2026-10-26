@@ -49,7 +49,7 @@ paths:
                   format: password
                   minLength: 1
                   maxLength: 72
-                  description: At most 72 UTF-8 bytes; passed unchanged to bcrypt.
+                  description: 1–72 printable ASCII characters, without spaces or control characters; passed unchanged to bcrypt. Registration complexity is not enforced at login.
             example:
               username: Alice
               password: StrongPass1!
@@ -151,7 +151,7 @@ paths:
                   type: string
                   minLength: 5
                   maxLength: 64
-                  description: No Unicode whitespace, including at the edges; not trimmed; unique ignoring case.
+                  description: 5–64 printable ASCII characters, without spaces or control characters; not trimmed; unique ignoring case.
                 email:
                   type: string
                   format: email
@@ -163,7 +163,7 @@ paths:
                   format: password
                   minLength: 8
                   maxLength: 72
-                  description: At most 72 UTF-8 bytes; requires lowercase, uppercase, a digit, and punctuation (Unicode IsPunct). No Unicode whitespace, including at the edges. Not trimmed.
+                  description: 8–72 printable ASCII characters; requires an English lowercase letter, uppercase letter, digit, and special character (including $, ^, or ~). No spaces or control characters. Not trimmed.
             example:
               username: Alice
               email: alice@example.com
@@ -232,7 +232,7 @@ paths:
         At least one field must be nonempty after normalization.
         The target ID is taken from verified Bearer claims; an id field in JSON is rejected.
         Username and email are unique ignoring case. Both changes are atomic:
-        a conflict rejects the entire update. Successful updates set updated_at.
+        a conflict rejects the entire update. A database trigger sets updated_at on every successful update, including unchanged values.
         Responses use Cache-Control no-store and Pragma no-cache; cookies are unchanged.
       operationId: updateMyProfile
       servers:
@@ -250,7 +250,7 @@ paths:
               properties:
                 username:
                   type: [string, "null"]
-                  description: After trimming, a nonempty username must be 5–64 Unicode characters with no whitespace or control characters.
+                  description: After trimming, a nonempty username must be 5–64 printable ASCII characters with no whitespace or control characters.
                 email:
                   type: [string, "null"]
                   description: After trimming and lowercasing, a nonempty email must pass format validation and be 5–254 UTF-8 bytes.
@@ -280,6 +280,87 @@ paths:
           description: Request body exceeds 16 KiB (text/plain).
         "500":
           description: Update failed internally (text/plain); storage details are hidden.
+    delete:
+      tags: [Backend]
+      summary: Delete the authenticated account
+      description: |
+        No request body is required. The user ID comes from verified Bearer claims.
+        Deletes the user and all their sessions through ON DELETE CASCADE.
+        Expires the configured refresh cookie; clients must clear the access JWT locally.
+        Character data in the separate character database is retained.
+        Reusing the token normally returns 401 after its session is deleted.
+        Responses use Cache-Control no-store and Pragma no-cache.
+      operationId: deleteMyAccount
+      servers:
+        - url: http://localhost:8083
+          description: Backend Service
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Account and sessions deleted; the response is a JSON string.
+          headers:
+            Set-Cookie:
+              description: Expires the configured refresh cookie with Path=/ and matching security attributes.
+              schema: {type: string}
+          content:
+            application/json:
+              schema: {type: string, const: success}
+        "401":
+          description: Missing/invalid token or inactive session (text/plain).
+        "404":
+          description: User disappeared after authentication (text/plain).
+        "500":
+          description: Deletion failed internally (text/plain).
+  /password:
+    put:
+      tags: [Backend]
+      summary: Change the authenticated user's password
+      description: |
+        The user ID comes from verified Bearer claims. Both passwords must meet
+        current registration complexity rules, including the old password.
+        Verifies the old password with bcrypt and conditionally replaces its hash.
+        A concurrent hash change returns 404. The database trigger sets updated_at.
+        Existing sessions and tokens remain valid; cookies are unchanged.
+        Responses use Cache-Control no-store and Pragma no-cache.
+      operationId: updateMyPassword
+      servers:
+        - url: http://localhost:8083
+          description: Backend Service
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [old_password, new_password]
+              properties:
+                old_password:
+                  $ref: "#/components/schemas/PasswordChangeValue"
+                new_password:
+                  $ref: "#/components/schemas/PasswordChangeValue"
+            example:
+              old_password: StrongPass1!
+              new_password: NewStrongPass2!
+      responses:
+        "200":
+          description: Password hash updated; the response is a JSON string.
+          content:
+            application/json:
+              schema: {type: string, const: success}
+        "400":
+          description: Invalid JSON, unknown/missing fields, invalid password format, or incorrect old password (text/plain).
+        "401":
+          description: Missing/invalid token or inactive session (text/plain).
+        "404":
+          description: User not found or stored hash changed concurrently (text/plain).
+        "413":
+          description: Request body exceeds 16 KiB (text/plain).
+        "500":
+          description: Password change failed internally (text/plain); storage details are hidden.
   /refresh:
     post:
       tags: [Backend]
@@ -578,6 +659,13 @@ components:
           schema:
             $ref: "#/components/schemas/Error"
   schemas:
+    PasswordChangeValue:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 72
+      pattern: '^[!-~]+$'
+      description: Requires an English lowercase letter, uppercase letter, digit, and printable ASCII special character. No whitespace or control characters; passed unchanged.
     UserProfile:
       type: object
       required: [id, username, email]
@@ -585,6 +673,7 @@ components:
         id:
           type: string
           format: uuid
+          description: User UUID; newly registered users receive UUID v7.
         username:
           type: string
         email:

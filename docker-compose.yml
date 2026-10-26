@@ -24,12 +24,12 @@ services:
     env_file:
       - services/resolve/.env
     ports:
-      - "8080:8080"
+      - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8080/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8081/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -42,12 +42,12 @@ services:
     env_file:
       - services/character/.env
     ports:
-      - "8081:8081"
+      - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:8081/health || exit 1" ]
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/health || exit 1" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -61,11 +61,11 @@ services:
       - services/backend/.env
     environment:
       DATABASE_URL: postgres://user_service:user_password@postgres:5432/user_db?sslmode=disable
-      HTTP_ADDR: ":8083"
+      HTTP_ADDR: ":8080"
       LOG_MODE: default
       ALLOWED_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5174}
     ports:
-      - "8083:8083"
+      - "8080:8080"
     depends_on:
       postgres:
         condition: service_healthy
@@ -89,7 +89,7 @@ services:
   swagger-ui:
     image: swaggerapi/swagger-ui:latest
     ports:
-      - "8082:8080"
+      - "8888:8080"
     environment:
       SWAGGER_JSON: /spec/openapi.yaml
     volumes:
