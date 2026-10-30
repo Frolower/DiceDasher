@@ -11,6 +11,7 @@ import (
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
 	"errors"
+	"fmt"
 	"net"
 	"net/http"
 	"os"
@@ -20,20 +21,29 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		logger.Logf(context.Background(), "backend failed: %v", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	var shutdownErr error
+
 	cfg, err := config.Load()
 	if err != nil {
-		logger.LogFatalf(context.Background(), "%v", err)
+		return fmt.Errorf("load config: %w", err)
 	}
 
 	repo, err := dbutil.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
-		logger.LogFatalf(context.Background(), "%v", err)
+		return fmt.Errorf("connect database: %w", err)
 	}
 	defer repo.Close()
 
 	tokens, err := auth.NewJWTManager(cfg.JWTKey, cfg.JWTIssuer, cfg.JWTAudience)
 	if err != nil {
-		logger.LogFatalf(context.Background(), "%v", err)
+		return fmt.Errorf("create JWT manager: %w", err)
 	}
 	store := repository.New(repo.Pool())
 	// A single repository implements both the user and session interfaces.
@@ -57,7 +67,7 @@ func main() {
 
 	ln, err := net.Listen("tcp", cfg.HTTPAddr)
 	if err != nil {
-		logger.LogFatalf(context.Background(), "%v", err)
+		return fmt.Errorf("listen: %w", err)
 	}
 
 	stopCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -74,9 +84,10 @@ func main() {
 	select {
 	case err := <-serveErr:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
-			logger.Logf(context.Background(), "HTTP server failed: %v", err)
+			err = fmt.Errorf("serve HTTP: %w", err)
+			return err
 		}
-		return
+		return nil
 
 	case <-stopCtx.Done():
 		logger.Logf(context.Background(), "backend service stopping")
@@ -88,16 +99,21 @@ func main() {
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
-		logger.Logf(context.Background(), "graceful shutdown failed: %v", err)
+		shutdownErr = fmt.Errorf("graceful shutdown: %w", err)
 
 		if err := srv.Close(); err != nil {
-			logger.Logf(context.Background(), "close HTTP server: %v", err)
+			shutdownErr = errors.Join(shutdownErr, fmt.Errorf("close HTTP server: %w", err))
 		}
 	}
 
 	if err := <-serveErr; err != nil && !errors.Is(err, http.ErrServerClosed) {
-		logger.Logf(context.Background(), "HTTP server failed: %v", err)
+		shutdownErr = errors.Join(shutdownErr, fmt.Errorf("serve HTTP: %w", err))
+	}
+
+	if shutdownErr != nil {
+		return shutdownErr
 	}
 
 	logger.Logf(context.Background(), "backend service shutdown")
+	return nil
 }
