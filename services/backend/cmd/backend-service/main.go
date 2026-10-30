@@ -10,8 +10,12 @@ import (
 	"diceDasher/pkg/dbutil"
 	"diceDasher/pkg/httputil"
 	"diceDasher/pkg/logger"
+	"errors"
 	"net"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -56,6 +60,44 @@ func main() {
 		logger.LogFatalf(context.Background(), "%v", err)
 	}
 
+	stopCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	serveErr := make(chan error, 1)
+
+	go func() {
+		serveErr <- srv.Serve(ln)
+	}()
+
 	logger.Logf(context.Background(), "backend service READY on %s", cfg.HTTPAddr)
-	logger.LogFatalf(context.Background(), "%v", srv.Serve(ln))
+
+	select {
+	case err := <-serveErr:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logger.Logf(context.Background(), "HTTP server failed: %v", err)
+		}
+		return
+
+	case <-stopCtx.Done():
+		logger.Logf(context.Background(), "backend service stopping")
+	}
+
+	stop()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		logger.Logf(context.Background(), "graceful shutdown failed: %v", err)
+
+		if err := srv.Close(); err != nil {
+			logger.Logf(context.Background(), "close HTTP server: %v", err)
+		}
+	}
+
+	if err := <-serveErr; err != nil && !errors.Is(err, http.ErrServerClosed) {
+		logger.Logf(context.Background(), "HTTP server failed: %v", err)
+	}
+
+	logger.Logf(context.Background(), "backend service shutdown")
 }
