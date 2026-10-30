@@ -1,0 +1,216 @@
+name: PR Checks
+run-name: ${{ github.actor }} is building and testing DiceDasher
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [master]
+
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  frontend-lint:
+    name: Frontend Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Oxlint
+        working-directory: frontend
+        run: npm run lint
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    needs: frontend-lint
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: "frontend/package-lock.json"
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run Tests
+        working-directory: frontend
+        run: npm test
+
+  docker-build-frontend:
+    name: Docker builds frontend
+    runs-on: ubuntu-latest
+    needs: frontend-tests
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Docker Build
+        run: docker build -t dicedasher-frontend:ci ./frontend
+
+  database-tests:
+    name: Database tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Initialize database
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker cp database/init "$POSTGRES_CONTAINER:/ci-init"
+          docker exec "$POSTGRES_CONTAINER" sh -ec '
+            for file in /ci-init/*.sql; do
+              psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -f "$file"
+            done
+          '
+
+      - name: Test database triggers and permissions
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker exec -i "$POSTGRES_CONTAINER" \
+            psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+            < database/tests/updated_at.sql
+
+  go-tests:
+    name: Go tests (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - pkg
+          - services/backend
+          - services/character
+          - services/resolve
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            go.work.sum
+            pkg/go.sum
+            services/*/go.sum
+
+      - name: Vet
+        run: go vet ./${{ matrix.module }}/...
+
+      - name: Test
+        run: go test -race ./${{ matrix.module }}/...
+
+  integration-tests:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    needs: database-tests
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.work
+          cache-dependency-path: |
+            go.work.sum
+            pkg/go.sum
+            services/*/go.sum
+
+      - name: Initialize database
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          docker cp database/init "$POSTGRES_CONTAINER:/ci-init"
+          docker exec "$POSTGRES_CONTAINER" sh -ec '
+            for file in /ci-init/*.sql; do
+              psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -f "$file"
+            done
+          '
+
+      - name: Run backend integration tests
+        env:
+          BACKEND_TEST_DATABASE_URL: postgres://user_service:user_password@localhost:5432/user_db?sslmode=disable
+          BACKEND_TEST_ADMIN_URL: postgres://postgres:postgres@localhost:5432/user_db?sslmode=disable
+        run: >-
+          go test -race -count=1 -v
+          ./services/backend/internal/handler
+          -run 'Postgres$'
+
+  docker-build:
+    name: Docker builds (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    needs: [go-tests, integration-tests]
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - services/backend
+          - services/character
+          - services/resolve
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Docker Build
+        run: >-
+          docker build
+          -f services/${{ matrix.service }}/Dockerfile
+          -t dicedasher-${{ matrix.service }}:ci
+          .
