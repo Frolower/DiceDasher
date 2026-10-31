@@ -203,9 +203,9 @@ jobs:
       fail-fast: false
       matrix:
         service:
-          - services/backend
-          - services/character
-          - services/resolve
+          - backend
+          - character
+          - resolve
 
     steps:
       - uses: actions/checkout@v7
