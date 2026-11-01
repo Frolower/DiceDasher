@@ -319,6 +319,7 @@ paths:
       description: |
         The user ID comes from verified Bearer claims. Both passwords must meet
         current registration complexity rules, including the old password.
+        The new password must differ from the old password.
         Verifies the old password with bcrypt and conditionally replaces its hash.
         A concurrent hash change returns 404. The database trigger sets updated_at.
         Existing sessions and tokens remain valid; cookies are unchanged.

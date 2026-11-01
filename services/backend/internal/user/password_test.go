@@ -143,3 +143,14 @@ func TestUpdatePasswordFailures(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdatePasswordRejectsUnchangedPassword(t *testing.T) {
+	store := passwordStoreStub{get: func(context.Context, uuid.UUID) (string, error) {
+		t.Fatal("unchanged password reached storage")
+		return "", nil
+	}}
+	err := NewServiceWithDependencies(store, nil).UpdatePassword(context.Background(), PasswordUpdateRecord{Id: uuid.New(), OldPassword: "SamePass1!", NewPassword: "SamePass1!"})
+	if !errors.Is(err, ErrInvalidInput) {
+		t.Fatalf("expected invalid input, got %v", err)
+	}
+}
