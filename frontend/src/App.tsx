@@ -142,6 +142,12 @@ function App() {
             <DemoPage key={page} kind={page} />
           ) : page === 'settings' ? (
             <ProfileSettings
+              onDeleted={() => {
+                setSession(null)
+                setPage('rooms')
+                setMenuOpen(false)
+                setMode('login')
+              }}
               token={session.access_token}
               onBack={() => setPage('rooms')}
               onProfile={(profile) =>

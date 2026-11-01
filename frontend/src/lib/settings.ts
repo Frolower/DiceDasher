@@ -59,7 +59,9 @@ export async function settingsRequest(
             ? 'Your old password is incorrect.'
             : response.status === 400
               ? 'Check your details and try again.'
-              : 'Unable to save or load your profile. Please try again.',
+              : method === 'DELETE'
+                ? 'Unable to delete your account. Please try again.'
+                : 'Unable to save or load your profile. Please try again.',
     )
   }
   return response.json()

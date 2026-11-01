@@ -933,3 +933,57 @@
     margin-left: 68px;
   }
 }
+
+.delete-account {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-top: 8px;
+}
+.delete-account p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin-top: 8px;
+  max-width: 64ch;
+}
+.delete-account > .button {
+  flex-shrink: 0;
+  margin: 0;
+}
+.destructive-outline {
+  color: var(--error);
+  background: #fff;
+  border-color: var(--error);
+}
+.destructive-outline:hover {
+  background: #fff3f3;
+}
+.destructive {
+  color: #fff;
+  background: var(--error);
+}
+.destructive:hover {
+  background: #8f1c2b;
+}
+.delete-dialog > p {
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.7;
+  margin-block: 18px;
+}
+.delete-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+@media (max-width: 600px) {
+  .delete-account {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

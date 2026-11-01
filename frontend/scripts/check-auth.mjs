@@ -236,6 +236,11 @@ try {
   assert.equal(sent.method, 'PATCH')
   assert.equal(sent.headers.Authorization, 'Bearer token')
   assert.deepEqual(JSON.parse(sent.body), { username: 'AliceNew', email: good.email })
+  await settingsRequest('user', 'token', 'DELETE')
+  assert.equal(sent.url, '/api/user')
+  assert.equal(sent.method, 'DELETE')
+  assert.equal(sent.headers.Authorization, 'Bearer token')
+  assert.equal(sent.body, undefined)
   await settingsRequest('password', 'token', 'PUT', {
     old_password: 'OldPass1!',
     new_password: 'NewPass2!',

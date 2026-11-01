@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { DeleteAccount } from './DeleteAccount'
 import { passwordChecks } from '../lib/auth'
 import { settingsRequest, validatePasswordChange, validateProfile } from '../lib/settings'
 import type { PasswordFields, Profile } from '../lib/settings'
@@ -8,10 +9,12 @@ export function ProfileSettings({
   token,
   onProfile,
   onBack,
+  onDeleted,
 }: {
   token: string
   onProfile: (profile: Profile) => void
   onBack: () => void
+  onDeleted: () => void
 }) {
   const heading = useRef<HTMLHeadingElement>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -242,6 +245,7 @@ export function ProfileSettings({
               </fieldset>
             </form>
           </section>
+          <DeleteAccount token={token} disabled={!!pending} onDeleted={onDeleted} />
         </div>
       )}
     </main>
