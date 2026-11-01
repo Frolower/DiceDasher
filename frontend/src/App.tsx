@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AuthDialog } from './components/AuthDialog'
 import { Die } from './components/Die'
+import { ProfileSettings } from './components/ProfileSettings'
 import { ProfilePage } from './components/ProfilePage'
 import type { AuthMode } from './lib/auth'
 import './App.css'
@@ -12,6 +13,7 @@ function App() {
     access_token: string
     expires_at: string
   } | null>(null)
+  const [settings, setSettings] = useState(false)
   const [paused, setPaused] = useState(false)
   return (
     <>
@@ -19,15 +21,24 @@ function App() {
         Skip to content
       </a>
       <header className="site-header shell">
-        <a className="wordmark" href="#" aria-label="DiceDasher home">
+        <a
+          className="wordmark"
+          href="#"
+          onClick={() => setSettings(false)}
+          aria-label="DiceDasher home"
+        >
           <Die className="brand-die" />
           DiceDasher
         </a>
         <div className="account-actions">
           {session ? (
-            <span className="signed-in" role="status">
+            <button
+              className="button quiet"
+              onClick={() => setSettings(true)}
+              aria-current={settings ? 'page' : undefined}
+            >
               My profile
-            </span>
+            </button>
           ) : (
             <>
               <button className="button quiet" onClick={() => setMode('login')}>
@@ -41,7 +52,21 @@ function App() {
         </div>
       </header>
       {session ? (
-        <ProfilePage username={session.username} />
+        <>
+          {settings ? (
+            <ProfileSettings
+              token={session.access_token}
+              onBack={() => setSettings(false)}
+              onProfile={(profile) =>
+                setSession((previous) =>
+                  previous ? { ...previous, username: profile.username } : null,
+                )
+              }
+            />
+          ) : (
+            <ProfilePage username={session.username} />
+          )}
+        </>
       ) : (
         <main id="main" className="dice-stage">
           <div id="possibilities">

@@ -105,3 +105,82 @@ for (const value of ['Алиса', 'Alicе', 'Alicé', 'Alice🎲', 'Alice Smith
   assert.ok(validateAuth('login', { ...good, username: value }).username)
   assert.ok(validateAuth('login', { ...good, password: value }).password)
 }
+
+const settingsSource = fs.readFileSync(new URL('../src/lib/settings.ts', import.meta.url), 'utf8')
+const settingsCode = ts
+  .transpileModule(settingsSource, {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
+  })
+  .outputText.replace(
+    "'./auth'",
+    JSON.stringify(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`),
+  )
+const { validateProfile, validatePasswordChange, settingsRequest } = await import(
+  `data:text/javascript;base64,${Buffer.from(settingsCode).toString('base64')}`
+)
+assert.deepEqual(validateProfile({ username: good.username, email: good.email }), {})
+assert.ok(validateProfile({ username: 'four', email: 'bad' }).username)
+assert.ok(validateProfile({ username: good.username, email: 'bad' }).email)
+assert.deepEqual(
+  validatePasswordChange({
+    oldPassword: 'OldPass1!',
+    password: 'NewPass2!',
+    repeatPassword: 'NewPass2!',
+  }),
+  {},
+)
+assert.ok(
+  validatePasswordChange({
+    oldPassword: 'OldPass1!',
+    password: 'OldPass1!',
+    repeatPassword: 'OldPass1!',
+  }).password,
+)
+assert.ok(
+  validatePasswordChange({ oldPassword: '', password: 'NewPass2!', repeatPassword: 'different' })
+    .oldPassword,
+)
+assert.ok(
+  validatePasswordChange({
+    oldPassword: 'OldPass1!',
+    password: 'NewPass2!',
+    repeatPassword: 'different',
+  }).repeatPassword,
+)
+for (const password of ['short', 'NoSymbol12', 'Has Space1!', 'PassWord1!🎲', 'a'.repeat(73)]) {
+  assert.ok(
+    validatePasswordChange({ oldPassword: 'OldPass1!', password, repeatPassword: password })
+      .password,
+  )
+}
+try {
+  let sent
+  globalThis.fetch = async (url, options) => {
+    sent = { url, ...options }
+    return new Response(JSON.stringify('success'))
+  }
+  await settingsRequest('user', 'token', 'PATCH', { username: 'AliceNew', email: good.email })
+  assert.equal(sent.url, '/api/user')
+  assert.equal(sent.method, 'PATCH')
+  assert.equal(sent.headers.Authorization, 'Bearer token')
+  assert.deepEqual(JSON.parse(sent.body), { username: 'AliceNew', email: good.email })
+  await settingsRequest('password', 'token', 'PUT', {
+    old_password: 'OldPass1!',
+    new_password: 'NewPass2!',
+  })
+  assert.equal(sent.url, '/api/password')
+  assert.equal(sent.method, 'PUT')
+  assert.deepEqual(JSON.parse(sent.body), { old_password: 'OldPass1!', new_password: 'NewPass2!' })
+  globalThis.fetch = async () => new Response('old password does not match', { status: 400 })
+  await assert.rejects(
+    () => settingsRequest('password', 'token', 'PUT', {}),
+    /old password is incorrect/,
+  )
+  globalThis.fetch = async () => new Response('', { status: 401 })
+  await assert.rejects(() => settingsRequest('me', 'token'), /session has expired/)
+} finally {
+  globalThis.fetch = originalFetch
+}
+console.log(
+  'Settings checks passed: signup rules, password confirmation and reuse, authenticated API contracts, and errors.',
+)
