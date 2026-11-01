@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -48,6 +49,10 @@ func (s *Service) UpdatePassword(ctx context.Context, rec PasswordUpdateRecord) 
 	err = validatePassword(rec.NewPassword)
 	if err != nil {
 		return InvalidInputError{Err: err}
+	}
+
+	if rec.OldPassword == rec.NewPassword {
+		return InvalidInputError{Err: errors.New("new password must differ from old password")}
 	}
 
 	oldHash, err := s.users.GetHashByID(ctx, rec.Id)
