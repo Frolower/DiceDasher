@@ -1,4 +1,4 @@
-import { validateAuth } from './auth'
+import { sessionFetch, validateAuth } from './auth'
 
 export type Profile = { username: string; email: string }
 export type PasswordFields = { oldPassword: string; password: string; repeatPassword: string }
@@ -35,7 +35,7 @@ export async function settingsRequest(
   body?: unknown,
   signal?: AbortSignal,
 ) {
-  const response = await fetch(`/api/${path}`, {
+  const response = await sessionFetch(`/api/${path}`, token, {
     method,
     signal,
     credentials: 'include',

@@ -1,4 +1,71 @@
 export type AuthMode = 'login' | 'signup'
+export type AccessTokens = { access_token: string; expires_at: string }
+export type Session = AccessTokens & { username: string }
+let currentSession: Session | null = null
+const listeners = new Set<() => void>()
+export const getSession = () => currentSession
+export function subscribeSession(listener: () => void) {
+  listeners.add(listener)
+  return () => {
+    listeners.delete(listener)
+  }
+}
+export function setSession(session: Session | null) {
+  currentSession = session
+  listeners.forEach((listener) => listener())
+}
+
+// Share refreshes across startup, timers and requests. Never abort a rotating
+// refresh on React effect cleanup: the server may already have replaced the cookie.
+let refreshing: Promise<Session | null> | null = null
+export function refreshSession(): Promise<Session | null> {
+  if (refreshing) return refreshing
+  refreshing = (async () => {
+    const response = await fetch('/api/refresh', {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+    })
+    if (response.status === 401) {
+      setSession(null)
+      return null
+    }
+    if (!response.ok) throw new Error('Unable to restore your session. Please try again.')
+    const tokens = (await response.json()) as AccessTokens
+    if (!tokens.access_token || !Number.isFinite(Date.parse(tokens.expires_at)))
+      throw new Error('The account service returned an incomplete session.')
+    const profileResponse = await fetch('/api/me', {
+      credentials: 'include',
+      cache: 'no-store',
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    })
+    if (profileResponse.status === 401) {
+      setSession(null)
+      return null
+    }
+    if (!profileResponse.ok) throw new Error('Unable to load your account. Please try again.')
+    const profile = (await profileResponse.json()) as { username: string }
+    const session = { ...tokens, username: profile.username }
+    setSession(session)
+    return session
+  })().finally(() => {
+    refreshing = null
+  })
+  return refreshing
+}
+
+export async function sessionFetch(path: string, token: string, options: RequestInit) {
+  const send = (access: string) =>
+    fetch(path, {
+      ...options,
+      headers: { ...options.headers, Authorization: `Bearer ${access}` },
+    })
+  const response = await send(currentSession?.access_token ?? token)
+  if (response.status !== 401) return response
+  const session = await refreshSession()
+  if (!session || options.signal?.aborted) return response
+  return send(session.access_token)
+}
 export type AuthFields = {
   email: string
   username: string

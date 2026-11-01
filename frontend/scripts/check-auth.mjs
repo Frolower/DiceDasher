@@ -6,9 +6,8 @@ const source = fs.readFileSync(new URL('../src/lib/auth.ts', import.meta.url), '
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
 })
-const { validateAuth, authenticate } = await import(
-  `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`
-)
+const { validateAuth, authenticate, refreshSession, getSession, setSession, sessionFetch } =
+  await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`)
 const good = {
   email: 'alice@example.com',
   username: 'Alice',
@@ -105,6 +104,79 @@ for (const value of ['Алиса', 'Alicе', 'Alicé', 'Alice🎲', 'Alice Smith
   assert.ok(validateAuth('login', { ...good, username: value }).username)
   assert.ok(validateAuth('login', { ...good, password: value }).password)
 }
+
+try {
+  const calls = []
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, ...options })
+    return new Response(
+      JSON.stringify(
+        url === '/api/refresh'
+          ? {
+              access_token: 'restored-token',
+              expires_at: new Date(Date.now() + 600000).toISOString(),
+            }
+          : { username: 'Alice', email: good.email },
+      ),
+    )
+  }
+  const first = refreshSession()
+  const second = refreshSession()
+  assert.equal(first, second, 'Concurrent refreshes must share token rotation')
+  await Promise.all([first, second])
+  assert.deepEqual(
+    calls.map(({ url }) => url),
+    ['/api/refresh', '/api/me'],
+  )
+  assert.equal(calls[0].method, 'POST')
+  assert.equal(calls[0].credentials, 'include')
+  assert.equal(calls[1].headers.Authorization, 'Bearer restored-token')
+  assert.equal(getSession().username, 'Alice')
+
+  globalThis.fetch = async () => new Response('', { status: 503 })
+  await assert.rejects(refreshSession, /restore/)
+  assert.equal(getSession().access_token, 'restored-token', 'Outages must preserve login')
+
+  const requests = []
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, ...options })
+    if (url === '/api/user' && options.headers.Authorization === 'Bearer restored-token')
+      return new Response('', { status: 401 })
+    return new Response(
+      JSON.stringify(
+        url === '/api/refresh'
+          ? {
+              access_token: 'renewed-token',
+              expires_at: new Date(Date.now() + 600000).toISOString(),
+            }
+          : url === '/api/me'
+            ? { username: 'Alice' }
+            : 'success',
+      ),
+    )
+  }
+  const result = await sessionFetch('/api/user', 'old-token', {
+    method: 'PATCH',
+    body: JSON.stringify({ username: 'AliceNew' }),
+  })
+  assert.equal(result.status, 200)
+  assert.deepEqual(
+    requests.map(({ url }) => url),
+    ['/api/user', '/api/refresh', '/api/me', '/api/user'],
+  )
+  assert.equal(requests[3].headers.Authorization, 'Bearer renewed-token')
+  assert.equal(requests[3].body, requests[0].body)
+
+  globalThis.fetch = async () => new Response('', { status: 401 })
+  assert.equal(await refreshSession(), null)
+  assert.equal(getSession(), null, 'Invalid refresh cookies must clear login')
+} finally {
+  setSession(null)
+  globalThis.fetch = originalFetch
+}
+console.log(
+  'Session checks passed: restoration, shared rotation, outage recovery, request retry, and expiry.',
+)
 
 const settingsSource = fs.readFileSync(new URL('../src/lib/settings.ts', import.meta.url), 'utf8')
 const settingsCode = ts
