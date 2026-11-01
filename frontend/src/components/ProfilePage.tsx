@@ -1,10 +1,10 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Die } from './Die'
 
 const exampleCampaigns = [
   {
     name: 'The Ember Coast',
-    kind: 'Campaign',
+    kind: 'Room',
     description: 'A voyage beyond the edge of the map.',
     system: 'Dungeons & Dragons',
     theme: 'coast',
@@ -18,7 +18,7 @@ const exampleCampaigns = [
   },
   {
     name: 'Secrets of the Hollow',
-    kind: 'Campaign',
+    kind: 'Room',
     description: 'Some mysteries are better shared.',
     system: 'Pathfinder',
     theme: 'hollow',
@@ -26,6 +26,7 @@ const exampleCampaigns = [
 ]
 
 export function ProfilePage({ username }: { username: string }) {
+  const [creationNotice, setCreationNotice] = useState(false)
   const heading = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
@@ -58,12 +59,23 @@ export function ProfilePage({ username }: { username: string }) {
         aria-describedby="campaigns-note"
       >
         <div className="campaigns-heading">
-          <h2 id="campaigns-title">Rooms & campaigns</h2>
+          <h2 id="campaigns-title">Rooms</h2>
           <span className="preview-label">Preview</span>
+          <button
+            className="button primary create-room-button"
+            onClick={() => setCreationNotice(true)}
+          >
+            <span aria-hidden="true">+</span> Create new room
+          </button>
         </div>
         <p id="campaigns-note" className="campaigns-note">
-          Your rooms and campaigns will live here. These are examples while we get things ready.
+          Your rooms will live here. These are examples while we get things ready.
         </p>
+        {creationNotice && (
+          <p className="room-creation-notice" role="status">
+            Room creation is coming soon. You’ll be able to gather your party here.
+          </p>
+        )}
         <ul className="campaign-grid">
           {exampleCampaigns.map((campaign) => (
             <li className={`campaign-tile ${campaign.theme}`} key={campaign.name}>
@@ -83,7 +95,7 @@ export function ProfilePage({ username }: { username: string }) {
           ))}
         </ul>
         <p className="campaigns-footer">
-          More adventures are on the horizon. Room and campaign features are coming soon.
+          More adventures are on the horizon. Room features are coming soon.
         </p>
       </section>
     </main>

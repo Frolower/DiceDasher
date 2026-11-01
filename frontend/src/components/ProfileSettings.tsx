@@ -143,7 +143,7 @@ export function ProfileSettings({
   return (
     <main id="main" className="settings-page shell">
       <button className="button quiet settings-back" onClick={onBack}>
-        ← Rooms & campaigns
+        ← Rooms
       </button>
       <h1 ref={heading} tabIndex={-1}>
         Profile settings
