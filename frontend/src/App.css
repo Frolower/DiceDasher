@@ -721,3 +721,9 @@
     width: 100%;
   }
 }
+
+/* Page headings receive focus to announce navigation, but aren't controls. */
+.profile-identity h1:focus,
+.settings-page > h1:focus {
+  outline: none;
+}
