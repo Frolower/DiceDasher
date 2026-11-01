@@ -1,5 +1,8 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { AuthDialog } from './components/AuthDialog'
+import { SideMenu } from './components/SideMenu'
+import type { Page } from './components/SideMenu'
+import { DemoPage } from './components/DemoPage'
 import { Die } from './components/Die'
 import { ProfileSettings } from './components/ProfileSettings'
 import { ProfilePage } from './components/ProfilePage'
@@ -62,7 +65,8 @@ function App() {
       document.removeEventListener('visibilitychange', onVisible)
     }
   }, [session])
-  const [settings, setSettings] = useState(false)
+  const [page, setPage] = useState<Page>('rooms')
+  const [menuOpen, setMenuOpen] = useState(false)
   const [paused, setPaused] = useState(false)
   return (
     <>
@@ -70,10 +74,31 @@ function App() {
         Skip to content
       </a>
       <header className="site-header shell">
+        {session && (
+          <button
+            className="button quiet menu-toggle"
+            aria-label="Open navigation"
+            aria-haspopup="dialog"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(true)}
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              aria-hidden="true"
+            >
+              <path d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
         <a
           className="wordmark"
           href="#"
-          onClick={() => setSettings(false)}
+          onClick={() => setPage('rooms')}
           aria-label="DiceDasher home"
         >
           <Die className="brand-die" />
@@ -83,8 +108,8 @@ function App() {
           {session ? (
             <button
               className="button quiet"
-              onClick={() => setSettings(true)}
-              aria-current={settings ? 'page' : undefined}
+              onClick={() => setPage('settings')}
+              aria-current={page === 'settings' ? 'page' : undefined}
             >
               My profile
             </button>
@@ -113,10 +138,12 @@ function App() {
       )}
       {session ? (
         <>
-          {settings ? (
+          {page === 'characters' || page === 'friends' ? (
+            <DemoPage key={page} kind={page} />
+          ) : page === 'settings' ? (
             <ProfileSettings
               token={session.access_token}
-              onBack={() => setSettings(false)}
+              onBack={() => setPage('rooms')}
               onProfile={(profile) =>
                 setSession(session ? { ...session, username: profile.username } : null)
               }
@@ -141,6 +168,16 @@ function App() {
             </div>
           </div>
         </main>
+      )}
+      {session && menuOpen && (
+        <SideMenu
+          page={page}
+          onClose={() => setMenuOpen(false)}
+          onNavigate={(next) => {
+            setPage(next)
+            setMenuOpen(false)
+          }}
+        />
       )}
       {mode && (
         <AuthDialog
