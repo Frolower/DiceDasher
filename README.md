@@ -180,7 +180,7 @@ Run `make` or `make help` to list all available commands.
 
 | Command | Description |
 | --- | --- |
-| `make up` / `make down` | Start / stop the Docker stack |
+| `make up` / `make down` | Build changed images and start / stop the Docker stack |
 | `make dev` | Build and run the Docker stack with attached logs |
 | `make build` / `make rebuild` | Build images / rebuild without cache |
 | `make logs SERVICE=backend` | Follow logs for a specific service |

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { AuthDialog } from './components/AuthDialog'
 import { Die } from './components/Die'
+import { ProfilePage } from './components/ProfilePage'
 import type { AuthMode } from './lib/auth'
 import './App.css'
 
@@ -25,7 +26,7 @@ function App() {
         <div className="account-actions">
           {session ? (
             <span className="signed-in" role="status">
-              Welcome, {session.username}
+              My profile
             </span>
           ) : (
             <>
@@ -39,21 +40,25 @@ function App() {
           )}
         </div>
       </header>
-      <main id="main" className="dice-stage">
-        <div id="possibilities">
-          <div id="systems">
-            <button
-              className="spinning-die"
-              aria-label={paused ? 'Resume dice rotation' : 'Pause dice rotation'}
-              aria-pressed={paused}
-              data-paused={paused || mode !== null}
-              onClick={() => setPaused((value) => !value)}
-            >
-              <Die className="center-die" />
-            </button>
+      {session ? (
+        <ProfilePage username={session.username} />
+      ) : (
+        <main id="main" className="dice-stage">
+          <div id="possibilities">
+            <div id="systems">
+              <button
+                className="spinning-die"
+                aria-label={paused ? 'Resume dice rotation' : 'Pause dice rotation'}
+                aria-pressed={paused}
+                data-paused={paused || mode !== null}
+                onClick={() => setPaused((value) => !value)}
+              >
+                <Die className="center-die" />
+              </button>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
+      )}
       {mode && (
         <AuthDialog
           key={mode}
