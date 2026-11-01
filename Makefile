@@ -17,8 +17,8 @@ help: ## Show available commands
 build: ## Build Docker images (optionally SERVICE=...)
 	$(COMPOSE) build $(SERVICE)
 
-up: ## Start containers in the background (optionally SERVICE=...)
-	$(COMPOSE) up -d $(SERVICE)
+up: ## Build changed images and start containers in the background (optionally SERVICE=...)
+	$(COMPOSE) up -d --build $(SERVICE)
 
 down: ## Stop and remove containers, keeping database volumes
 	$(COMPOSE) down
