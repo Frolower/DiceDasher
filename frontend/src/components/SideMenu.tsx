@@ -1,15 +1,7 @@
+import { NavLink } from 'react-router'
 import { useEffect, useRef } from 'react'
 
-export type Page = 'rooms' | 'settings' | 'characters' | 'friends'
-export function SideMenu({
-  page,
-  onNavigate,
-  onClose,
-}: {
-  page: Page
-  onNavigate: (page: Page) => void
-  onClose: () => void
-}) {
+export function SideMenu({ onNavigate, onClose }: { onNavigate: () => void; onClose: () => void }) {
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
@@ -42,12 +34,7 @@ export function SideMenu({
       </div>
       <nav aria-label="Main navigation">
         {(['characters', 'friends'] as const).map((item) => (
-          <button
-            key={item}
-            className="side-menu-item"
-            aria-current={page === item ? 'page' : undefined}
-            onClick={() => onNavigate(item)}
-          >
+          <NavLink key={item} to={`/${item}`} className="side-menu-item" onClick={onNavigate}>
             <svg
               className="side-menu-icon"
               width="24"
@@ -77,7 +64,7 @@ export function SideMenu({
             </svg>
             {item === 'characters' ? 'Characters' : 'Friends'}
             <span aria-hidden="true">→</span>
-          </button>
+          </NavLink>
         ))}
       </nav>
       <p className="side-menu-note">Every adventure starts with good company.</p>

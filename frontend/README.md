@@ -73,3 +73,17 @@ npm run format:check  # Check formatting without changing files
 Prettier uses `.prettierrc.json`: 2-space indentation, single quotes, no semicolons,
 and a 100-character line width. Generated output, dependencies, and lockfiles are excluded.
 For formatting on save, select the Prettier extension in your editor and enable format on save.
+
+### Client-side routes
+
+React Router handles navigation without reloading the document:
+
+- `/`: public landing page; signed-in users continue to `/profile`.
+- `/profile`: profile and Rooms (`/rooms` redirects here).
+- `/settings`: account settings.
+- `/characters` and `/friends`: demo pages.
+- `/login`: login dialog; successful login returns to the requested private page.
+
+Private routes wait for session restoration before redirecting to login. Unknown
+paths show a page-not-found view. Docker's Nginx configuration serves `index.html`
+for frontend routes so direct links and refreshes work; `/api/` is proxied separately.

@@ -1,7 +1,8 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { AuthDialog } from './components/AuthDialog'
 import { SideMenu } from './components/SideMenu'
-import type { Page } from './components/SideMenu'
+import type { ReactNode } from 'react'
+import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { DemoPage } from './components/DemoPage'
 import { Die } from './components/Die'
 import { ProfileSettings } from './components/ProfileSettings'
@@ -65,9 +66,40 @@ function App() {
       document.removeEventListener('visibilitychange', onVisible)
     }
   }, [session])
-  const [page, setPage] = useState<Page>('rooms')
+  const location = useLocation()
+  const navigate = useNavigate()
+  const activeMode =
+    mode ??
+    (location.pathname === '/login' && !session && !restoring && !sessionError ? 'login' : null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [paused, setPaused] = useState(false)
+  const landing = (
+    <main id="main" className="dice-stage">
+      <div id="possibilities">
+        <div id="systems">
+          <button
+            className="spinning-die"
+            aria-label={paused ? 'Resume dice rotation' : 'Pause dice rotation'}
+            aria-pressed={paused}
+            data-paused={paused || activeMode !== null}
+            onClick={() => setPaused((value) => !value)}
+          >
+            <Die className="center-die" />
+          </button>
+        </div>
+      </div>
+    </main>
+  )
+  function protect(content: ReactNode) {
+    if (session) return content
+    if (restoring || sessionError)
+      return (
+        <main id="main" className="dice-stage">
+          <p role="status">{sessionError || 'Restoring your session…'}</p>
+        </main>
+      )
+    return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
+  }
   return (
     <>
       <a className="skip-link" href="#main">
@@ -95,24 +127,19 @@ function App() {
             </svg>
           </button>
         )}
-        <a
-          className="wordmark"
-          href="#"
-          onClick={() => setPage('rooms')}
-          aria-label="DiceDasher home"
-        >
+        <Link className="wordmark" to={session ? '/profile' : '/'} aria-label="DiceDasher home">
           <Die className="brand-die" />
           DiceDasher
-        </a>
+        </Link>
         <div className="account-actions">
           {session ? (
-            <button
+            <Link
               className="button quiet"
-              onClick={() => setPage('settings')}
-              aria-current={page === 'settings' ? 'page' : undefined}
+              to="/settings"
+              aria-current={location.pathname === '/settings' ? 'page' : undefined}
             >
               My profile
-            </button>
+            </Link>
           ) : restoring ? (
             <p role="status">Restoring your session…</p>
           ) : sessionError ? (
@@ -136,64 +163,77 @@ function App() {
           {sessionError}
         </p>
       )}
-      {session ? (
-        <>
-          {page === 'characters' || page === 'friends' ? (
-            <DemoPage key={page} kind={page} />
-          ) : page === 'settings' ? (
+      <Routes>
+        <Route path="/" element={session ? <Navigate to="/profile" replace /> : landing} />
+        <Route path="/login" element={session ? <Navigate to="/profile" replace /> : landing} />
+        <Route
+          path="/profile"
+          element={protect(<ProfilePage username={session?.username ?? ''} />)}
+        />
+        <Route path="/rooms" element={<Navigate to="/profile" replace />} />
+        <Route
+          path="/settings"
+          element={protect(
             <ProfileSettings
+              token={session?.access_token ?? ''}
+              onBack={() => navigate('/profile')}
               onDeleted={() => {
                 setSession(null)
-                setPage('rooms')
                 setMenuOpen(false)
-                setMode('login')
+                navigate('/login', { replace: true })
               }}
-              token={session.access_token}
-              onBack={() => setPage('rooms')}
               onProfile={(profile) =>
                 setSession(session ? { ...session, username: profile.username } : null)
               }
-            />
-          ) : (
-            <ProfilePage username={session.username} />
+            />,
           )}
-        </>
-      ) : (
-        <main id="main" className="dice-stage">
-          <div id="possibilities">
-            <div id="systems">
-              <button
-                className="spinning-die"
-                aria-label={paused ? 'Resume dice rotation' : 'Pause dice rotation'}
-                aria-pressed={paused}
-                data-paused={paused || mode !== null}
-                onClick={() => setPaused((value) => !value)}
-              >
-                <Die className="center-die" />
-              </button>
-            </div>
-          </div>
-        </main>
-      )}
+        />
+        <Route
+          path="/characters"
+          element={protect(<DemoPage key="characters" kind="characters" />)}
+        />
+        <Route path="/friends" element={protect(<DemoPage key="friends" kind="friends" />)} />
+        <Route
+          path="*"
+          element={
+            <main id="main" className="settings-page shell">
+              <h1>Page not found</h1>
+              <p className="settings-intro">This page doesn’t exist.</p>
+              <Link className="button primary" to={session ? '/profile' : '/'}>
+                Go home
+              </Link>
+            </main>
+          }
+        />
+      </Routes>
       {session && menuOpen && (
         <SideMenu
-          page={page}
           onClose={() => setMenuOpen(false)}
-          onNavigate={(next) => {
-            setPage(next)
+          onNavigate={() => {
             setMenuOpen(false)
           }}
         />
       )}
-      {mode && (
+      {activeMode && (
         <AuthDialog
-          key={mode}
-          mode={mode}
-          onClose={() => setMode(null)}
+          key={activeMode}
+          mode={activeMode}
+          onClose={() => {
+            setMode(null)
+            if (location.pathname === '/login') navigate('/')
+          }}
           onSwitch={setMode}
           onLogin={(username, data) => {
             setSession({ username, ...data })
             setMode(null)
+            const from = location.state?.from
+            navigate(
+              typeof from === 'string' &&
+                /^\/(profile|settings|characters|friends)(\?|$)/.test(from)
+                ? from
+                : '/profile',
+              { replace: true },
+            )
           }}
         />
       )}
