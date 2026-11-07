@@ -317,12 +317,17 @@ paths:
       tags: [Backend]
       summary: Change the authenticated user's password
       description: |
-        The user ID comes from verified Bearer claims. Both passwords must meet
+        The user ID and current session ID come from verified Bearer claims. Both passwords must meet
         current registration complexity rules, including the old password.
         The new password must differ from the old password.
         Verifies the old password with bcrypt and conditionally replaces its hash.
         A concurrent hash change returns 404. The database trigger sets updated_at.
-        Existing sessions and tokens remain valid; cookies are unchanged.
+        The password update, updated_at change, and revocation of all other unrevoked
+        sessions belonging to the user are atomic. The current session is excluded
+        using the access JWT sid and remains valid; its tokens are not rotated.
+        Other sessions cannot authenticate or refresh after revocation.
+        Other users' sessions and existing revocation timestamps are unchanged.
+        Cookies are unchanged.
         Responses use Cache-Control no-store and Pragma no-cache.
       operationId: updateMyPassword
       servers:
@@ -348,7 +353,7 @@ paths:
               new_password: NewStrongPass2!
       responses:
         "200":
-          description: Password hash updated; the response is a JSON string.
+          description: Password and updated_at updated; other sessions revoked, current session retained. The response is a JSON string.
           content:
             application/json:
               schema: {type: string, const: success}
