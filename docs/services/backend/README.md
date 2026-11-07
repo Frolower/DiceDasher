@@ -15,7 +15,7 @@ and a refresh cookie.
 | `internal/handler/user.go` | Profile update and account deletion HTTP contracts |
 | `internal/handler/password.go` | Password change HTTP contract |
 | `internal/user/password.go` | Password validation, bcrypt verification, and hashing |
-| `internal/repository/password.go` | Password hash lookup and conditional update |
+| `internal/repository/password.go` | Password hash lookup, transactional password update and session revocation |
 | `internal/handler/auth_middleware.go` | Bearer token and session validation; authenticated claims in context |
 | `internal/handler/refresh.go` | Token refresh HTTP contract and cookie rotation |
 | `internal/user/profile.go`, `model.go` | Profile lookup and public user model |
@@ -121,7 +121,7 @@ has already been deleted.
 
 ## PUT /password
 
-Requires Bearer authentication. Send both passwords; the user ID comes from
+Requires Bearer authentication. Send both passwords; the user ID and current session ID come from
 verified claims, and unknown JSON fields are rejected.
 
 ```sh
@@ -139,9 +139,19 @@ here, even if login still accepts it.
 
 The service verifies the old password with bcrypt, hashes the new password, and
 updates the stored hash only if it still matches the hash read for verification.
-A concurrent password change that replaces that hash results in `404`. The database
-trigger updates `updated_at`. Existing sessions, access JWTs, and refresh cookies
-remain valid; this operation does not revoke sessions or rotate tokens.
+A concurrent password change that replaces that hash results in `404`.
+
+The password update and revocation of all other unrevoked sessions belonging to
+the user run in one database transaction. The current session is excluded by its
+ID from the verified access JWT (`sid`), not by its refresh token hash. The database
+trigger updates `updated_at` as part of the same transaction. If either update
+fails, the transaction is rolled back.
+
+The current session and its tokens remain valid; tokens are not rotated and cookies
+are unchanged. Other sessions are marked with `revoked_at`, so their access JWTs
+are rejected on subsequent authentication checks and their refresh tokens cannot
+be used. Sessions belonging to other users and existing revocation timestamps
+are unchanged.
 
 Success: `200` with the JSON string `"success"`, `Cache-Control: no-store`, and
 `Pragma: no-cache`. Cookies are unchanged. Errors use `text/plain`.
@@ -358,9 +368,13 @@ Update tests check authenticated identity, malformed/oversized JSON, and
 400/404/409/500 responses without internal error details.
 
 Password tests cover validation, old-password verification, hashing, conditional
-storage updates, authenticated HTTP handling, and errors. The password PostgreSQL
-integration test checks rejected changes, persisted bcrypt hashes, old-password
-rejection after a change, and rejection of a stale hash update.
+storage updates, propagation of the current session ID and revocation time,
+authenticated HTTP handling, and errors. The password PostgreSQL integration test
+checks rejected changes, persisted bcrypt hashes, old-password rejection after a
+change, and rejection of a stale hash update. It also checks that other sessions
+are revoked while the current session, other users' sessions, and existing
+revocation timestamps are preserved. `updated_at` must reflect a successful
+password change and remain unchanged for rejected or stale updates.
 
 PostgreSQL integration tests cover registration, login, password changes, and profile updates under
 the service role. Update tests check one-field and two-field changes, uniqueness,

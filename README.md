@@ -1,266 +1,251 @@
-<div align="center">
-<h1>DiceDasher</h1>
-  
+# DiceDasher
 
-  <a href="https://github.com/Frolower/DiceDasher/issues/new?assignees=&labels=bug&template=01_BUG_REPORT.md&title=bug%3A+">Report a Bug</a>
-  ·
-  <a href="https://github.com/Frolower/DiceDasher/issues/new?assignees=&labels=enhancement&template=02_FEATURE_REQUEST.md&title=feature%3A+">Request a Feature</a>
-  ·
-  <a href="https://github.com/Frolower/DiceDasher/issues/new?assignees=&labels=question&template=04_SUPPORT_QUESTION.md&title=support%3A+">Ask a Question</a>
-</div>
+DiceDasher is a platform in development for online tabletop role-playing games,
+with system-independent tools and rules for individual TTRPGs.
 
-<div align="center">
+[Report a bug](https://github.com/Frolower/DiceDasher/issues) ·
+[Request a feature](https://github.com/Frolower/DiceDasher/issues) ·
+[License](LICENSE)
 
-[![License](https://img.shields.io/github/license/Frolower/DiceDasher.svg?style=flat-square)](./LICENSE)
+## Current state
 
-</div>
+The web app includes registration, login, session restoration after a page reload,
+and account settings. Signed-in users can edit their username and email, change
+their password and delete their account. Access tokens stay in memory;
+sessions are restored and renewed using an HttpOnly refresh cookie.
 
-<details open="open">
-<summary>Table of Contents</summary>
+Rooms, Characters, and Friends screens currently show example content. Room
+creation, character creation in the UI, and friend requests are placeholders.
+Systems mentioned on example cards do not indicate implemented rules support.
+Dice resolution and character creation are available through separate APIs and
+Swagger UI, rather than the web interface.
 
-- [Status](#status)
-- [About](#about)
-  - [Built With](#built-with)
-- [Architecture](#architecture)
-  - [Repo Map](#repo-map)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-- [Roadmap](#roadmap)
-- [Support](#support)
-- [Project assistance](#project-assistance)
-- [Contributing](#contributing)
-- [Authors & contributors](#authors--contributors)
-- [Security](#security)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
-
-</details>
-
----
-## Status
-Early development. Backend APIs and a minimal React landing page with registration
-and login are available. Open the frontend at http://localhost:5174. Dice rolls,
-character creation, and profile management currently use the API or Swagger UI.
-<br>
-Currently supported systems:
-- General
-- VtM V5
-- The Electric State
-
-Currently existing services:
-- backend service: handles registration, JWT authentication, session refresh, profile lookup/updates, password changes, and account deletion ([documentation](docs/services/backend/README.md))
-- resolve service: resolves dice rolls according to the system rules
-- character service: creates and stores system-specific characters
-
-## About
-
-DiceDasher is a website created to have a dedicated space to run online TTRPG games, with tools for specific systems.
-It is designed to have both system agnostic and system specific tools for various TTRPG systems.
-
-### Built With
-
-- Backend: Go 1.26, net/http
-- Frontend: React, TypeScript, Vite, Nginx
-- DB: PostgreSQL 18 (UUID v7 defaults)
-- Infra: Docker Compose, Makefile
-
-## Architecture
-This project is designed to use microservice architecture.
-
-### Repo Map
-```
-.
-├── database/                     
-│   └── init/                     Database initialization scripts
-│
-├── docs/
-│   ├── api/                      Existing API endpoints overview
-│   ├── services/
-│   │   ├── backend/             Authentication and user management documentation
-│   │   ├── character/           Character service documentation
-│   │   └── resolve/             Resolve service documentation
-│   ├── CODE_OF_CONDUCT.md
-│   ├── CONTRIBUTING.md
-│   └── SECURITY.md
-│
-├── frontend/
-│
-├── pkg/                           Project-wide helper functions
-│   ├── dbutil/                    DB related helpers
-│   ├── dice/                      Dice rolling engine
-│   ├── httputil/                  Web related helpers
-│   ├── logger/                    Custom logging functions
-│   ├── util/                      Various utility functions
-│   └── go.mod
-│
-├── services/                      Backend services
-│   ├── backend/                   Authentication, sessions, and user management
-│   ├── character/                 Character service
-│   │   ├── cmd/character-service  Entrypoint
-│   │   ├── internal/
-│   │   │   ├── config/
-│   │   │   ├── handler/
-│   │   │   ├── repository/
-│   │   ├── .env.example
-│   │   ├── Dockerfile
-│   │   └── go.mod
-│   │
-│   └── resolve/                   Resolve service
-│       ├── cmd/resolve-service    Entrypoint
-│       ├── internal/
-│       │   ├── config/
-│       │   ├── handler/
-│       │   ├── repository/
-│       │   └── system/            Per system resolvers (eg vtmv5/)
-│       ├── .env.example
-│       ├── Dockerfile
-│       └── go.mod
-│
-├── .dockerignore
-├── .gitignore
-├── docker-compose.yml
-├── go.work
-├── LICENSE
-├── Makefile
-└── README.md
-```
-
-## Getting Started
-
-### Prerequisites
-
-The Docker setup requires Docker with Compose. The commands below also use Make;
-without Make, run the corresponding `docker compose` commands directly. Services
-run in containers, so local Go and Node.js installations are optional.
-
-### Installation
-
-1. Clone the repo
-  ```sh
-  git clone https://github.com/Frolower/DiceDasher
-  ```
-2. Enter the repository and create service environment files
-  ```sh
-  cd DiceDasher
-  cp services/resolve/.env.example services/resolve/.env
-  cp services/character/.env.example services/character/.env
-  cp services/backend/.env.example services/backend/.env
-  ```
-  Set `JWT_SECRET` in `services/backend/.env` to the output of
-  `openssl rand -base64 32`. Keep `COOKIE_SECURE=false` for local HTTP.
-  The backend allows Swagger at `http://localhost:8888` and the frontend at
-  `http://localhost:5174` by default.
-3. Build and run Docker containers
-  ```sh
-  make build
-  make up
-  ```
-4. Display logs
-  ```sh
-  make logs
-  ```
-5. Check if services are healthy
-  ```sh
-  curl http://localhost:8081/health
-  curl http://localhost:8082/health
-  curl http://localhost:8000/health
-  curl http://localhost:5174/health
-  ```
-6. Open the frontend at [http://localhost:5174](http://localhost:5174) and Swagger UI at [http://localhost:8888](http://localhost:8888).
-7. Stop containers
-  ```sh
-  make down
-  ```
-
-### Make commands
-
-Run `make` or `make help` to list all available commands.
-
-| Command | Description |
+| Service | Implemented functionality |
 | --- | --- |
-| `make up` / `make down` | Build changed images and start / stop the Docker stack |
-| `make dev` | Build and run the Docker stack with attached logs |
-| `make build` / `make rebuild` | Build images / rebuild without cache |
-| `make logs SERVICE=backend` | Follow logs for a specific service |
-| `make ps` / `make restart` | Check status / restart containers |
-| `make install` | Install frontend dependencies from the lockfile |
+| `backend` | Registration, JWT authentication, rotating refresh tokens, logout, profile lookup/updates, password changes, account deletion |
+| `resolve` | Generic dice rolls; Vampire: The Masquerade V5 rolls, rerolls, and checks; The Electric State rolls and pushes; persisted roll history |
+| `character` | Validation, creation, and storage of The Electric State characters |
+
+## Stack and architecture
+
+- **Backend:** Go, `net/http`, three services in a Go workspace. The workspace currently specifies Go **1.27.1**.
+- **Frontend:** React 19, TypeScript, React Router, Vite; static builds served by Nginx.
+- **Database:** PostgreSQL 18 with pg_cron, separate databases and roles for each service, UUID v7 identifiers.
+- **Development:** Docker Compose, Make, Node.js 24, npm, Oxlint, Prettier, GitHub Actions.
+
+The browser sends account requests to `/api/*`. Nginx (or Vite in local
+development) forwards them to `backend`, removing the `/api` prefix. The resolve
+and character APIs are accessed separately; the frontend proxy does not route to
+them. Each Go service connects to its own database in the shared PostgreSQL
+instance.
+
+```text
+.
+├── database/                 PostgreSQL image, initialization SQL, database tests
+├── docs/
+│   ├── api/                  API overview and OpenAPI specification
+│   └── services/             Backend, resolve, and character documentation
+├── frontend/                 React app, Nginx configuration, frontend checks
+├── pkg/                      Shared dice, database, HTTP, logging, and utility code
+├── services/
+│   ├── backend/              Authentication, sessions, and account management
+│   ├── character/            Character validation and persistence
+│   └── resolve/              System-specific dice resolution and roll history
+├── docker-compose.yml        Shared service configuration
+├── docker-compose.dev.yml    Local ports, HTTP settings, and Swagger UI
+├── go.work                   Go workspace
+└── Makefile                  Development commands
+```
+
+## Quick start
+
+Install Docker with Docker Compose. The commands below use Make; local Go and
+Node.js installations are not needed for the container setup.
+
+```sh
+git clone https://github.com/Frolower/DiceDasher.git
+cd DiceDasher
+cp services/backend/.env.example services/backend/.env
+cp services/resolve/.env.example services/resolve/.env
+cp services/character/.env.example services/character/.env
+```
+
+Configure the new `.env` files before starting:
+
+| File | Required setting for Docker Compose |
+| --- | --- |
+| `services/backend/.env` | Set `JWT_SECRET` to the output of `openssl rand -base64 32` |
+| `services/resolve/.env` | Set `DATABASE_URL=postgres://resolve_service:resolve_password@postgres:5432/resolve_db?sslmode=disable` |
+| `services/character/.env` | Set `DATABASE_URL=postgres://character_service:character_password@postgres:5432/character_db?sslmode=disable` |
+
+Compose supplies the backend database URL. Leave the example HTTP ports unchanged;
+container health checks use them. The development override sets
+`COOKIE_SECURE=false` and allows browser requests to the backend from
+`http://localhost:5174` and `http://localhost:8888`.
+
+```sh
+make up
+make ps
+```
+
+`make up` builds images and starts the stack in the background. On the first
+startup, PostgreSQL creates the databases and loads the initialization and seed
+scripts.
+
+| Component | Local address |
+| --- | --- |
+| Web app | http://localhost:5174 |
+| Swagger UI | http://localhost:8888 |
+| Account API | http://localhost:8000 |
+| Resolve API | http://localhost:8081 |
+| Character API | http://localhost:8082 |
+| PostgreSQL | `localhost:5432` |
+
+All published development ports bind to `127.0.0.1`.
+
+```sh
+# Check HTTP health endpoints
+curl http://localhost:5174/health
+curl http://localhost:8000/health
+curl http://localhost:8081/health
+curl http://localhost:8082/health
+
+# Follow logs, or stop the stack while keeping database data
+make logs
+make down
+```
+
+### Compose configuration and data
+
+Docker Make targets explicitly combine `docker-compose.yml` and
+`docker-compose.dev.yml`. The equivalent startup command is:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+Use both files for other Compose operations too. A plain `docker compose up`
+loads only the base configuration and publishes no host ports. To inspect the
+merged configuration:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml config
+```
+
+The stack is configured for local development, with development database
+credentials and HTTP cookies. No production Compose or TLS configuration is
+provided. `COMPOSE_FILES` can override the file selection used by Make.
+
+PostgreSQL data lives in the `postgres_data` volume. Initialization SQL runs only
+on an empty volume; changing a script does not migrate an existing database.
+**`make clean` and `make nuke` delete database volumes and stored data.**
+See the [database documentation](database/README.md) for schema updates,
+timestamp triggers, session retention, and pg_cron checks.
+
+### Local frontend development
+
+Use Node.js 24 and npm, matching the frontend image and CI. From the repository
+root, after configuring the service environment files:
+
+```sh
+make install
+docker compose -f docker-compose.yml -f docker-compose.dev.yml stop frontend
+make up SERVICE=backend
+make frontend-dev
+```
+
+Open http://localhost:5174. Vite provides live reload and proxies `/api/*` to
+`http://localhost:8000`. Vite and the frontend container share port 5174, so stop
+the container before starting Vite. Rebuild the frontend container with
+`make up SERVICE=frontend` when returning to the Docker-served app.
+
+Local Go commands require the version specified in [go.work](go.work). When
+running Go services outside Docker, supply their environment variables explicitly
+and use `localhost` instead of `postgres` in database URLs.
+
+## Web routes
+
+| Route | Behavior |
+| --- | --- |
+| `/` | Public landing page; signed-in users redirect to `/profile` |
+| `/login` | Login dialog; returns to the requested private page after login |
+| `/profile` | Signed-in profile with example rooms |
+| `/rooms` | Redirects to `/profile` |
+| `/settings` | Account details, password, and account deletion |
+| `/characters` | Signed-in character preview with example data |
+| `/friends` | Signed-in friends preview with example data |
+
+Private routes wait for session restoration before redirecting to login.
+Nginx serves the app for direct links to client-side routes.
+
+## API documentation
+
+Open [Swagger UI](http://localhost:8888) with the development stack running, or
+read the [API overview](docs/api/README.md) and
+[OpenAPI specification](docs/api/openapi.yaml).
+
+- [Account API](docs/services/backend/README.md)
+- [Resolve endpoints and supported actions](docs/services/resolve/endpoints.md)
+- [Generic dice](docs/services/resolve/systems/generic.md), [VtM V5](docs/services/resolve/systems/vtmv5.md), [The Electric State](docs/services/resolve/systems/tes.md)
+- [Character endpoints](docs/services/character/endpoints.md) and [TES character schema](docs/services/character/systems/tes.md)
+
+Account endpoints use paths such as `/login` and `/me` on port 8000, or
+`/api/login` and `/api/me` through the frontend. Resolve requests use
+`POST /resolve?system=generic|vtmv5|tes`; character creation uses
+`POST /character?system=tes` on its own service.
+
+The Docker frontend applies Nginx request limits to `/api/`, with additional
+limits for login and registration. Direct requests to port 8000 and requests
+through Vite bypass these Nginx limits. Shared Nginx routes and limits live in
+`frontend/nginx-common/`; the dev Compose file mounts this directory and
+`frontend/nginx.dev.conf`. After editing mounted configuration, validate and reload:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec frontend nginx -t
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec frontend nginx -s reload
+```
+
+## Development commands and checks
+
+Run `make help` for the full list. Frontend commands require `make install` first;
+Go commands cover all four workspace modules.
+
+| Command | Purpose |
+| --- | --- |
+| `make up` / `make down` | Build and start the dev stack / stop it and keep data |
+| `make dev` | Start the stack with attached logs |
+| `make build` / `make rebuild` | Build images / build without cache |
+| `make logs SERVICE=backend` | Follow one service's logs |
+| `make ps` / `make restart` | Show status / restart containers |
 | `make frontend-dev` | Start Vite with live reload |
 | `make frontend-build` | Type-check and build the frontend |
-| `make test` | Run Go and frontend tests |
-| `make lint` | Run Go vet and frontend lint |
-| `make fmt` / `make fmt-check` | Format files / check formatting |
+| `make frontend-preview` | Preview the built frontend |
+| `make test` | Run Go tests and frontend authentication/settings checks |
+| `make lint` | Run Go vet and Oxlint |
+| `make fmt` / `make fmt-check` | Format code / check formatting |
 
-Local Go commands require the Go version specified in `go.work`; frontend commands
-require Node.js and npm. Run `make install` before local frontend commands.
-Before `make frontend-dev`, stop the frontend container with
-`docker compose stop frontend` and start the API with `make up SERVICE=backend`.
-Both Vite and the frontend container use port 5174.
+`SERVICE` selects a service for build, up, dev, logs, restart, and rebuild.
+For separate checks, use `make test-go`, `make test-frontend`, `make lint-go`, or
+`make lint-frontend`.
 
-**Destructive commands:** `make clean` and `make nuke` delete database volumes and
-all stored data. `make down` keeps volumes.
+Pull requests to `master` run frontend lint/tests and image build, Go vet and tests
+with the race detector, database SQL tests, backend PostgreSQL integration tests,
+and Go service image builds. `make test` does not provision the integration-test
+database; see [backend testing instructions](docs/services/backend/README.md) and
+[database checks](database/README.md) for database-backed verification.
 
-## Usage
+## Contributing and support
 
-The [frontend](frontend/README.md) provides registration and login. Its access token
-is held in memory; reloading clears the displayed login state. Use Swagger UI,
-Postman, or cURL for the other endpoints listed in the
-[API reference](docs/api/README.md).
+See [open issues](https://github.com/Frolower/DiceDasher/issues) for bugs, feature
+requests, and development discussion. Read the
+[contribution guidelines](docs/CONTRIBUTING.md) and
+[Code of Conduct](docs/CODE_OF_CONDUCT.md) before contributing.
+Report security issues according to the [security policy](docs/SECURITY.md).
 
-## Roadmap
-
-See the [open issues](https://github.com/Frolower/DiceDasher/issues) for a list of proposed features (and known issues).
-
-- [Top Feature Requests](https://github.com/Frolower/DiceDasher/issues?q=label%3Aenhancement+is%3Aopen+sort%3Areactions-%2B1-desc) (Add your votes using the 👍 reaction)
-- [Top Bugs](https://github.com/Frolower/DiceDasher/issues?q=is%3Aissue+is%3Aopen+label%3Abug+sort%3Areactions-%2B1-desc) (Add your votes using the 👍 reaction)
-- [Newest Bugs](https://github.com/Frolower/DiceDasher/issues?q=is%3Aopen+is%3Aissue+label%3Abug)
-
-## Support
-
-Reach out to the maintainer at one of the following places:
-
-- [GitHub issues](https://github.com/Frolower/DiceDasher/issues/new?assignees=&labels=question&template=04_SUPPORT_QUESTION.md&title=support%3A+)
-- Contact options listed on [this GitHub profile](https://github.com/Frolower)
-
-## Project assistance
-
-If you want to say **thank you** or/and support active development of DiceDasher:
-
-- Add a [GitHub Star](https://github.com/Frolower/DiceDasher) to the project.
-- Spread the word about this project among your friends and use it.
-
-Together, we can make DiceDasher **better**!
-
-## Contributing
-
-First off, thanks for taking the time to contribute! Contributions are what make the open-source community such an amazing place to learn, inspire, and create.
-Any contributions you make will benefit everybody else and are **greatly appreciated**.
-
-
-Please read [our contribution guidelines](/docs/CONTRIBUTING.md), and thank you for being involved!
-
-By participating, you agree to abide by the Code of Conduct.
-
-## Authors & contributors
-
-The original setup of this repository is by [Nikita Dubinin](https://github.com/Frolower).
-
-For a full list of all authors and contributors, see [the contributors page](https://github.com/Frolower/DiceDasher/contributors).
-
-## Security
-
-DiceDasher follows good practices of security, but 100% security cannot be assured.
-DiceDasher is provided **"as is"** without any **warranty**. Use at your own risk.
-
-_For more information and to report security issues, please refer to our [security documentation](/docs/SECURITY.md)._
+Created by [Nikita Dubinin](https://github.com/Frolower).
+See all [contributors](https://github.com/Frolower/DiceDasher/contributors).
+Inspired by tabletop RPGs and platforms such as Owlbear Rodeo and Roll20.
 
 ## License
 
-This project is licensed under the **MIT license**.
-
-See [LICENSE](/LICENSE) for more information.
-
-## Acknowledgements
-
-> This project is inspired by the TTRPGs, platforms like owlbear.rodeo and Roll20
+Licensed under the [Apache License 2.0](LICENSE).

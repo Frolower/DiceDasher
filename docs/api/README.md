@@ -91,6 +91,8 @@ Base URL: `http://localhost:8000`
 | GET | `/health` | Health check |
 
 Account deletion and password changes require Bearer authentication and return
-`200` with the JSON string `"success"`. Password changes retain existing sessions.
+`200` with the JSON string `"success"`. Password changes atomically update the password and `updated_at` and revoke all
+other sessions belonging to the user. The current session, identified by the
+verified access JWT's `sid`, remains valid; its tokens and cookie are unchanged.
 
 [Authentication, user management, errors and setup](../services/backend/README.md).

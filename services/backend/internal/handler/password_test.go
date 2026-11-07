@@ -46,17 +46,17 @@ func TestPasswordUpdateHTTPContract(t *testing.T) {
 		{"oversized", `{"new_password":"` + strings.Repeat("x", 17000) + `"}`, nil, 413, false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			id := uuid.New()
+			id, sessionID := uuid.New(), uuid.New()
 			calls := 0
 			h := New(authenticateFunc{authenticate: func(_ context.Context, token string) (auth.AccessClaims, error) {
 				if token != "secret-token" {
 					t.Fatal("wrong token")
 				}
-				return auth.AccessClaims{UserID: id, SessionID: uuid.New()}, nil
+				return auth.AccessClaims{UserID: id, SessionID: sessionID}, nil
 			}}, passwordUpdateFunc{update: func(ctx context.Context, rec user.PasswordUpdateRecord) error {
 				calls++
 				claims, ok := AccessClaimsFromContext(ctx)
-				if !ok || claims.UserID != id || rec != (user.PasswordUpdateRecord{Id: id, OldPassword: "OldPass1!", NewPassword: "NewPass2!"}) {
+				if !ok || claims.UserID != id || rec != (user.PasswordUpdateRecord{ID: id, CurrentSessionID: sessionID, OldPassword: "OldPass1!", NewPassword: "NewPass2!"}) {
 					t.Fatal("lost password fields or authenticated identity")
 				}
 				return tc.err

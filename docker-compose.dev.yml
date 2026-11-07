@@ -1,0 +1,37 @@
+# Local development only. Use together with docker-compose.yml.
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  backend:
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      COOKIE_SECURE: "false"
+      ALLOWED_ORIGINS: "http://localhost:5174,http://localhost:8888"
+
+  character:
+    ports:
+      - "127.0.0.1:8082:8082"
+
+  resolve:
+    ports:
+      - "127.0.0.1:8081:8081"
+
+  frontend:
+    ports:
+      - "127.0.0.1:5174:80"
+    volumes:
+      - ./frontend/nginx.dev.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./frontend/nginx-common:/etc/nginx/snippets:ro
+
+  swagger-ui:
+    image: swaggerapi/swagger-ui:latest
+    ports:
+      - "127.0.0.1:8888:8080"
+    environment:
+      SWAGGER_JSON: /spec/openapi.yaml
+    volumes:
+      - ./docs/api/openapi.yaml:/spec/openapi.yaml:ro
+    restart: unless-stopped
