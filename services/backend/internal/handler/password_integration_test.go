@@ -105,7 +105,22 @@ func TestPasswordUpdatePostgres(t *testing.T) {
 		}
 		return hash
 	}
+	readUpdatedAt := func() *time.Time {
+		var updatedAt *time.Time
+		if err := admin.QueryRow(ctx, "SELECT updated_at FROM public.users WHERE id=$1", created.ID).Scan(&updatedAt); err != nil {
+			t.Fatal(err)
+		}
+		return updatedAt
+	}
+	assertUpdatedAt := func(want *time.Time) {
+		t.Helper()
+		got := readUpdatedAt()
+		if (got == nil) != (want == nil) || (got != nil && want != nil && !got.Equal(*want)) {
+			t.Fatalf("updated_at changed unexpectedly: got=%v want=%v", got, want)
+		}
+	}
 	initialHash := readHash()
+	initialUpdatedAt := readUpdatedAt()
 	for _, tc := range []struct{ name, old, next string }{
 		{"wrong old password", "WrongPass3!", newPassword},
 		{"invalid new password", oldPassword, "weak"},
@@ -114,6 +129,7 @@ func TestPasswordUpdatePostgres(t *testing.T) {
 			if w := request(tc.old, tc.next); w.Code != http.StatusBadRequest {
 				t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
 			}
+			assertUpdatedAt(initialUpdatedAt)
 			if readRevocation(otherSessionID) != nil {
 				t.Fatal("rejected update revoked a session")
 			}
@@ -121,6 +137,11 @@ func TestPasswordUpdatePostgres(t *testing.T) {
 				t.Fatal("rejected update changed the password")
 			}
 		})
+	}
+	// Use the database clock to avoid clock skew between the app and PostgreSQL.
+	var beforeUpdate time.Time
+	if err := admin.QueryRow(ctx, "SELECT clock_timestamp()").Scan(&beforeUpdate); err != nil {
+		t.Fatal(err)
 	}
 	if w := request(oldPassword, newPassword); w.Code != http.StatusOK {
 		t.Fatalf("status=%d body=%s", w.Code, w.Body.String())
@@ -134,6 +155,14 @@ func TestPasswordUpdatePostgres(t *testing.T) {
 	if got := readRevocation(revokedSessionID); got == nil || !got.Equal(previousRevocation) {
 		t.Fatal("previous revocation timestamp was changed")
 	}
+	updatedAt := readUpdatedAt()
+	var afterUpdate time.Time
+	if err := admin.QueryRow(ctx, "SELECT clock_timestamp()").Scan(&afterUpdate); err != nil {
+		t.Fatal(err)
+	}
+	if updatedAt == nil || updatedAt.Before(beforeUpdate) || updatedAt.After(afterUpdate) {
+		t.Fatalf("updated_at must reflect the successful password update: got=%v interval=[%v, %v]", updatedAt, beforeUpdate, afterUpdate)
+	}
 	newHash := readHash()
 	if newHash == initialHash || bcrypt.CompareHashAndPassword([]byte(newHash), []byte(newPassword)) != nil || bcrypt.CompareHashAndPassword([]byte(newHash), []byte(oldPassword)) == nil {
 		t.Fatal("stored password was not replaced correctly")
@@ -141,10 +170,12 @@ func TestPasswordUpdatePostgres(t *testing.T) {
 	if w := request(oldPassword, "Another3!"); w.Code != http.StatusBadRequest {
 		t.Fatalf("old password accepted: %d", w.Code)
 	}
+	assertUpdatedAt(updatedAt)
 	// A stale hash must not overwrite a password changed by another request.
 	if err := store.UpdatePasswordAndRevokeOtherSessions(ctx, created.ID, currentSessionID, initialHash, initialHash, time.Now().UTC()); !errors.Is(err, user.ErrUserNotFound) {
 		t.Fatalf("stale update: %v", err)
 	}
+	assertUpdatedAt(updatedAt)
 	if readHash() != newHash {
 		t.Fatal("stale update changed the password")
 	}
