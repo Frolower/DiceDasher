@@ -31,7 +31,7 @@ func (h *Handler) HandleUpdatePassword(w http.ResponseWriter, r *http.Request) {
 		r.Context(),
 		user.PasswordUpdateRecord{
 			ID:               claims.UserID,
-			CurrentSessionID: claims.UserID,
+			CurrentSessionID: claims.SessionID,
 			OldPassword:      req.OldPassword,
 			NewPassword:      req.NewPassword})
 	if err != nil {

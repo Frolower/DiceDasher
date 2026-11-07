@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -14,15 +15,15 @@ import (
 type passwordStoreStub struct {
 	UserStore
 	get    func(context.Context, uuid.UUID) (string, error)
-	update func(context.Context, uuid.UUID, string, string) error
+	update func(context.Context, uuid.UUID, uuid.UUID, string, string, time.Time) error
 }
 
 func (s passwordStoreStub) GetHashByID(ctx context.Context, id uuid.UUID) (string, error) {
 	return s.get(ctx, id)
 }
 
-func (s passwordStoreStub) UpdatePassword(ctx context.Context, id uuid.UUID, oldHash, newHash string) error {
-	return s.update(ctx, id, oldHash, newHash)
+func (s passwordStoreStub) UpdatePasswordAndRevokeOtherSessions(ctx context.Context, id, sessionID uuid.UUID, oldHash, newHash string, now time.Time) error {
+	return s.update(ctx, id, sessionID, oldHash, newHash, now)
 }
 
 func TestUpdatePasswordWithBcrypt(t *testing.T) {
@@ -32,7 +33,8 @@ func TestUpdatePasswordWithBcrypt(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	id := uuid.New()
+	id, sessionID := uuid.New(), uuid.New()
+	now := time.Date(2026, 11, 7, 12, 0, 0, 0, time.UTC)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	savedHash := initialHash
@@ -44,8 +46,8 @@ func TestUpdatePasswordWithBcrypt(t *testing.T) {
 			}
 			return savedHash, nil
 		},
-		update: func(got context.Context, gotID uuid.UUID, oldHash, newHash string) error {
-			if got != ctx || gotID != id || oldHash != savedHash {
+		update: func(got context.Context, gotID, gotSessionID uuid.UUID, oldHash, newHash string, gotNow time.Time) error {
+			if got != ctx || gotID != id || gotSessionID != sessionID || !gotNow.Equal(now) || oldHash != savedHash {
 				t.Fatal("update must use the original stored hash, context and ID")
 			}
 			if newHash == newPassword || hasher.Verify(newHash, newPassword) != nil {
@@ -57,14 +59,15 @@ func TestUpdatePasswordWithBcrypt(t *testing.T) {
 		},
 	}
 	s := NewServiceWithDependencies(store, hasher)
-	if err := s.UpdatePassword(ctx, PasswordUpdateRecord{Id: id, OldPassword: oldPassword, NewPassword: newPassword}); err != nil {
+	s.now = func() time.Time { return now }
+	if err := s.UpdatePassword(ctx, PasswordUpdateRecord{ID: id, CurrentSessionID: sessionID, OldPassword: oldPassword, NewPassword: newPassword}); err != nil {
 		t.Fatal(err)
 	}
 	if updates != 1 || savedHash == initialHash || hasher.Verify(savedHash, oldPassword) == nil {
 		t.Fatal("password was not replaced")
 	}
 	// Reusing the old password must fail without another write.
-	err = s.UpdatePassword(ctx, PasswordUpdateRecord{Id: id, OldPassword: oldPassword, NewPassword: "Another3!"})
+	err = s.UpdatePassword(ctx, PasswordUpdateRecord{ID: id, CurrentSessionID: sessionID, OldPassword: oldPassword, NewPassword: "Another3!"})
 	if !errors.Is(err, ErrOldPasswordDoesntMatch) || updates != 1 {
 		t.Fatalf("reused password: err=%v updates=%d", err, updates)
 	}
@@ -78,7 +81,7 @@ func TestUpdatePasswordRejectsInvalidNewPassword(t *testing.T) {
 				return "", nil
 			}}
 			err := NewServiceWithDependencies(store, nil).UpdatePassword(context.Background(), PasswordUpdateRecord{
-				Id: uuid.New(), OldPassword: "OldPass1!", NewPassword: password,
+				ID: uuid.New(), OldPassword: "OldPass1!", NewPassword: password,
 			})
 			if !errors.Is(err, ErrInvalidInput) {
 				t.Fatalf("expected validation error, got %v", err)
@@ -95,7 +98,7 @@ type passwordManagerStub struct {
 func (p passwordManagerStub) Hash(password string) (string, error) { return p.hash(password) }
 
 func TestUpdatePasswordFailures(t *testing.T) {
-	input := PasswordUpdateRecord{Id: uuid.New(), OldPassword: "OldPass1!", NewPassword: "NewPass2!"}
+	input := PasswordUpdateRecord{ID: uuid.New(), OldPassword: "OldPass1!", NewPassword: "NewPass2!"}
 	if err := NewServiceWithDependencies(nil, nil).UpdatePassword(context.Background(), input); !errors.Is(err, ErrStoreNotConfigured) {
 		t.Fatalf("missing store: %v", err)
 	}
@@ -118,7 +121,7 @@ func TestUpdatePasswordFailures(t *testing.T) {
 					}
 					return storedHash, nil
 				},
-				update: func(context.Context, uuid.UUID, string, string) error {
+				update: func(context.Context, uuid.UUID, uuid.UUID, string, string, time.Time) error {
 					updates++
 					return fmt.Errorf("update: %w", cause)
 				},
@@ -149,7 +152,7 @@ func TestUpdatePasswordRejectsUnchangedPassword(t *testing.T) {
 		t.Fatal("unchanged password reached storage")
 		return "", nil
 	}}
-	err := NewServiceWithDependencies(store, nil).UpdatePassword(context.Background(), PasswordUpdateRecord{Id: uuid.New(), OldPassword: "SamePass1!", NewPassword: "SamePass1!"})
+	err := NewServiceWithDependencies(store, nil).UpdatePassword(context.Background(), PasswordUpdateRecord{ID: uuid.New(), OldPassword: "SamePass1!", NewPassword: "SamePass1!"})
 	if !errors.Is(err, ErrInvalidInput) {
 		t.Fatalf("expected invalid input, got %v", err)
 	}
