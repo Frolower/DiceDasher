@@ -27,7 +27,13 @@ func (h *Handler) HandleUpdatePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.user.UpdatePassword(r.Context(), user.PasswordUpdateRecord{Id: claims.UserID, OldPassword: req.OldPassword, NewPassword: req.NewPassword})
+	err := h.user.UpdatePassword(
+		r.Context(),
+		user.PasswordUpdateRecord{
+			ID:               claims.UserID,
+			CurrentSessionID: claims.UserID,
+			OldPassword:      req.OldPassword,
+			NewPassword:      req.NewPassword})
 	if err != nil {
 		switch {
 		case errors.Is(err, user.ErrInvalidInput):

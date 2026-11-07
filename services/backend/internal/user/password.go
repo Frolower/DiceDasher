@@ -55,7 +55,7 @@ func (s *Service) UpdatePassword(ctx context.Context, rec PasswordUpdateRecord) 
 		return InvalidInputError{Err: errors.New("new password must differ from old password")}
 	}
 
-	oldHash, err := s.users.GetHashByID(ctx, rec.Id)
+	oldHash, err := s.users.GetHashByID(ctx, rec.ID)
 	if err != nil {
 		return err
 	}
@@ -70,7 +70,7 @@ func (s *Service) UpdatePassword(ctx context.Context, rec PasswordUpdateRecord) 
 		return err
 	}
 
-	err = s.users.UpdatePassword(ctx, rec.Id, oldHash, newHash)
+	err = s.users.UpdatePasswordAndRevokeOtherSessions(ctx, rec.ID, rec.CurrentSessionID, oldHash, newHash, s.now())
 	if err != nil {
 		return err
 	}

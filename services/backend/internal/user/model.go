@@ -9,9 +9,10 @@ type UserUpdateRecord struct {
 }
 
 type PasswordUpdateRecord struct {
-	Id          uuid.UUID
-	OldPassword string
-	NewPassword string
+	ID               uuid.UUID
+	CurrentSessionID uuid.UUID
+	OldPassword      string
+	NewPassword      string
 }
 
 type UserProfile struct {
