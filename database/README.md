@@ -3,6 +3,11 @@
 Scripts in `init/` run in filename order when PostgreSQL starts with a new volume.
 They do not run automatically for an existing volume.
 
+Both database and backend integration CI jobs build the same pg_cron image using
+`tests/start-postgres.sh`, then apply all init scripts. The database job also runs
+the timestamp/permissions and session-retention SQL tests. A plain upstream
+`postgres:18-alpine` container cannot run script 005: it lacks pg_cron.
+
 ## IDs and PostgreSQL version
 
 Compose builds PostgreSQL 18 Alpine with pg_cron using `database/Dockerfile`.
