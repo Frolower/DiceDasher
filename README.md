@@ -174,6 +174,44 @@ run in containers, so local Go and Node.js installations are optional.
   make down
   ```
 
+### Docker and nginx environments
+
+`docker-compose.yml` contains shared services without published host ports.
+`docker-compose.dev.yml` adds localhost ports, Swagger UI, local HTTP cookie/CORS
+settings, and mounts the development nginx configuration.
+
+All Docker Make targets explicitly use both files, so `make up` starts development:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
+```
+
+A plain `docker compose up` reads only the base file and does not publish ports.
+Use Make or pass both files explicitly, including for stop/down/log commands.
+Inspect the merged configuration with:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml config
+```
+
+The frontend image defaults to `frontend/nginx.dev.conf`; the dev Compose file
+also mounts it at `/etc/nginx/conf.d/default.conf`. nginx reads that path, rather
+than choosing an environment itself. Shared rate-limit zones and routes live in
+`frontend/nginx-common/`. Local API requests through `localhost:5174/api/` use
+nginx limits; direct requests to `localhost:8000` bypass them.
+
+After editing mounted nginx configuration, validate and reload it:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec frontend nginx -t
+docker compose -f docker-compose.yml -f docker-compose.dev.yml exec frontend nginx -s reload
+```
+
+No production configuration is provided yet. A future production Compose file
+must select its own nginx config at the same `default.conf` path and supply TLS
+certificates. It must not be combined with the dev file. `COMPOSE_FILES` can
+explicitly select another file combination for all Docker Make targets.
+
 ### Make commands
 
 Run `make` or `make help` to list all available commands.
@@ -195,7 +233,7 @@ Run `make` or `make help` to list all available commands.
 Local Go commands require the Go version specified in `go.work`; frontend commands
 require Node.js and npm. Run `make install` before local frontend commands.
 Before `make frontend-dev`, stop the frontend container with
-`docker compose stop frontend` and start the API with `make up SERVICE=backend`.
+`docker compose -f docker-compose.yml -f docker-compose.dev.yml stop frontend` and start the API with `make up SERVICE=backend`.
 Both Vite and the frontend container use port 5174.
 
 **Destructive commands:** `make clean` and `make nuke` delete database volumes and

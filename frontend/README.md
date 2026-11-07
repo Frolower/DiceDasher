@@ -7,7 +7,7 @@ React + TypeScript + Vite. Minimal landing page with a rotating d20 and account 
 From the repository root:
 
 ```sh
-docker compose up -d --build frontend
+make up SERVICE=frontend
 ```
 
 Open http://localhost:5174. Compose also starts PostgreSQL and the backend.
@@ -18,7 +18,7 @@ It preserves the browser Origin and cookies. `/health` checks the frontend itsel
 After frontend changes, rebuild with the same command. To follow its logs:
 
 ```sh
-docker compose logs -f frontend
+make logs SERVICE=frontend
 ```
 
 ## Development with live reload
@@ -30,14 +30,14 @@ npm run dev
 ```
 
 Open http://localhost:5174. The port is fixed so the backend Origin check stays predictable.
-Stop the frontend container first (`docker compose stop frontend` from the repository root)
+Stop the frontend container first (`docker compose -f docker-compose.yml -f docker-compose.dev.yml stop frontend` from the repository root)
 when using Vite locally, because both use port 5174.
 
 The Vite development proxy forwards `/api/*` to `http://localhost:8000/*`.
 From the repository root, start or recreate the backend with the updated Compose configuration:
 
 ```sh
-docker compose up -d --build backend
+make up SERVICE=backend
 ```
 
 Compose reads `ALLOWED_ORIGINS` from `services/backend/.env` without overriding it.
