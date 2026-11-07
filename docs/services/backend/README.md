@@ -265,6 +265,11 @@ The JWT is signed, but its contents are not encrypted.
 
 A refresh token consists of 32 random bytes encoded as base64url. Only its SHA-256
 hash is stored in the database, not the original token. Sessions last 30 days.
+Completed sessions are retained for another 30 days after expiration or early
+revocation. pg_cron removes older sessions daily at 03:00 UTC; authorization
+checks reject expired or revoked sessions immediately, independently of cleanup.
+See [database maintenance](../../../database/README.md#session-retention-and-scheduled-cleanup)
+for setup, existing-volume updates, and job monitoring.
 Each login creates a new session. User IDs default to PostgreSQL 18 `uuidv7()`.
 The service generates a UUID v7 session ID before
 signing the JWT and performing the INSERT.
@@ -310,13 +315,14 @@ Running Go directly does not automatically read .env.
 Start PostgreSQL and the backend:
 
 ```sh
-docker compose up -d postgres
+docker compose up -d --build postgres
 docker compose up -d --build backend
 ```
 
 On a new volume, PostgreSQL runs the scripts in database/init in filename order.
 Script 000 creates the databases and roles; 004 creates the backend tables,
-indexes, permissions, and the users timestamp trigger. Script 002 creates the
+indexes, permissions, and the users timestamp trigger. Script 005 configures
+pg_cron session cleanup and execution-log retention. Script 002 creates the
 characters timestamp trigger. The database sets updated_at on every matching
 UPDATE, including assignments of unchanged values. NOW() uses the transaction
 start time. Users start with NULL in updated_at until the first update.
