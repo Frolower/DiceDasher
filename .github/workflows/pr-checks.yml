@@ -77,25 +77,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
-    services:
-      postgres:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
+    env:
+      POSTGRES_CONTAINER: dicedasher-postgres-ci
 
     steps:
       - uses: actions/checkout@v7
 
+      - name: Build and start PostgreSQL with pg_cron
+        run: bash database/tests/start-postgres.sh
+
       - name: Initialize database
-        env:
-          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
           docker cp database/init "$POSTGRES_CONTAINER:/ci-init"
           docker exec "$POSTGRES_CONTAINER" sh -ec '
@@ -105,12 +96,20 @@ jobs:
           '
 
       - name: Test database triggers and permissions
-        env:
-          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
           docker exec -i "$POSTGRES_CONTAINER" \
             psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
             < database/tests/updated_at.sql
+
+      - name: Test session retention
+        run: |
+          docker exec -i "$POSTGRES_CONTAINER" \
+            psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres \
+            < database/tests/session_cleanup.sql
+
+      - name: Remove test database
+        if: always()
+        run: docker rm -f -v "$POSTGRES_CONTAINER"
 
   go-tests:
     name: Go tests (${{ matrix.module }})
@@ -149,18 +148,8 @@ jobs:
     needs: database-tests
     timeout-minutes: 10
 
-    services:
-      postgres:
-        image: postgres:18-alpine
-        env:
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
+    env:
+      POSTGRES_CONTAINER: dicedasher-postgres-ci
 
     steps:
       - uses: actions/checkout@v7
@@ -173,9 +162,10 @@ jobs:
             pkg/go.sum
             services/*/go.sum
 
+      - name: Build and start PostgreSQL with pg_cron
+        run: bash database/tests/start-postgres.sh
+
       - name: Initialize database
-        env:
-          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
         run: |
           docker cp database/init "$POSTGRES_CONTAINER:/ci-init"
           docker exec "$POSTGRES_CONTAINER" sh -ec '
@@ -192,6 +182,10 @@ jobs:
           go test -race -count=1 -v
           ./services/backend/internal/handler
           -run 'Postgres$'
+
+      - name: Remove test database
+        if: always()
+        run: docker rm -f -v "$POSTGRES_CONTAINER"
 
   docker-build:
     name: Docker builds (${{ matrix.service }})

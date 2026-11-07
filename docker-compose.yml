@@ -1,6 +1,17 @@
 services:
   postgres:
-    image: postgres:18-alpine
+    build:
+      context: ./database
+    command:
+      - postgres
+      - -c
+      - shared_preload_libraries=pg_cron
+      - -c
+      - cron.database_name=user_db
+      - -c
+      - cron.timezone=UTC
+      - -c
+      - cron.use_background_workers=on
     container_name: dicedasher-postgres
     environment:
       POSTGRES_USER: postgres
