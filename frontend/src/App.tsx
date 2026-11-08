@@ -118,6 +118,8 @@ function App() {
   )
   function protect(content: ReactNode) {
     if (session) return content
+    // Session clearing can render a private route before handleLogout navigates.
+    if (loggingOut) return <Navigate to="/" replace />
     if (restoring || sessionError)
       return (
         <main id="main" className="dice-stage">
