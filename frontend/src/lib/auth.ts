@@ -1,3 +1,9 @@
+// Only explicitly written messages are safe to display in the interface.
+export class UserFacingError extends Error {}
+export function userErrorMessage(error: unknown, fallback: string): string {
+  return error instanceof UserFacingError ? error.message : fallback
+}
+
 export type AuthMode = 'login' | 'signup'
 export type AccessTokens = { access_token: string; expires_at: string }
 export type Session = AccessTokens & { username: string }
@@ -36,10 +42,10 @@ export function refreshSession(): Promise<Session | null> {
       setSession(null)
       return null
     }
-    if (!response.ok) throw new Error('Unable to restore your session. Please try again.')
+    if (!response.ok) throw new UserFacingError('Unable to restore your session. Please try again.')
     const tokens = (await response.json()) as AccessTokens
     if (!tokens.access_token || !Number.isFinite(Date.parse(tokens.expires_at)))
-      throw new Error('The account service returned an incomplete session.')
+      throw new UserFacingError('Unable to restore your session. Please try again.')
     const profileResponse = await fetch('/api/me', {
       credentials: 'include',
       cache: 'no-store',
@@ -49,7 +55,8 @@ export function refreshSession(): Promise<Session | null> {
       setSession(null)
       return null
     }
-    if (!profileResponse.ok) throw new Error('Unable to load your account. Please try again.')
+    if (!profileResponse.ok)
+      throw new UserFacingError('Unable to load your account. Please try again.')
     const profile = (await profileResponse.json()) as { username: string }
     const session = { ...tokens, username: profile.username }
     setSession(session)
@@ -146,18 +153,18 @@ export async function authenticate(mode: AuthMode, fields: AuthFields, signal: A
         : response.status === 401
           ? 'Your username or password is incorrect.'
           : response.status === 403
-            ? 'Sign-in is not allowed from this address. Check the backend ALLOWED_ORIGINS setting.'
+            ? 'Unable to sign in right now. Please try again later.'
             : response.status === 400
-              ? 'The server could not accept these details. Check the fields and try again.'
+              ? 'Check your details and try again.'
               : response.status === 429
                 ? 'Too many attempts. Please try again in a moment.'
-                : 'We could not reach the account service. Please try again shortly.'
-    throw new Error(message)
+                : `Unable to ${mode === 'login' ? 'sign in' : 'create your account'} right now. Please try again later.`
+    throw new UserFacingError(message)
   }
   if (mode === 'login') {
     const data = (await response.json()) as { access_token: string; expires_at: string }
     if (!data.access_token)
-      throw new Error('The account service returned an incomplete response. Please try again.')
+      throw new UserFacingError('Unable to sign in right now. Please try again later.')
     return data
   }
   return null
@@ -173,11 +180,7 @@ export function logout(): Promise<void> {
       cache: 'no-store',
     })
     if (!response.ok) {
-      throw new Error(
-        response.status === 403
-          ? 'Logout is not allowed from this address. Check the backend ALLOWED_ORIGINS setting.'
-          : 'Unable to log out. Please try again.',
-      )
+      throw new UserFacingError('Unable to log out. Please try again.')
     }
     setSession(null)
   })().finally(() => {

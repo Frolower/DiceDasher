@@ -1,3 +1,4 @@
+import { userErrorMessage } from '../lib/auth'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { authenticate, passwordChecks, validateAuth } from '../lib/auth'
@@ -82,9 +83,7 @@ export function AuthDialog({
       setMessage(
         controller.signal.aborted
           ? 'The request timed out. Please try again.'
-          : error instanceof Error
-            ? error.message
-            : 'Unable to connect. Check your connection and try again.',
+          : userErrorMessage(error, 'Unable to connect. Check your connection and try again.'),
       )
     } finally {
       window.clearTimeout(timeout)

@@ -7,7 +7,7 @@ import { DemoPage } from './components/DemoPage'
 import { Die } from './components/Die'
 import { ProfileSettings } from './components/ProfileSettings'
 import { ProfilePage } from './components/ProfilePage'
-import { type AuthMode, logout } from './lib/auth'
+import { type AuthMode, logout, userErrorMessage } from './lib/auth'
 import { getSession, refreshSession, setSession, subscribeSession } from './lib/auth'
 import './App.css'
 
@@ -90,9 +90,7 @@ function App() {
       setMenuOpen(false)
       navigate('/', { replace: true })
     } catch (error) {
-      setLogoutError(
-        error instanceof Error ? error.message : 'Unable to log out. Please try again.',
-      )
+      setLogoutError(userErrorMessage(error, 'Unable to log out. Please try again.'))
     } finally {
       logoutInFlight.current = false
       setLoggingOut(false)

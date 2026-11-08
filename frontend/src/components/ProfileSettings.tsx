@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { DeleteAccount } from './DeleteAccount'
-import { passwordChecks } from '../lib/auth'
+import { passwordChecks, userErrorMessage } from '../lib/auth'
 import { settingsRequest, validatePasswordChange, validateProfile } from '../lib/settings'
 import type { PasswordFields, Profile } from '../lib/settings'
 
@@ -40,8 +40,9 @@ export function ProfileSettings({
     const controller = new AbortController()
     settingsRequest('me', token, 'GET', undefined, controller.signal)
       .then((data: Profile) => setProfile(data))
-      .catch((error: Error) => {
-        if (!controller.signal.aborted) setLoadError(error.message)
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted)
+          setLoadError(userErrorMessage(error, 'Unable to load your profile. Please try again.'))
       })
     return () => controller.abort()
   }, [token, attempt])
@@ -82,7 +83,12 @@ export function ProfileSettings({
     } catch (error) {
       setMessage({
         section,
-        text: error instanceof Error ? error.message : 'Unable to save. Please try again.',
+        text: userErrorMessage(
+          error,
+          section === 'password'
+            ? 'Unable to change your password. Please try again.'
+            : 'Unable to save your profile. Please try again.',
+        ),
         error: true,
       })
     } finally {
