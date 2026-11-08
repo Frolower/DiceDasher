@@ -26,7 +26,11 @@ func logf(ctx context.Context, label, color, format string, args ...any) {
 		format = "id=%s | " + format
 		args = append([]any{id.String()}, args...)
 	}
-	log.Printf("%s%-8s%s| "+format, append([]any{color, label, cReset}, args...)...)
+	separator := "| "
+	if label == "REQUEST" || label == "RESPONSE" {
+		separator = "|"
+	}
+	log.Printf("%s%-8s%s"+separator+format, append([]any{color, label, cReset}, args...)...)
 }
 
 func LogWarning(message string) {
