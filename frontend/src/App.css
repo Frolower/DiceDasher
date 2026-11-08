@@ -998,6 +998,25 @@
   }
 }
 
+.side-menu-logout,
+.side-menu-logout .side-menu-icon {
+  color: var(--error);
+}
+.side-menu-logout:hover:not(:disabled),
+.side-menu-logout:focus-visible {
+  color: var(--error);
+  background: #fff1f2;
+}
+.side-menu-logout:active:not(:disabled) {
+  background: #ffe0e4;
+}
+.side-menu-logout:focus-visible {
+  outline-color: var(--error);
+}
+.side-menu-logout:disabled {
+  color: var(--error);
+  background: transparent;
+}
 .side-menu-logout > span:last-child {
   margin-left: 0;
 }
