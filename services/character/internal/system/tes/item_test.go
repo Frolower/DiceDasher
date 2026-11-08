@@ -2,7 +2,8 @@ package tes
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"reflect"
 	"testing"
 )
@@ -34,7 +35,7 @@ func TestItemFactoryVariants(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			var fields map[string]json.RawMessage
+			var fields map[string]jsontext.Value
 			if err = json.Unmarshal(data, &fields); err != nil {
 				t.Fatal(err)
 			}
@@ -84,18 +85,20 @@ func TestItemFactoryAcceptsLegacyZeroFields(t *testing.T) {
 
 func TestTypedItemsPersistInEveryInventory(t *testing.T) {
 	raw := `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":{"name":"Mira","gear":[{"type":"gear","name":"Tool","code":"tool"}],"vehicle":{"SharedGear":[{"type":"gear","name":"Radio","code":"radio"}],"stats":{"gear":[{"type":"gear","name":"Kit","code":"kit"}]}}}}`
-	created, err := (Character{}).CreateCharacter(context.Background(), json.RawMessage(raw))
+	created, err := (Character{}).CreateCharacter(context.Background(), jsontext.Value(raw))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var stored struct {
 		Character struct {
-			Gear    []map[string]any
+			Gear    []map[string]any `json:"gear"`
 			Vehicle struct {
 				SharedGear []map[string]any
-				Stats      struct{ Gear []map[string]any }
-			}
-		}
+				Stats      struct {
+					Gear []map[string]any `json:"gear"`
+				} `json:"stats"`
+			} `json:"vehicle"`
+		} `json:"character"`
 	}
 	if err = json.Unmarshal(created.Data, &stored); err != nil {
 		t.Fatal(err)

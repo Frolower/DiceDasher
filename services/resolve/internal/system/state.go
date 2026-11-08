@@ -2,7 +2,7 @@ package system
 
 import (
 	"diceDasher/services/resolve/internal/repository"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"github.com/google/uuid"
 )
@@ -35,4 +35,4 @@ func (s Lineage) Next(previous uuid.UUID) Lineage {
 	return s
 }
 
-func HasState(raw json.RawMessage) bool { return len(raw) != 0 && string(raw) != "null" }
+func HasState(raw jsontext.Value) bool { return len(raw) != 0 && string(raw) != "null" }

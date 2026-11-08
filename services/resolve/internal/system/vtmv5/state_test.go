@@ -3,7 +3,8 @@ package vtmv5
 import (
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"github.com/google/uuid"
 	"reflect"
@@ -13,8 +14,8 @@ import (
 func TestContinuationRoundTrip(t *testing.T) {
 	root := uuid.New()
 	rec := repository.RollHistory{ID: root, SystemName: "vtmv5", ActionType: "roll",
-		RequestPayload:  json.RawMessage(`{"target":2}`),
-		ResponsePayload: json.RawMessage(`{"main_roll":[1,6],"hunger_roll":[1,6]}`),
+		RequestPayload:  jsontext.Value(`{"target":2}`),
+		ResponsePayload: jsontext.Value(`{"main_roll":[1,6],"hunger_roll":[1,6]}`),
 	}
 	for i := 0; i < 3; i++ {
 		state, err := loadState(rec)
@@ -47,7 +48,7 @@ func TestContinuationRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		var public map[string]json.RawMessage
+		var public map[string]jsontext.Value
 		if err := json.Unmarshal(payload, &public); err != nil {
 			t.Fatal(err)
 		}
@@ -57,7 +58,7 @@ func TestContinuationRoundTrip(t *testing.T) {
 			}
 		}
 		rec = repository.RollHistory{ID: uuid.New(), SystemName: "vtmv5", ActionType: "reroll", StatePayload: encoded,
-			RequestPayload: json.RawMessage(`{"record_id":"` + rec.ID.String() + `"}`), ResponsePayload: payload}
+			RequestPayload: jsontext.Value(`{"record_id":"` + rec.ID.String() + `"}`), ResponsePayload: payload}
 	}
 }
 
@@ -78,7 +79,7 @@ func TestRejectUnsupportedHistory(t *testing.T) {
 }
 
 func TestInitialRollPersistsState(t *testing.T) {
-	raw := json.RawMessage(`{"attribute":2,"skill":1,"hunger":1,"target":1}`)
+	raw := jsontext.Value(`{"attribute":2,"skill":1,"hunger":1,"target":1}`)
 	response, err := (Resolver{}).resolveRoll(raw)
 	if err != nil {
 		t.Fatalf("roll: %v", err)

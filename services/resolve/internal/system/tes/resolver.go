@@ -5,7 +5,8 @@ import (
 	"diceDasher/pkg/dice"
 	"diceDasher/pkg/util"
 	"diceDasher/services/resolve/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 )
@@ -21,7 +22,7 @@ func New(history system.HistoryReader, generator dice.Generator) Resolver {
 	return Resolver{Dice: generator, history: history}
 }
 
-func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error) {
+func (r Resolver) Resolve(ctx context.Context, action string, raw jsontext.Value) (any, error) {
 
 	switch action {
 	case "roll":
@@ -33,7 +34,7 @@ func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessag
 	}
 }
 
-func (r Resolver) resolveRoll(raw json.RawMessage) (rollResponse, error) {
+func (r Resolver) resolveRoll(raw jsontext.Value) (rollResponse, error) {
 	var req rollRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {
@@ -66,7 +67,7 @@ func (r Resolver) resolveRoll(raw json.RawMessage) (rollResponse, error) {
 	}, nil
 }
 
-func (r Resolver) resolvePush(ctx context.Context, raw json.RawMessage) (pushResponse, error) {
+func (r Resolver) resolvePush(ctx context.Context, raw jsontext.Value) (pushResponse, error) {
 	var req pushRequest
 
 	if err := json.Unmarshal(raw, &req); err != nil {

@@ -1,7 +1,8 @@
 package tes
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"strings"
 
 	"diceDasher/services/character/internal/system"
@@ -131,7 +132,7 @@ func (dto gearDTO) MarshalJSON() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	var fields map[string]json.RawMessage
+	var fields map[string]jsontext.Value
 	if err = json.Unmarshal(data, &fields); err != nil {
 		return nil, err
 	}

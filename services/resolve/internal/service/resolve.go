@@ -4,7 +4,8 @@ import (
 	"context"
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -29,12 +30,12 @@ func New(resolvers map[string]system.Resolver, history HistoryWriter) *ResolveSe
 type Command struct {
 	System    string
 	Action    string
-	Payload   json.RawMessage
+	Payload   jsontext.Value
 	RequestID uuid.UUID
 }
 type Result struct {
-	RecordID uuid.UUID       `json:"record_id"`
-	Payload  json.RawMessage `json:"payload"`
+	RecordID uuid.UUID      `json:"record_id"`
+	Payload  jsontext.Value `json:"payload"`
 }
 
 // Resolve returns success only after the result and its continuation state have
@@ -64,7 +65,7 @@ func (s *ResolveService) Resolve(ctx context.Context, cmd Command) (Result, erro
 	if err != nil {
 		return Result{}, fmt.Errorf("encode result: %w", err)
 	}
-	var state json.RawMessage
+	var state jsontext.Value
 	if stateful, ok := response.(system.StatefulResult); ok {
 		state, err = json.Marshal(stateful.HistoryState())
 		if err != nil {

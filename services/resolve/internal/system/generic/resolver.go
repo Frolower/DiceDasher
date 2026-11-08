@@ -5,14 +5,15 @@ import (
 	"diceDasher/pkg/dice"
 	"diceDasher/pkg/util"
 	"diceDasher/services/resolve/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 )
 
 type Resolver struct{ Dice dice.Generator }
 
-func (r Resolver) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error) {
+func (r Resolver) Resolve(ctx context.Context, action string, raw jsontext.Value) (any, error) {
 	var req request
 
 	if action != "roll" {

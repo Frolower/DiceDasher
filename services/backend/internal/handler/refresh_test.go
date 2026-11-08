@@ -4,7 +4,7 @@ import (
 	"backend/internal/auth"
 	"context"
 	"diceDasher/pkg/httputil"
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"

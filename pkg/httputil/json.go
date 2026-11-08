@@ -1,7 +1,8 @@
 package httputil
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"io"
 	"net/http"
@@ -10,22 +11,21 @@ import (
 func UnpackJSON(r *http.Request, dst any) error {
 	if r.Body == nil {
 		// no body at all, treat like empty
-		if _, ok := dst.(*json.RawMessage); ok {
+		if _, ok := dst.(*jsontext.Value); ok {
 			return nil
 		}
 		return errors.New("empty body")
 	}
 	defer r.Body.Close()
 
-	dec := json.NewDecoder(r.Body)
-	dec.DisallowUnknownFields()
+	dec := jsontext.NewDecoder(r.Body)
 
 	// Decode first JSON value
-	if err := dec.Decode(dst); err != nil {
+	if err := json.UnmarshalDecode(dec, dst, json.RejectUnknownMembers(true)); err != nil {
 		// Empty body -> EOF
 		if errors.Is(err, io.EOF) {
-			// For RawMessage, empty is acceptable; leave it nil
-			if _, ok := dst.(*json.RawMessage); ok {
+			// For jsontext.Value, empty is acceptable; leave it nil
+			if _, ok := dst.(*jsontext.Value); ok {
 				return nil
 			}
 			return errors.New("empty body")
@@ -34,7 +34,7 @@ func UnpackJSON(r *http.Request, dst any) error {
 	}
 
 	// Ensure there's no trailing junk / extra JSON values
-	if err := dec.Decode(&struct{}{}); err != nil {
+	if err := json.UnmarshalDecode(dec, &struct{}{}); err != nil {
 		if errors.Is(err, io.EOF) {
 			return nil
 		}
@@ -52,8 +52,7 @@ func PackJSON(w http.ResponseWriter, status int, src any) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	enc := json.NewEncoder(w)
-	enc.SetEscapeHTML(true)
+	enc := jsontext.NewEncoder(w, jsontext.EscapeForHTML(true))
 
-	return enc.Encode(src)
+	return json.MarshalEncode(enc, src)
 }

@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"reflect"
 	"testing"
@@ -18,20 +18,20 @@ func (f repositoryFunc) InsertPlayerCreatedCharacter(ctx context.Context, rec Re
 	return f(ctx, rec)
 }
 
-type strategyFunc func(context.Context, json.RawMessage) (system.CreatedCharacter, error)
+type strategyFunc func(context.Context, jsontext.Value) (system.CreatedCharacter, error)
 
-func (f strategyFunc) CreateCharacter(ctx context.Context, raw json.RawMessage) (system.CreatedCharacter, error) {
+func (f strategyFunc) CreateCharacter(ctx context.Context, raw jsontext.Value) (system.CreatedCharacter, error) {
 	return f(ctx, raw)
 }
 
 func TestCreateSelectsStrategyAndPersistsRecord(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	raw := json.RawMessage(`{"name":"Mira"}`)
+	raw := jsontext.Value(`{"name":"Mira"}`)
 	created := system.CreatedCharacter{UserID: uuid.New(), CharacterType: "pc", Name: "Mira", Data: raw}
 	wantID := uuid.New()
 	calls := 0
-	systems := map[string]system.Character{"chosen": strategyFunc(func(got context.Context, body json.RawMessage) (system.CreatedCharacter, error) {
+	systems := map[string]system.Character{"chosen": strategyFunc(func(got context.Context, body jsontext.Value) (system.CreatedCharacter, error) {
 		if got != ctx || string(body) != string(raw) {
 			t.Fatal("lost context or payload")
 		}
@@ -60,7 +60,7 @@ func TestCreateDoesNotSaveRejectedInput(t *testing.T) {
 	for _, tt := range []struct{ name, body string }{
 		{"unknown", `{}`}, {"tes", `{`}, {"tes", `{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":{"name":""}}`},
 	} {
-		id, err := s.Create(context.Background(), tt.name, json.RawMessage(tt.body))
+		id, err := s.Create(context.Background(), tt.name, jsontext.Value(tt.body))
 		if err == nil || id != uuid.Nil {
 			t.Fatalf("accepted rejected request: %s", tt.body)
 		}
@@ -72,7 +72,7 @@ func TestCreateDoesNotSaveRejectedInput(t *testing.T) {
 
 func TestCreatePreservesFailures(t *testing.T) {
 	validation := &system.ValidationError{Violations: []system.Violation{{Field: "character.name", Code: "required"}}}
-	s := New(nil, map[string]system.Character{"test": strategyFunc(func(context.Context, json.RawMessage) (system.CreatedCharacter, error) {
+	s := New(nil, map[string]system.Character{"test": strategyFunc(func(context.Context, jsontext.Value) (system.CreatedCharacter, error) {
 		return system.CreatedCharacter{}, validation
 	})})
 	_, err := s.Create(context.Background(), "test", nil)
@@ -82,7 +82,7 @@ func TestCreatePreservesFailures(t *testing.T) {
 	}
 	cause := errors.New("database unavailable")
 	s = New(repositoryFunc(func(context.Context, Record) (uuid.UUID, error) { return uuid.Nil, cause }), map[string]system.Character{"tes": tes.Character{}})
-	id, err := s.Create(context.Background(), "tes", json.RawMessage(`{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":{"name":"Mira"}}`))
+	id, err := s.Create(context.Background(), "tes", jsontext.Value(`{"user_id":"d7a92c4c-7c65-41d8-946a-4b94d3e721f9","type":"pc","character":{"name":"Mira"}}`))
 	var save *SaveError
 	if id != uuid.Nil || !errors.As(err, &save) || !errors.Is(err, cause) {
 		t.Fatalf("lost persistence error: %v", err)

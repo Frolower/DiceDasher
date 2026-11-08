@@ -28,7 +28,7 @@ Swagger UI, rather than the web interface.
 
 ## Stack and architecture
 
-- **Backend:** Go, `net/http`, three services in a Go workspace. The workspace currently specifies Go **1.27.1**.
+- **Backend:** Go, `net/http`, three services in a Go workspace. The workspace currently specifies Go **1.27.2**.
 - **Frontend:** React 19, TypeScript, React Router, Vite; static builds served by Nginx.
 - **Database:** PostgreSQL 18 with pg_cron, separate databases and roles for each service, UUID v7 identifiers.
 - **Development:** Docker Compose, Make, Node.js 24, npm, Oxlint, Prettier, GitHub Actions.

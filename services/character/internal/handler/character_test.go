@@ -3,7 +3,8 @@ package handler
 import (
 	"context"
 	"diceDasher/pkg/httputil"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -38,9 +39,9 @@ func TestCharacterValidationResponse(t *testing.T) {
 	}
 }
 
-type creatorFunc func(context.Context, string, json.RawMessage) (uuid.UUID, error)
+type creatorFunc func(context.Context, string, jsontext.Value) (uuid.UUID, error)
 
-func (f creatorFunc) Create(ctx context.Context, name string, raw json.RawMessage) (uuid.UUID, error) {
+func (f creatorFunc) Create(ctx context.Context, name string, raw jsontext.Value) (uuid.UUID, error) {
 	return f(ctx, name, raw)
 }
 
@@ -63,7 +64,7 @@ func TestCharacterHTTPContract(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			called := false
-			h := New(creatorFunc(func(ctx context.Context, name string, raw json.RawMessage) (uuid.UUID, error) {
+			h := New(creatorFunc(func(ctx context.Context, name string, raw jsontext.Value) (uuid.UUID, error) {
 				called = true
 				return id, tt.err
 			}))

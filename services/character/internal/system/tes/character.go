@@ -4,7 +4,8 @@ import (
 	"context"
 	"diceDasher/pkg/logger"
 	"diceDasher/services/character/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ import (
 
 type Character struct{}
 
-func (Character) CreateCharacter(ctx context.Context, raw json.RawMessage) (system.CreatedCharacter, error) {
+func (Character) CreateCharacter(ctx context.Context, raw jsontext.Value) (system.CreatedCharacter, error) {
 	logger.Logf(ctx, "RUN: CreateCharacter system=tes |")
 
 	var req createRequest

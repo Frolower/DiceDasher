@@ -7,7 +7,8 @@ import (
 	"diceDasher/services/resolve/internal/service"
 	"diceDasher/services/resolve/internal/system"
 	"diceDasher/services/resolve/internal/system/generic"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -52,7 +53,7 @@ func TestHTTPCommandAndEnvelope(t *testing.T) {
 		if cmd.System != "tes" || cmd.Action != "push" || string(cmd.Payload) != `{"record_id":"example"}` {
 			t.Fatalf("wrong command: %+v", cmd)
 		}
-		return service.Result{RecordID: id, Payload: json.RawMessage(`{"success":true}`)}, nil
+		return service.Result{RecordID: id, Payload: jsontext.Value(`{"success":true}`)}, nil
 	}))
 	w := httptest.NewRecorder()
 	h.Resolve(w, httptest.NewRequest(http.MethodPost, "/resolve?system=tes&action=push", strings.NewReader(`{"record_id":"example"}`)))

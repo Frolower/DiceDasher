@@ -6,7 +6,7 @@ import (
 	"diceDasher/pkg/logger"
 	"diceDasher/services/character/internal/service"
 	"diceDasher/services/character/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"net/http"
 
@@ -14,7 +14,7 @@ import (
 )
 
 type CharacterCreator interface {
-	Create(context.Context, string, json.RawMessage) (uuid.UUID, error)
+	Create(context.Context, string, jsontext.Value) (uuid.UUID, error)
 }
 
 type Handler struct{ characters CharacterCreator }
@@ -31,7 +31,7 @@ func (h *Handler) postUserCreatedCharacterHandler(w http.ResponseWriter, r *http
 		http.Error(w, "missing query param: system", http.StatusBadRequest)
 		return
 	}
-	var raw json.RawMessage
+	var raw jsontext.Value
 	if err := httputil.UnpackJSON(r, &raw); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
