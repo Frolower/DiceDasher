@@ -1,6 +1,6 @@
 module diceDasher/services/resolve
 
-go 1.26
+go 1.27.0
 
 require (
 	diceDasher/pkg v0.0.0

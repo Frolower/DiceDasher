@@ -3,7 +3,8 @@ package tes
 import (
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"github.com/google/uuid"
 	"reflect"
@@ -13,8 +14,8 @@ import (
 func TestContinuationRoundTrip(t *testing.T) {
 	root := uuid.New()
 	rec := repository.RollHistory{ID: root, SystemName: "tes", ActionType: "roll",
-		RequestPayload:  json.RawMessage(`{"target":2}`),
-		ResponsePayload: json.RawMessage(`{"attribute_rolls":[1,6],"gear_rolls":[1,6]}`),
+		RequestPayload:  jsontext.Value(`{"target":2}`),
+		ResponsePayload: jsontext.Value(`{"attribute_rolls":[1,6],"gear_rolls":[1,6]}`),
 	}
 	for i := 0; i < 3; i++ {
 		state, err := loadState(rec)
@@ -40,7 +41,7 @@ func TestContinuationRoundTrip(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		var public map[string]json.RawMessage
+		var public map[string]jsontext.Value
 		if err := json.Unmarshal(payload, &public); err != nil {
 			t.Fatal(err)
 		}
@@ -50,7 +51,7 @@ func TestContinuationRoundTrip(t *testing.T) {
 			}
 		}
 		rec = repository.RollHistory{ID: uuid.New(), SystemName: "tes", ActionType: "push", StatePayload: encoded,
-			RequestPayload: json.RawMessage(`{"record_id":"` + rec.ID.String() + `"}`), ResponsePayload: payload}
+			RequestPayload: jsontext.Value(`{"record_id":"` + rec.ID.String() + `"}`), ResponsePayload: payload}
 	}
 }
 
@@ -71,7 +72,7 @@ func TestRejectUnsupportedHistory(t *testing.T) {
 }
 
 func TestInitialRollPersistsState(t *testing.T) {
-	raw := json.RawMessage(`{"attr":2,"gear":1,"target":1}`)
+	raw := jsontext.Value(`{"attr":2,"gear":1,"target":1}`)
 	response, err := (Resolver{}).resolveRoll(raw)
 	if err != nil {
 		t.Fatalf("roll: %v", err)

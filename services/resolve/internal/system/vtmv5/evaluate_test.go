@@ -2,7 +2,7 @@ package vtmv5
 
 import (
 	"diceDasher/pkg/dice"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"reflect"
 	"testing"
 )
@@ -56,7 +56,7 @@ func sequence(t *testing.T, values ...int) dice.Generator {
 
 func TestRollAndRerollEvaluateIdentically(t *testing.T) {
 	r := Resolver{Dice: sequence(t, 10, 6, 10)}
-	roll, err := r.resolveRoll(json.RawMessage(`{"attribute":3,"hunger":1,"target":5}`))
+	roll, err := r.resolveRoll(jsontext.Value(`{"attribute":3,"hunger":1,"target":5}`))
 	if err != nil {
 		t.Fatalf("roll: %v", err)
 	}

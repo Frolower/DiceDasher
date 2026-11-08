@@ -2,7 +2,7 @@ package tes
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"strings"
 	"testing"
@@ -79,7 +79,7 @@ func TestCreateCharacterContract(t *testing.T) {
 		{"invalid JSON", `{`, "input"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := (Character{}).CreateCharacter(context.Background(), json.RawMessage(tt.raw))
+			_, err := (Character{}).CreateCharacter(context.Background(), jsontext.Value(tt.raw))
 			var input *system.InputError
 			var validation *system.ValidationError
 			switch tt.kind {

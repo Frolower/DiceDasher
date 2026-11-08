@@ -7,7 +7,7 @@ import (
 	"diceDasher/services/resolve/internal/repository"
 	"diceDasher/services/resolve/internal/service"
 	"diceDasher/services/resolve/internal/system"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"net/http"
 )
@@ -20,7 +20,7 @@ type Handler struct{ service ResolveService }
 func New(service ResolveService) *Handler { return &Handler{service: service} }
 
 func (h *Handler) Resolve(w http.ResponseWriter, r *http.Request) {
-	var raw json.RawMessage
+	var raw jsontext.Value
 	if err := httputil.UnpackJSON(r, &raw); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

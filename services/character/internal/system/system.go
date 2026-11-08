@@ -2,7 +2,7 @@ package system
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
 
 	"github.com/google/uuid"
 )
@@ -11,9 +11,9 @@ type CreatedCharacter struct {
 	UserID        uuid.UUID
 	CharacterType string
 	Name          string
-	Data          json.RawMessage
+	Data          jsontext.Value
 }
 
 type Character interface {
-	CreateCharacter(ctx context.Context, raw json.RawMessage) (CreatedCharacter, error)
+	CreateCharacter(ctx context.Context, raw jsontext.Value) (CreatedCharacter, error)
 }

@@ -5,7 +5,7 @@ import (
 	"backend/internal/repository"
 	"context"
 	"diceDasher/pkg/httputil"
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"os"

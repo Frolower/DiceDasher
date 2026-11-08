@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
 	"errors"
 	"fmt"
 	"maps"
@@ -23,7 +23,7 @@ type Record struct {
 	SystemName    string
 	CharacterType string
 	Name          string
-	Data          json.RawMessage
+	Data          jsontext.Value
 }
 
 type SaveError struct{ Err error }
@@ -41,7 +41,7 @@ func New(repository Repository, systems map[string]system.Character) *CharacterS
 	return &CharacterService{repository: repository, systems: maps.Clone(systems)}
 }
 
-func (s *CharacterService) Create(ctx context.Context, systemName string, raw json.RawMessage) (uuid.UUID, error) {
+func (s *CharacterService) Create(ctx context.Context, systemName string, raw jsontext.Value) (uuid.UUID, error) {
 	strategy, ok := s.systems[systemName]
 	if !ok {
 		return uuid.Nil, ErrUnknownSystem

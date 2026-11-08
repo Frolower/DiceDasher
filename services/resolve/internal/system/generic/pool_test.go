@@ -4,7 +4,7 @@ import (
 	"context"
 	"diceDasher/pkg/dice"
 	"diceDasher/services/resolve/internal/system"
-	"encoding/json"
+	"encoding/json/v2"
 	"testing"
 )
 

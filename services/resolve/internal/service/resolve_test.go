@@ -7,7 +7,8 @@ import (
 	"diceDasher/services/resolve/internal/system"
 	"diceDasher/services/resolve/internal/system/tes"
 	"diceDasher/services/resolve/internal/system/vtmv5"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"errors"
 	"github.com/google/uuid"
 	"testing"
@@ -42,9 +43,9 @@ func (m *memoryHistory) GetRollHistoryByID(ctx context.Context, id uuid.UUID) (r
 	return rec, nil
 }
 
-type resolverFunc func(context.Context, string, json.RawMessage) (any, error)
+type resolverFunc func(context.Context, string, jsontext.Value) (any, error)
 
-func (f resolverFunc) Resolve(ctx context.Context, action string, raw json.RawMessage) (any, error) {
+func (f resolverFunc) Resolve(ctx context.Context, action string, raw jsontext.Value) (any, error) {
 	return f(ctx, action, raw)
 }
 
@@ -57,10 +58,10 @@ func TestSavedContinuations(t *testing.T) {
 			svc := New(resolvers, history)
 			// The service owns a registry snapshot, independent of caller mutations.
 			delete(resolvers, name)
-			payload := json.RawMessage(`{"attr":2,"gear":1,"target":2}`)
+			payload := jsontext.Value(`{"attr":2,"gear":1,"target":2}`)
 			action := "push"
 			if name == "vtmv5" {
-				payload = json.RawMessage(`{"attribute":3,"hunger":1,"target":2}`)
+				payload = jsontext.Value(`{"attribute":3,"hunger":1,"target":2}`)
 				action = "reroll"
 			}
 			requestID := uuid.New()
@@ -100,7 +101,7 @@ func TestSavedContinuations(t *testing.T) {
 func TestFailuresDoNotReturnSuccessOrReroll(t *testing.T) {
 	storageError := errors.New("database unavailable")
 	calls := 0
-	resolver := resolverFunc(func(context.Context, string, json.RawMessage) (any, error) {
+	resolver := resolverFunc(func(context.Context, string, jsontext.Value) (any, error) {
 		calls++
 		return map[string]int{"roll": 6}, nil
 	})
@@ -116,7 +117,7 @@ func TestFailedExecutionIsNotSaved(t *testing.T) {
 	invalid := system.Invalid(system.Validation, errors.New("bad pool"))
 	for _, response := range []any{nil, make(chan int), badState{}} {
 		history := &memoryHistory{records: map[uuid.UUID]repository.RollHistory{}}
-		resolver := resolverFunc(func(context.Context, string, json.RawMessage) (any, error) {
+		resolver := resolverFunc(func(context.Context, string, jsontext.Value) (any, error) {
 			if response == nil {
 				return nil, invalid
 			}
