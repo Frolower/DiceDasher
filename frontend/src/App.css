@@ -998,7 +998,9 @@
   }
 }
 
-.side-menu-logout,
+.side-menu-logout {
+  color: var(--ink);
+}
 .side-menu-logout .side-menu-icon {
   color: var(--error);
 }
@@ -1014,7 +1016,7 @@
   outline-color: var(--error);
 }
 .side-menu-logout:disabled {
-  color: var(--error);
+  color: var(--ink);
   background: transparent;
 }
 .side-menu-logout > span:last-child {
