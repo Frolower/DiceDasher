@@ -10,36 +10,46 @@ const (
 	cReset = "\033[0m"
 
 	// foreground
-	cBlack        = "\033[30m"
-	cWhite        = "\033[97m"
 	cGray         = "\033[90m"
 	cRed          = "\033[31m"
+	cGreen        = "\033[32m"
+	cBlue         = "\033[34m"
 	cBrightYellow = "\033[93m"
-
-	bgBrightRed = "\033[101m"
 )
 
 func Logf(ctx context.Context, format string, args ...any) {
+	logf(ctx, "LOG", cGray, format, args...)
+}
+
+func logf(ctx context.Context, label, color, format string, args ...any) {
 	if id, ok := ReqIDFromContext(ctx); ok {
-		log.Printf("| id=%s | "+format, append([]any{id.String()}, args...)...)
-		return
+		format = "id=%s | " + format
+		args = append([]any{id.String()}, args...)
 	}
-	log.Printf(format, args...)
+	log.Printf("%s%-8s%s| "+format, append([]any{color, label, cReset}, args...)...)
 }
 
 func LogWarning(message string) {
-	log.Printf("%sWARNING: %s%s", cBrightYellow, message, cReset)
+	LogWarningf(context.Background(), "%s", message)
 }
 
 func LogWarningf(ctx context.Context, format string, args ...any) {
-	Logf(ctx, cBrightYellow+"WARNING: "+format+cReset, args...)
+	logf(ctx, "WARNING", cBrightYellow, format, args...)
 }
 
 func LogErrorf(ctx context.Context, format string, args ...any) {
-	Logf(ctx, cRed+"ERROR: "+format+cReset, args...)
+	logf(ctx, "ERROR", cRed, format, args...)
+}
+
+func LogRequestf(ctx context.Context, format string, args ...any) {
+	logf(ctx, "REQUEST", cGreen, format, args...)
+}
+
+func LogResponsef(ctx context.Context, format string, args ...any) {
+	logf(ctx, "RESPONSE", cBlue, format, args...)
 }
 
 func LogFatalf(ctx context.Context, format string, args ...any) {
-	Logf(ctx, bgBrightRed+cWhite+"FATAL: "+format+cReset, args...)
+	LogErrorf(ctx, format, args...)
 	os.Exit(1)
 }
