@@ -169,9 +169,8 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		ip := clientIP(r)
 
 		// Log on request
-		logger.Logf(context.Background(), "| %-71s | id=%s |%s%-6s%s| \"%s\"",
-			ip, id.String(), ms, r.Method,
-			cReset, r.URL.RequestURI())
+		logger.Logf(context.Background(), "|%s%-6s%s| %-10s | id=%s | %s",
+			ms, r.Method, cReset, r.URL.RequestURI(), id.String(), ip)
 
 		next.ServeHTTP(sw, r)
 
@@ -183,12 +182,8 @@ func RequestLoggerWithMode(next http.Handler, mode string) http.Handler {
 		ss := styleForStatus(sw.status, colorMode)
 
 		// Log on response
-		logger.Logf(context.Background(), "|%s %3d %s| %22s | %40s | id=%s |%s%-6s%s| \"%s\"%s bytes=%d%s",
-			ss, sw.status, cReset,
-			dur, r.UserAgent(), id.String(),
-			ms, r.Method, cReset,
-			r.URL.RequestURI(), cGray,
-			sw.bytes, cReset)
+		logger.Logf(context.Background(), "|%s %3d %s| %-10s | id=%s",
+			ss, sw.status, cReset, dur, id.String())
 	})
 }
 
