@@ -18,7 +18,13 @@ export function setSession(session: Session | null) {
 // Share refreshes across startup, timers and requests. Never abort a rotating
 // refresh on React effect cleanup: the server may already have replaced the cookie.
 let refreshing: Promise<Session | null> | null = null
+let loggingOut: Promise<void> | null = null
 export function refreshSession(): Promise<Session | null> {
+  if (loggingOut)
+    return loggingOut.then(
+      () => null,
+      () => currentSession,
+    )
   if (refreshing) return refreshing
   refreshing = (async () => {
     const response = await fetch('/api/refresh', {
@@ -155,4 +161,27 @@ export async function authenticate(mode: AuthMode, fields: AuthFields, signal: A
     return data
   }
   return null
+}
+export function logout(): Promise<void> {
+  if (loggingOut) return loggingOut
+  loggingOut = (async () => {
+    // Finish any cookie rotation before revoking the refresh token.
+    await refreshing?.catch(() => null)
+    const response = await fetch('/api/logout', {
+      method: 'POST',
+      credentials: 'include',
+      cache: 'no-store',
+    })
+    if (!response.ok) {
+      throw new Error(
+        response.status === 403
+          ? 'Logout is not allowed from this address. Check the backend ALLOWED_ORIGINS setting.'
+          : 'Unable to log out. Please try again.',
+      )
+    }
+    setSession(null)
+  })().finally(() => {
+    loggingOut = null
+  })
+  return loggingOut
 }

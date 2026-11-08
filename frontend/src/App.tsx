@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AuthDialog } from './components/AuthDialog'
 import { SideMenu } from './components/SideMenu'
 import type { ReactNode } from 'react'
@@ -7,7 +7,7 @@ import { DemoPage } from './components/DemoPage'
 import { Die } from './components/Die'
 import { ProfileSettings } from './components/ProfileSettings'
 import { ProfilePage } from './components/ProfilePage'
-import type { AuthMode } from './lib/auth'
+import { type AuthMode, logout } from './lib/auth'
 import { getSession, refreshSession, setSession, subscribeSession } from './lib/auth'
 import './App.css'
 
@@ -73,6 +73,32 @@ function App() {
     (location.pathname === '/login' && !session && !restoring && !sessionError ? 'login' : null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [paused, setPaused] = useState(false)
+
+  const logoutInFlight = useRef(false)
+  const [loggingOut, setLoggingOut] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+
+  async function handleLogout(): Promise<void> {
+    if (logoutInFlight.current) return
+    logoutInFlight.current = true
+    setLoggingOut(true)
+    setLogoutError('')
+    try {
+      await logout()
+      setSessionError('')
+      setMode(null)
+      setMenuOpen(false)
+      navigate('/', { replace: true })
+    } catch (error) {
+      setLogoutError(
+        error instanceof Error ? error.message : 'Unable to log out. Please try again.',
+      )
+    } finally {
+      logoutInFlight.current = false
+      setLoggingOut(false)
+    }
+  }
+
   const landing = (
     <main id="main" className="dice-stage">
       <div id="possibilities">
@@ -92,6 +118,8 @@ function App() {
   )
   function protect(content: ReactNode) {
     if (session) return content
+    // Session clearing can render a private route before handleLogout navigates.
+    if (loggingOut) return <Navigate to="/" replace />
     if (restoring || sessionError)
       return (
         <main id="main" className="dice-stage">
@@ -208,6 +236,9 @@ function App() {
       </Routes>
       {session && menuOpen && (
         <SideMenu
+          onLogout={handleLogout}
+          loggingOut={loggingOut}
+          logoutError={logoutError}
           onClose={() => setMenuOpen(false)}
           onNavigate={() => {
             setMenuOpen(false)

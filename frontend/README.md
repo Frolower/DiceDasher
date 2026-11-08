@@ -52,8 +52,19 @@ terminate HTTPS at your ingress, and set `COOKIE_SECURE=true` in the backend env
 - Registration sends email, username, and password to `POST /register`; repeat password is validated locally and never sent.
 - Login sends username and password to `POST /login` with credentials included for the HttpOnly refresh cookie.
 - Validation follows the current Go registration rules, including 8–72 ASCII characters, English uppercase/lowercase letters, a digit, and a printable special character. Spaces, Cyrillic, accented letters, and emoji are rejected. Login applies the same ASCII character restrictions, but does not apply the registration password complexity checks.
-- On login, the landing page shows a welcome message. Access tokens are kept in React memory only; persistent sessions, refresh, logout, and authenticated app screens are a later step. Reloading the page clears the displayed login state.
+- Access tokens are kept in memory only. On page load, the app restores the session using the HttpOnly refresh cookie (`POST /api/refresh`, then `GET /api/me`). It also refreshes tokens before expiry and retries authenticated requests once after a `401`.
+- Signed-in users can log out using the red **Log out** button at the bottom of the left navigation menu. It sends `POST /api/logout` with credentials included. On success, the app clears its in-memory session, closes the menu, and returns to `/`.
+- During logout, the button is disabled and shows **Logging out…**. Failed requests leave the session in place and display an error beside the button so the user can retry. HTTP errors use messages defined in `src/lib/auth.ts`; network errors currently display the browser's error message.
+- Logout waits for any active refresh to finish before revoking the session. Concurrent logout calls share one request, and new refresh calls wait for logout to settle.
 - The central d20 rotates slowly; click it or press Enter/Space to pause or resume. Rotation pauses while an account dialog is open and respects the system reduced-motion preference.
+
+### Authentication code
+
+- `src/lib/auth.ts`: session store, login and refresh requests, and `logout()` (server request and session clearing).
+- `src/App.tsx`: `handleLogout()` controls pending/error state, closes the menu, and navigates after success.
+- `src/components/SideMenu.tsx`: renders the logout button, pending label, and error message using props from `App`.
+- `src/App.css`: logout button colors and hover, pressed, keyboard focus, and disabled states.
+- `scripts/check-auth.mjs`: checks request contracts, failure recovery, duplicate logout calls, and refresh/logout ordering.
 
 ## Checks
 

@@ -1,7 +1,19 @@
 import { NavLink } from 'react-router'
 import { useEffect, useRef } from 'react'
 
-export function SideMenu({ onNavigate, onClose }: { onNavigate: () => void; onClose: () => void }) {
+export function SideMenu({
+  onNavigate,
+  onClose,
+  onLogout,
+  loggingOut,
+  logoutError,
+}: {
+  onNavigate: () => void
+  onClose: () => void
+  onLogout: () => void
+  loggingOut: boolean
+  logoutError: string
+}) {
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
@@ -68,6 +80,37 @@ export function SideMenu({ onNavigate, onClose }: { onNavigate: () => void; onCl
         ))}
       </nav>
       <p className="side-menu-note">Every adventure starts with good company.</p>
+      <div className="side-menu-footer">
+        {logoutError && (
+          <p className="form-message" role="alert">
+            {logoutError}
+          </p>
+        )}
+        <button
+          type="button"
+          className="side-menu-item side-menu-logout"
+          onClick={onLogout}
+          disabled={loggingOut}
+          aria-busy={loggingOut}
+        >
+          <svg
+            className="side-menu-icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.7"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path d="M9 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M17 8l4 4-4 4M8 12h13" />
+          </svg>
+          <span role="status">{loggingOut ? 'Logging out…' : 'Log out'}</span>
+        </button>
+      </div>
     </dialog>
   )
 }

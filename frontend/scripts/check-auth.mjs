@@ -6,7 +6,7 @@ const source = fs.readFileSync(new URL('../src/lib/auth.ts', import.meta.url), '
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
 })
-const { validateAuth, authenticate, refreshSession, getSession, setSession, sessionFetch } =
+const { validateAuth, authenticate, refreshSession, getSession, setSession, sessionFetch, logout } =
   await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`)
 const good = {
   email: 'alice@example.com',
@@ -260,4 +260,44 @@ try {
 }
 console.log(
   'Settings checks passed: signup rules, password confirmation and reuse, authenticated API contracts, and errors.',
+)
+
+try {
+  const session = { username: 'Alice', access_token: 'token', expires_at: '2030-01-01T00:00:00Z' }
+  setSession(session)
+  globalThis.fetch = async () => new Response(null, { status: 503 })
+  await assert.rejects(logout, /Unable to log out/)
+  assert.equal(getSession(), session, 'Failed logout must preserve the session for retry')
+  let finishRefresh
+  const calls = []
+  globalThis.fetch = async (url, options) => {
+    calls.push({ url, ...options })
+    if (url === '/api/refresh') {
+      await new Promise((resolve) => {
+        finishRefresh = resolve
+      })
+      return new Response(JSON.stringify(session))
+    }
+    if (url === '/api/me') return new Response(JSON.stringify({ username: 'Alice' }))
+    return new Response(null, { status: 204 })
+  }
+  const refresh = refreshSession()
+  const exit = logout()
+  assert.equal(logout(), exit, 'Repeated clicks must share a logout request')
+  const blockedRefresh = refreshSession()
+  finishRefresh()
+  await Promise.all([refresh, exit, blockedRefresh])
+  assert.deepEqual(
+    calls.map(({ url }) => url),
+    ['/api/refresh', '/api/me', '/api/logout'],
+  )
+  assert.equal(calls[2].method, 'POST')
+  assert.equal(calls[2].credentials, 'include')
+  assert.equal(getSession(), null, 'Refresh must not restore the session after logout')
+} finally {
+  setSession(null)
+  globalThis.fetch = originalFetch
+}
+console.log(
+  'Logout checks passed: failure recovery, cookie contract, duplicate clicks, and refresh ordering.',
 )
