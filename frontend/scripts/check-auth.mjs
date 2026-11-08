@@ -6,8 +6,17 @@ const source = fs.readFileSync(new URL('../src/lib/auth.ts', import.meta.url), '
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
 })
-const { validateAuth, authenticate, refreshSession, getSession, setSession, sessionFetch, logout } =
-  await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`)
+const {
+  validateAuth,
+  authenticate,
+  refreshSession,
+  getSession,
+  setSession,
+  sessionFetch,
+  logout,
+  UserFacingError,
+  userErrorMessage,
+} = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`)
 const good = {
   email: 'alice@example.com',
   username: 'Alice',
@@ -300,4 +309,56 @@ try {
 }
 console.log(
   'Logout checks passed: failure recovery, cookie contract, duplicate clicks, and refresh ordering.',
+)
+
+// Unexpected browser/runtime errors must never become interface copy.
+const fallback = 'Unable to connect. Please try again.'
+for (const error of [
+  new TypeError('Failed to fetch'),
+  new SyntaxError('Unexpected token'),
+  new Error('internal details'),
+  null,
+]) {
+  assert.equal(userErrorMessage(error, fallback), fallback)
+}
+assert.equal(
+  userErrorMessage(new UserFacingError('Your old password is incorrect.'), fallback),
+  'Your old password is incorrect.',
+)
+try {
+  globalThis.fetch = async () => new Response('origin is not allowed', { status: 403 })
+  await assert.rejects(
+    () => authenticate('login', good, new AbortController().signal),
+    (error) => {
+      assert.equal(
+        userErrorMessage(error, fallback),
+        'Unable to sign in right now. Please try again later.',
+      )
+      return true
+    },
+  )
+  await assert.rejects(logout, (error) => {
+    assert.equal(userErrorMessage(error, fallback), 'Unable to log out. Please try again.')
+    return true
+  })
+  globalThis.fetch = async () => new Response('<html>Bad gateway</html>')
+  await assert.rejects(
+    () => authenticate('login', good, new AbortController().signal),
+    (error) => {
+      assert.equal(userErrorMessage(error, fallback), fallback)
+      return true
+    },
+  )
+  await assert.rejects(
+    () => settingsRequest('me', 'token'),
+    (error) => {
+      assert.equal(userErrorMessage(error, fallback), fallback)
+      return true
+    },
+  )
+} finally {
+  globalThis.fetch = originalFetch
+}
+console.log(
+  'User-facing error checks passed: safe messages, origin rejection, and malformed responses.',
 )

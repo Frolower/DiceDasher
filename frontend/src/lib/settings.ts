@@ -1,4 +1,4 @@
-import { sessionFetch, validateAuth } from './auth'
+import { sessionFetch, validateAuth, UserFacingError } from './auth'
 
 export type Profile = { username: string; email: string }
 export type PasswordFields = { oldPassword: string; password: string; repeatPassword: string }
@@ -48,7 +48,7 @@ export async function settingsRequest(
   })
   if (!response.ok) {
     const detail = await response.text()
-    throw new Error(
+    throw new UserFacingError(
       response.status === 401
         ? 'Your session has expired. Reload and log in again.'
         : response.status === 409
@@ -61,7 +61,11 @@ export async function settingsRequest(
               ? 'Check your details and try again.'
               : method === 'DELETE'
                 ? 'Unable to delete your account. Please try again.'
-                : 'Unable to save or load your profile. Please try again.',
+                : method === 'GET'
+                  ? 'Unable to load your profile. Please try again.'
+                  : path === 'password'
+                    ? 'Unable to change your password. Please try again.'
+                    : 'Unable to save your profile. Please try again.',
     )
   }
   return response.json()

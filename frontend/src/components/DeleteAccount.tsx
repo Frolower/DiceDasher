@@ -1,3 +1,4 @@
+import { userErrorMessage } from '../lib/auth'
 import { useEffect, useRef, useState } from 'react'
 import { settingsRequest } from '../lib/settings'
 
@@ -33,9 +34,7 @@ function DeleteConfirmation({
       await settingsRequest('user', token, 'DELETE')
       onDeleted()
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : 'Unable to delete your account. Please try again.',
-      )
+      setError(userErrorMessage(cause, 'Unable to delete your account. Please try again.'))
       inFlight.current = false
       setPending(false)
     }
