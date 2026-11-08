@@ -754,6 +754,16 @@
 .side-menu::backdrop {
   background: #172b4d66;
 }
+.side-menu[open] {
+  display: flex;
+  flex-direction: column;
+}
+.side-menu-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
 .side-menu-heading {
   display: flex;
   align-items: center;
@@ -986,4 +996,8 @@
     align-items: flex-start;
     flex-direction: column;
   }
+}
+
+.side-menu-logout > span:last-child {
+  margin-left: 0;
 }
