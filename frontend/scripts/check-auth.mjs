@@ -2,7 +2,10 @@ import ts from 'typescript'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 
-const source = fs.readFileSync(new URL('../src/lib/auth.ts', import.meta.url), 'utf8')
+const en = JSON.parse(fs.readFileSync(new URL('../src/locales/en.json', import.meta.url), 'utf8'))
+const source = fs
+  .readFileSync(new URL('../src/lib/auth.ts', import.meta.url), 'utf8')
+  .replace("import en from '../locales/en.json'", `const en = ${JSON.stringify(en)}`)
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
 })
@@ -15,8 +18,12 @@ const {
   sessionFetch,
   logout,
   UserFacingError,
-  userErrorMessage,
+  userErrorMessage: errorKey,
 } = await import(`data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`)
+const userErrorMessage = (error, fallback) => {
+  const key = errorKey(error, fallback)
+  return en[key] ?? key
+}
 const good = {
   email: 'alice@example.com',
   username: 'Alice',
@@ -260,7 +267,7 @@ try {
   globalThis.fetch = async () => new Response('old password does not match', { status: 400 })
   await assert.rejects(
     () => settingsRequest('password', 'token', 'PUT', {}),
-    /old password is incorrect/,
+    /current password is incorrect/,
   )
   globalThis.fetch = async () => new Response('', { status: 401 })
   await assert.rejects(() => settingsRequest('me', 'token'), /session has expired/)

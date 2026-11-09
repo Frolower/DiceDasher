@@ -55,7 +55,7 @@ func TestLogLabels(t *testing.T) {
 			if tc.label == "REQUEST" || tc.label == "RESPONSE" {
 				separator = "|"
 			}
-			want := tc.color + tc.label + padding + cReset + separator + "id=" + id.String() + " | value=42\n"
+			want := "| " + tc.color + tc.label + padding + cReset + separator + "id=" + id.String() + " | value=42\n"
 			if got := buf.String(); got != want {
 				t.Fatalf("got %q, want %q", got, want)
 			}

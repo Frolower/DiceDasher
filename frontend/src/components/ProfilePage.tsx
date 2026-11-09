@@ -1,25 +1,26 @@
+import { t } from '../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { Die } from './Die'
 
 const exampleCampaigns = [
   {
-    name: 'The Ember Coast',
-    kind: 'Room',
-    description: 'A voyage beyond the edge of the map.',
+    name: 'text.theEmberCoast',
+    kind: 'text.room',
+    description: 'text.aVoyageBeyondTheEdgeOfTheMap',
     system: 'Dungeons & Dragons',
     theme: 'coast',
   },
   {
-    name: 'Sunday adventurers',
-    kind: 'Room',
-    description: 'A place for the party to gather.',
-    system: 'Tabletop hangout',
+    name: 'text.sundayAdventurers',
+    kind: 'text.room',
+    description: 'text.aPlaceForThePartyToGather',
+    system: 'text.tabletopHangout',
     theme: 'party',
   },
   {
-    name: 'Secrets of the Hollow',
-    kind: 'Room',
-    description: 'Some mysteries are better shared.',
+    name: 'text.secretsOfTheHollow',
+    kind: 'text.room',
+    description: 'text.someMysteriesAreBetterShared',
     system: 'Pathfinder',
     theme: 'hollow',
   },
@@ -44,11 +45,11 @@ export function ProfilePage({ username }: { username: string }) {
           {username.slice(0, 1).toUpperCase()}
         </div>
         <div className="profile-identity">
-          <p className="profile-label">Your profile</p>
+          <p className="profile-label">{t('text.yourProfile')}</p>
           <h1 id="profile-title" ref={heading} tabIndex={-1}>
             {username}
           </h1>
-          <p>Your party. Your stories. Your next adventure.</p>
+          <p>{t('text.yourPartyYourStoriesYourNextAdventure')}</p>
         </div>
         <Die className="profile-die" />
       </section>
@@ -59,21 +60,21 @@ export function ProfilePage({ username }: { username: string }) {
         aria-describedby="campaigns-note"
       >
         <div className="campaigns-heading">
-          <h2 id="campaigns-title">Rooms</h2>
-          <span className="preview-label">Preview</span>
+          <h2 id="campaigns-title">{t('text.rooms')}</h2>
+          <span className="preview-label">{t('text.preview')}</span>
           <button
             className="button primary create-room-button"
             onClick={() => setCreationNotice(true)}
           >
-            <span aria-hidden="true">+</span> Create new room
+            <span aria-hidden="true">+</span> {t('text.createNewRoom')}
           </button>
         </div>
         <p id="campaigns-note" className="campaigns-note">
-          Your rooms will live here. These are examples while we get things ready.
+          {t('text.yourRoomsWillLiveHereTheseAreExamplesWhileWeGetThingsReady')}
         </p>
         {creationNotice && (
           <p className="room-creation-notice" role="status">
-            Room creation is coming soon. You’ll be able to gather your party here.
+            {t('text.roomCreationIsComingSoonYouLlBeAbleToGatherYourPartyHere')}
           </p>
         )}
         <ul className="campaign-grid">
@@ -84,18 +85,18 @@ export function ProfilePage({ username }: { username: string }) {
               </div>
               <div className="campaign-content">
                 <div className="campaign-meta">
-                  <span>{campaign.kind}</span>
-                  <span>Example</span>
+                  <span>{t(campaign.kind)}</span>
+                  <span>{t('text.example')}</span>
                 </div>
-                <h3>{campaign.name}</h3>
-                <p>{campaign.description}</p>
-                <div className="campaign-system">{campaign.system}</div>
+                <h3>{t(campaign.name)}</h3>
+                <p>{t(campaign.description)}</p>
+                <div className="campaign-system">{t(campaign.system)}</div>
               </div>
             </li>
           ))}
         </ul>
         <p className="campaigns-footer">
-          More adventures are on the horizon. Room features are coming soon.
+          {t('text.moreAdventuresAreOnTheHorizonRoomFeaturesAreComingSoon')}
         </p>
       </section>
     </main>

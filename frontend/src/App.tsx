@@ -1,3 +1,5 @@
+import { LanguagePicker } from './components/LanguagePicker'
+import { getLanguage, subscribeLanguage, t } from './lib/i18n'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { AuthDialog } from './components/AuthDialog'
 import { SideMenu } from './components/SideMenu'
@@ -12,6 +14,10 @@ import { getSession, refreshSession, setSession, subscribeSession } from './lib/
 import './App.css'
 
 function App() {
+  const language = useSyncExternalStore(subscribeLanguage, getLanguage, getLanguage)
+  useEffect(() => {
+    document.documentElement.lang = language
+  }, [language])
   const [mode, setMode] = useState<AuthMode | null>(null)
   const session = useSyncExternalStore(subscribeSession, getSession)
   const [restoring, setRestoring] = useState(true)
@@ -26,7 +32,7 @@ function App() {
         if (active) setSessionError('')
       } catch {
         if (active) {
-          setSessionError('Unable to reconnect to your account. Retrying…')
+          setSessionError('text.unableToReconnectToYourAccountRetrying')
           timer = setTimeout(restore, 5000)
         }
       } finally {
@@ -90,7 +96,7 @@ function App() {
       setMenuOpen(false)
       navigate('/', { replace: true })
     } catch (error) {
-      setLogoutError(userErrorMessage(error, 'Unable to log out. Please try again.'))
+      setLogoutError(userErrorMessage(error, 'text.unableToLogOutPleaseTryAgain'))
     } finally {
       logoutInFlight.current = false
       setLoggingOut(false)
@@ -103,7 +109,7 @@ function App() {
         <div id="systems">
           <button
             className="spinning-die"
-            aria-label={paused ? 'Resume dice rotation' : 'Pause dice rotation'}
+            aria-label={paused ? t('text.resumeDiceRotation') : t('text.pauseDiceRotation')}
             aria-pressed={paused}
             data-paused={paused || activeMode !== null}
             onClick={() => setPaused((value) => !value)}
@@ -121,7 +127,7 @@ function App() {
     if (restoring || sessionError)
       return (
         <main id="main" className="dice-stage">
-          <p role="status">{sessionError || 'Restoring your session…'}</p>
+          <p role="status">{t(sessionError || 'text.restoringYourSession')}</p>
         </main>
       )
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
@@ -129,13 +135,13 @@ function App() {
   return (
     <>
       <a className="skip-link" href="#main">
-        Skip to content
+        {t('text.skipToContent')}
       </a>
       <header className="site-header shell">
         {session && (
           <button
             className="button quiet menu-toggle"
-            aria-label="Open navigation"
+            aria-label={t('text.openNavigation')}
             aria-haspopup="dialog"
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(true)}
@@ -153,32 +159,38 @@ function App() {
             </svg>
           </button>
         )}
-        <Link className="wordmark" to={session ? '/profile' : '/'} aria-label="DiceDasher home">
+        <Link
+          className="wordmark"
+          to={session ? '/profile' : '/'}
+          aria-label={t('text.dicedasherHome')}
+        >
           <Die className="brand-die" />
           DiceDasher
         </Link>
         <div className="account-actions">
+          {!session && !restoring && <LanguagePicker />}
           {session ? (
             <Link
               className="button quiet"
               to="/settings"
               aria-current={location.pathname === '/settings' ? 'page' : undefined}
             >
-              My profile
+              {t('text.myProfile')}
             </Link>
           ) : restoring ? (
-            <p role="status">Restoring your session…</p>
+            <p role="status">{t('text.restoringYourSession')}</p>
           ) : sessionError ? (
             <button className="button quiet" onClick={() => setAttempt((value) => value + 1)}>
-              Reconnect
+              {t('text.reconnect')}
             </button>
           ) : (
             <>
               <button className="button quiet" onClick={() => setMode('login')}>
-                Log in
+                {t('text.logIn')}
               </button>
               <button className="button primary" onClick={() => setMode('signup')}>
-                Create an account <span aria-hidden="true">↗</span>
+                {t('text.createAnAccount')}
+                <span aria-hidden="true">↗</span>
               </button>
             </>
           )}
@@ -186,7 +198,7 @@ function App() {
       </header>
       {sessionError && (
         <p className="shell" role="status">
-          {sessionError}
+          {t(sessionError)}
         </p>
       )}
       <Routes>
@@ -223,10 +235,10 @@ function App() {
           path="*"
           element={
             <main id="main" className="settings-page shell">
-              <h1>Page not found</h1>
-              <p className="settings-intro">This page doesn’t exist.</p>
+              <h1>{t('text.pageNotFound')}</h1>
+              <p className="settings-intro">{t('text.thisPageDoesnTExist')}</p>
               <Link className="button primary" to={session ? '/profile' : '/'}>
-                Go home
+                {t('text.goHome')}
               </Link>
             </main>
           }

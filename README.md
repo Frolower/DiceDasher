@@ -14,6 +14,11 @@ and account settings. Signed-in users can edit their username and email, change
 their password and delete their account. Access tokens stay in memory;
 sessions are restored and renewed using an HttpOnly refresh cookie.
 
+The UI supports English and Russian and includes 14 selectable color themes.
+Language and theme preferences are saved in the browser and sync between tabs.
+See the [frontend documentation](frontend/README.md) for localization and palette
+maintenance.
+
 Rooms, Characters, and Friends screens currently show example content. Room
 creation, character creation in the UI, and friend requests are placeholders.
 Systems mentioned on example cards do not indicate implemented rules support.
@@ -171,7 +176,7 @@ and use `localhost` instead of `postgres` in database URLs.
 | `/login` | Login dialog; returns to the requested private page after login |
 | `/profile` | Signed-in profile with example rooms |
 | `/rooms` | Redirects to `/profile` |
-| `/settings` | Account details, password, and account deletion |
+| `/settings` | Account details, password, account deletion, UI language, and color themes |
 | `/characters` | Signed-in character preview with example data |
 | `/friends` | Signed-in friends preview with example data |
 

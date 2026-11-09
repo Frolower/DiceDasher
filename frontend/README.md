@@ -1,6 +1,7 @@
 # DiceDasher frontend
 
-React + TypeScript + Vite. Minimal landing page with a rotating d20 and account forms.
+React + TypeScript + Vite. Landing page with a rotating d20, account management,
+English/Russian UI, and selectable color themes.
 
 ## Docker
 
@@ -98,3 +99,66 @@ React Router handles navigation without reloading the document:
 Private routes wait for session restoration before redirecting to login. Unknown
 paths show a page-not-found view. Docker's Nginx configuration serves `index.html`
 for frontend routes so direct links and refreshes work; `/api/` is proxied separately.
+
+## UI languages
+
+The UI supports English and Russian. The text selector in the header is available before sign-in. After sign-in,
+interface language is available in Settings instead of the header.
+The saved `dicedasher.language` preference takes priority over the browser's primary
+language; unsupported languages fall back to English. Changes also sync between tabs.
+Language selection continues to work when browser storage is unavailable.
+
+Translations live in `src/locales/en.json` and `src/locales/ru.json`. Add the same
+key to the English dictionary and render it with `t(key)` from `src/lib/i18n.ts`.
+Add the Russian translation under the same key when ready. Missing or blank
+Russian translations fall back to English, including placeholder substitution.
+Use `{name}` placeholders and `t(key, { name })` for dynamic values rather than
+joining translated fragments. `plural()` selects one/few/many/other keys using
+`Intl.PluralRules` for the current UI language.
+
+Keep translation keys in state, validation errors and demo data; translate them
+when rendering, so existing messages update when the language changes. API errors
+use `UserFacingError` keys, while unexpected errors use safe fallback keys.
+Usernames and other user-provided content are not translated. UI language remains
+independent of any future generated-content language and does not change API requests.
+
+`npm test` checks dictionary coverage, interpolation, language detection, saved
+preferences, storage failures and cross-tab synchronization, alongside auth checks.
+
+## Color themes
+
+Signed-in users can choose a theme in Settings. The 14 palettes are:
+
+- Light: Cobalt, Parchment, Cyberpunk Light, Chthonic Horror, The Loop, The Flood,
+  Nuclear (Атомная эра), Field Manual, and Noir.
+- Dark: Midnight, Forest, Cyberpunk Dark, Vampire, and Cosmic Horror.
+
+The choice is stored in browser local storage as `dicedasher.theme`, independently
+of UI language and account data. It applies across the app and syncs between tabs.
+Without a valid saved choice, the app initially selects Midnight or Cobalt based
+on `prefers-color-scheme`. Clearing the preference in another tab restores that
+system-based default. If storage is unavailable, selection still applies to the
+current page, and Settings reports that it could not be saved.
+
+### Adding or changing a palette
+
+1. Define its ID, translation keys, and preview colors in `src/lib/themes.ts`.
+2. Add a `:root[data-theme='…']` block in `src/themes.css`. Set `color-scheme` and
+   every semantic token, including text, surfaces, borders, selection, status
+   colors, hover states, and shadows. Components use these tokens through CSS
+   custom properties; avoid adding palette-specific colors to component styles.
+3. Keep preview colors in `themes.ts` consistent with `--page` and `--accent`.
+4. Add the ID to the startup allowlist in `index.html`, so a saved palette applies
+   before the first paint and survives direct navigation or reloads.
+5. Add its name and description to both locale dictionaries. Translate theme
+   metadata when rendering, just like other UI text.
+
+Check text contrast against every surface where it appears, including button
+labels, hover states, and status badges; target at least 4.5:1 for normal text.
+Check focus indicators and control boundaries separately. Color must not be the
+only way to distinguish errors or results, especially in red-accented palettes
+and the monochrome Noir theme.
+
+Run the frontend checks listed above and inspect the palette on real screens at
+compact and wide widths. The current automated suite renders the theme selector
+in both languages, but does not measure palette contrast or verify visual layout.

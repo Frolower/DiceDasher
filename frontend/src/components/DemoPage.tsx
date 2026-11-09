@@ -1,26 +1,27 @@
+import { t } from '../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { Die } from './Die'
 
 const characters = [
   {
-    name: 'Evelyn Ash',
+    name: 'text.evelynAsh',
     type: 'PC',
     system: 'VtM V5',
-    description: 'A nocturnal storyteller with a dangerous secret.',
+    description: 'text.aNocturnalStorytellerWithADangerousSecret',
     theme: 'hollow',
   },
   {
-    name: 'Thorne Oakshield',
+    name: 'text.thorneOakshield',
     type: 'PC',
     system: 'DnD',
-    description: 'A steadfast guardian of the old roads.',
+    description: 'text.aSteadfastGuardianOfTheOldRoads',
     theme: 'party',
   },
   {
-    name: 'Agent Morgan',
+    name: 'text.agentMorgan',
     type: 'NPC',
     system: 'Delta Green',
-    description: 'The contact who always knows too much.',
+    description: 'text.theContactWhoAlwaysKnowsTooMuch',
     theme: 'coast',
   },
 ]
@@ -28,23 +29,23 @@ const friends = [
   {
     nickname: 'MoonlitMage',
     initials: 'MM',
-    detail: 'VtM V5 · Stories after sundown',
+    detail: 'text.vtmV5StoriesAfterSundown',
     theme: 'violet',
   },
   {
     nickname: 'CriticalBard',
     initials: 'CB',
-    detail: 'DnD · Always a tale to tell',
+    detail: 'text.dndAlwaysATaleToTell',
     theme: 'green',
   },
-  { nickname: 'AgentZero', initials: 'AZ', detail: 'Delta Green · Trust the party', theme: 'blue' },
-  { nickname: 'DiceGoblin', initials: 'DG', detail: 'Pathfinder · One more roll', theme: 'violet' },
+  { nickname: 'AgentZero', initials: 'AZ', detail: 'text.deltaGreenTrustTheParty', theme: 'blue' },
+  { nickname: 'DiceGoblin', initials: 'DG', detail: 'text.pathfinderOneMoreRoll', theme: 'violet' },
 ]
 export function DemoPage({ kind }: { kind: 'characters' | 'friends' }) {
   const heading = useRef<HTMLHeadingElement>(null)
   const [notice, setNotice] = useState(false)
   const isCharacters = kind === 'characters'
-  const title = isCharacters ? 'Characters' : 'Friends'
+  const title = isCharacters ? t('text.characters') : t('text.friends')
   useEffect(() => {
     document.title = `${title} · DiceDasher`
     heading.current?.focus()
@@ -56,32 +57,32 @@ export function DemoPage({ kind }: { kind: 'characters' | 'friends' }) {
     <main id="main" className="demo-page shell">
       <div className="demo-heading">
         <div>
-          <p className="profile-label">Your table</p>
+          <p className="profile-label">{t('text.yourTable')}</p>
           <h1 ref={heading} tabIndex={-1}>
             {title}
           </h1>
         </div>
         <button className="button primary" onClick={() => setNotice(true)}>
           <span aria-hidden="true">+</span>
-          {isCharacters ? 'Create new character' : 'Add friend'}
+          {isCharacters ? t('text.createNewCharacter') : t('text.addFriend')}
         </button>
       </div>
       <p className="settings-intro">
         {isCharacters
-          ? 'The heroes, strangers, and familiar faces in your stories.'
-          : 'Good company makes every adventure better.'}
+          ? t('text.theHeroesStrangersAndFamiliarFacesInYourStories')
+          : t('text.goodCompanyMakesEveryAdventureBetter')}
       </p>
       <p className="demo-disclosure">
-        <span className="preview-label">Preview</span>{' '}
+        <span className="preview-label">{t('text.preview')}</span>{' '}
         {isCharacters
-          ? 'These are example characters. Your characters will live here.'
-          : 'These are example friends. Your friends will appear here.'}
+          ? t('text.theseAreExampleCharactersYourCharactersWillLiveHere')
+          : t('text.theseAreExampleFriendsYourFriendsWillAppearHere')}
       </p>
       {notice && (
         <p role="status" className="room-creation-notice">
           {isCharacters
-            ? 'Character creation is coming soon. Start dreaming up your next adventurer.'
-            : 'Friend requests are coming soon. You’ll be able to invite your party here.'}
+            ? t('text.characterCreationIsComingSoonStartDreamingUpYourNextAdventurer')
+            : t('text.friendRequestsAreComingSoonYouLlBeAbleToInviteYourPartyHere')}
         </p>
       )}
       {isCharacters ? (
@@ -95,15 +96,19 @@ export function DemoPage({ kind }: { kind: 'characters' | 'friends' }) {
                 <div className="campaign-meta">
                   <span>
                     <abbr
-                      title={character.type === 'PC' ? 'Player character' : 'Non-player character'}
+                      title={
+                        character.type === 'PC'
+                          ? t('text.playerCharacter')
+                          : t('text.nonPlayerCharacter')
+                      }
                     >
                       {character.type}
                     </abbr>
                   </span>
-                  <span>Example</span>
+                  <span>{t('text.example')}</span>
                 </div>
-                <h2>{character.name}</h2>
-                <p>{character.description}</p>
+                <h2>{t(character.name)}</h2>
+                <p>{t(character.description)}</p>
                 <div className="campaign-system">{character.system}</div>
               </div>
             </li>
@@ -118,9 +123,9 @@ export function DemoPage({ kind }: { kind: 'characters' | 'friends' }) {
               </div>
               <div className="friend-identity">
                 <h2>{friend.nickname}</h2>
-                <p>{friend.detail}</p>
+                <p>{t(friend.detail)}</p>
               </div>
-              <span className="friend-example">Example</span>
+              <span className="friend-example">{t('text.example')}</span>
             </li>
           ))}
         </ul>

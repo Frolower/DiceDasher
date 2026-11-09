@@ -1,4 +1,8 @@
+import { LanguagePicker } from './LanguagePicker'
+import { t } from '../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { ThemeSettings } from './ThemeSettings'
 import type { FormEvent } from 'react'
 import { DeleteAccount } from './DeleteAccount'
 import { passwordChecks, userErrorMessage } from '../lib/auth'
@@ -16,6 +20,8 @@ export function ProfileSettings({
   onBack: () => void
   onDeleted: () => void
 }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const section = searchParams.get('section') === 'themes' ? 'themes' : 'profile'
   const heading = useRef<HTMLHeadingElement>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loadError, setLoadError] = useState('')
@@ -29,20 +35,21 @@ export function ProfileSettings({
   const [pending, setPending] = useState('')
   const [message, setMessage] = useState({ section: '', text: '', error: false })
   const [showPassword, setShowPassword] = useState(false)
+  const title = t(section === 'themes' ? 'text.themes' : 'text.profileSettings')
   useEffect(() => {
     heading.current?.focus()
-    document.title = 'Profile settings · DiceDasher'
+    document.title = `${title} · DiceDasher`
     return () => {
       document.title = 'DiceDasher'
     }
-  }, [])
+  }, [title])
   useEffect(() => {
     const controller = new AbortController()
     settingsRequest('me', token, 'GET', undefined, controller.signal)
       .then((data: Profile) => setProfile(data))
       .catch((error: unknown) => {
         if (!controller.signal.aborted)
-          setLoadError(userErrorMessage(error, 'Unable to load your profile. Please try again.'))
+          setLoadError(userErrorMessage(error, 'text.unableToLoadYourProfilePleaseTryAgain'))
       })
     return () => controller.abort()
   }, [token, attempt])
@@ -77,7 +84,7 @@ export function ProfileSettings({
       }
       setMessage({
         section,
-        text: section === 'account' ? 'Profile updated.' : 'Password updated.',
+        text: section === 'account' ? 'text.profileUpdated' : 'text.passwordUpdated',
         error: false,
       })
     } catch (error) {
@@ -86,8 +93,8 @@ export function ProfileSettings({
         text: userErrorMessage(
           error,
           section === 'password'
-            ? 'Unable to change your password. Please try again.'
-            : 'Unable to save your profile. Please try again.',
+            ? 'text.unableToChangeYourPasswordPleaseTryAgain'
+            : 'text.unableToSaveYourProfilePleaseTryAgain',
         ),
         error: true,
       })
@@ -131,7 +138,7 @@ export function ProfileSettings({
         />
         {errors[name] && (
           <small className="field-error" id={`${name}-error`}>
-            {errors[name]}
+            {t(errors[name] ?? '')}
           </small>
         )}
       </div>
@@ -144,7 +151,7 @@ export function ProfileSettings({
           className={message.error ? 'form-message' : 'settings-success'}
           role={message.error ? 'alert' : 'status'}
         >
-          {message.text}
+          {t(message.text)}
         </p>
       )
     )
@@ -152,108 +159,158 @@ export function ProfileSettings({
   return (
     <main id="main" className="settings-page shell">
       <button className="button quiet settings-back" onClick={onBack}>
-        ← Rooms
+        {t('navigation.backToRooms')}
       </button>
       <h1 ref={heading} tabIndex={-1}>
-        Profile settings
+        {t('text.settings')}
       </h1>
-      <p className="settings-intro">Keep your adventuring identity up to date.</p>
-      {loadError ? (
-        <div role="alert">
-          <p>{loadError}</p>
-          <button
-            className="button quiet"
-            onClick={() => {
-              setLoadError('')
-              setAttempt((value) => value + 1)
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      ) : !profile ? (
-        <p role="status">Loading your profile…</p>
-      ) : (
-        <div className="settings-grid">
-          <section className="settings-panel" aria-labelledby="account-title">
-            <h2 id="account-title">Account details</h2>
-            <p>Your username is how your party knows you.</p>
-            <form
-              noValidate
-              onSubmit={(event) => save(event, 'account')}
-              aria-busy={pending === 'account'}
+      <div className="settings-layout">
+        <nav className="settings-nav" aria-label={t('text.settingsSections')}>
+          {(['profile', 'themes'] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              className="settings-nav-item"
+              aria-current={section === item ? 'page' : undefined}
+              onClick={() =>
+                setSearchParams((previous) => {
+                  const next = new URLSearchParams(previous)
+                  if (item === 'profile') next.delete('section')
+                  else next.set('section', item)
+                  return next
+                })
+              }
             >
-              <fieldset disabled={!!pending}>
-                {input(
-                  'username',
-                  'Username',
-                  profile.username,
-                  (username) => setProfile({ ...profile, username }),
-                  'text',
-                  'username',
+              <span aria-hidden="true">
+                {item === 'profile' ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                    <circle cx="12" cy="7" r="4" />
+                    <path d="M4 21v-2a8 8 0 0 1 16 0v2H4Z" />
+                  </svg>
+                ) : (
+                  '◐'
                 )}
-                {input(
-                  'email',
-                  'Email',
-                  profile.email,
-                  (email) => setProfile({ ...profile, email }),
-                  'email',
-                  'email',
-                )}
-                {feedback('account')}
-                <button className="button primary" type="submit">
-                  {pending === 'account' ? 'Saving…' : 'Save account details'}
+              </span>
+              {item === 'profile' ? t('text.profile') : t('text.themes')}
+            </button>
+          ))}
+        </nav>
+        <div className="settings-content">
+          {section === 'profile' && (
+            <section className="settings-language" aria-labelledby="settings-language-title">
+              <h2 id="settings-language-title" className="settings-section-title">
+                {t('language.label')}
+              </h2>
+              <LanguagePicker />
+            </section>
+          )}
+          {section === 'themes' && <ThemeSettings />}
+          <div hidden={section !== 'profile'}>
+            <h2 className="settings-section-title">{t('text.profile')}</h2>
+            {loadError ? (
+              <div role="alert">
+                <p>{t(loadError)}</p>
+                <button
+                  className="button quiet"
+                  onClick={() => {
+                    setLoadError('')
+                    setAttempt((value) => value + 1)
+                  }}
+                >
+                  {t('text.tryAgain')}
                 </button>
-              </fieldset>
-            </form>
-          </section>
-          <section className="settings-panel" aria-labelledby="password-title">
-            <h2 id="password-title">Change password</h2>
-            <p>Confirm your old password, then choose a new one.</p>
-            <form
-              noValidate
-              onSubmit={(event) => save(event, 'password')}
-              aria-busy={pending === 'password'}
-            >
-              <fieldset disabled={!!pending}>
-                {(['oldPassword', 'password', 'repeatPassword'] as const).map((name, index) => (
-                  <div key={name}>
-                    {input(
-                      name,
-                      ['Old password', 'New password', 'Repeat new password'][index],
-                      passwords[name],
-                      (value) => setPasswords({ ...passwords, [name]: value }),
-                      showPassword ? 'text' : 'password',
-                      index === 0 ? 'current-password' : 'new-password',
-                    )}
-                  </div>
-                ))}
-                <ul className="password-checks" id="settings-password-help">
-                  {passwordChecks(passwords.password).map((check) => (
-                    <li key={check.label} className={check.valid ? 'met' : ''}>
-                      <span aria-hidden="true">{check.valid ? '✓' : '○'}</span>
-                      {check.label}
-                    </li>
-                  ))}
-                </ul>
-                <label className="show-password">
-                  <input
-                    type="checkbox"
-                    checked={showPassword}
-                    onChange={(event) => setShowPassword(event.target.checked)}
-                  />
-                  Show passwords
-                </label>
-                {feedback('password')}
-                <button className="button primary" type="submit">
-                  {pending === 'password' ? 'Updating…' : 'Update password'}
-                </button>
-              </fieldset>
-            </form>
-          </section>
-          <DeleteAccount token={token} disabled={!!pending} onDeleted={onDeleted} />
+              </div>
+            ) : !profile ? (
+              <p role="status">{t('text.loadingYourProfile')}</p>
+            ) : (
+              <div className="settings-grid">
+                <section className="settings-panel" aria-labelledby="account-title">
+                  <h2 id="account-title">{t('text.accountDetails')}</h2>
+                  <form
+                    noValidate
+                    onSubmit={(event) => save(event, 'account')}
+                    aria-busy={pending === 'account'}
+                  >
+                    <fieldset disabled={!!pending}>
+                      {input(
+                        'username',
+                        t('text.username'),
+                        profile.username,
+                        (username) => setProfile({ ...profile, username }),
+                        'text',
+                        'username',
+                      )}
+                      {input(
+                        'email',
+                        t('text.email'),
+                        profile.email,
+                        (email) => setProfile({ ...profile, email }),
+                        'email',
+                        'email',
+                      )}
+                      {feedback('account')}
+                      <button className="button primary" type="submit">
+                        {pending === 'account' ? t('text.saving') : t('text.saveAccountDetails')}
+                      </button>
+                    </fieldset>
+                  </form>
+                </section>
+                <section className="settings-panel" aria-labelledby="password-title">
+                  <h2 id="password-title">{t('text.changePassword')}</h2>
+                  <p>{t('text.confirmYourOldPasswordThenChooseANewOne')}</p>
+                  <form
+                    noValidate
+                    onSubmit={(event) => save(event, 'password')}
+                    aria-busy={pending === 'password'}
+                  >
+                    <fieldset disabled={!!pending}>
+                      {(['oldPassword', 'password', 'repeatPassword'] as const).map(
+                        (name, index) => (
+                          <div key={name}>
+                            {input(
+                              name,
+                              [
+                                t('text.oldPassword'),
+                                t('text.newPassword'),
+                                t('text.repeatNewPassword'),
+                              ][index],
+                              passwords[name],
+                              (value) => setPasswords({ ...passwords, [name]: value }),
+                              showPassword ? 'text' : 'password',
+                              index === 0 ? 'current-password' : 'new-password',
+                            )}
+                          </div>
+                        ),
+                      )}
+                      <ul className="password-checks" id="settings-password-help">
+                        {passwordChecks(passwords.password).map((check) => (
+                          <li key={check.label} className={check.valid ? 'met' : ''}>
+                            <span aria-hidden="true">{check.valid ? '✓' : '○'}</span>
+                            {t(check.label)}
+                          </li>
+                        ))}
+                      </ul>
+                      <label className="show-password">
+                        <input
+                          type="checkbox"
+                          checked={showPassword}
+                          onChange={(event) => setShowPassword(event.target.checked)}
+                        />
+                        {t('text.showPasswords')}
+                      </label>
+                      {feedback('password')}
+                      <button className="button primary" type="submit">
+                        {pending === 'password' ? t('text.updating') : t('text.updatePassword')}
+                      </button>
+                    </fieldset>
+                  </form>
+                </section>
+                <DeleteAccount token={token} disabled={!!pending} onDeleted={onDeleted} />
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </main>
   )
 }
