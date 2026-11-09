@@ -267,7 +267,7 @@ try {
   globalThis.fetch = async () => new Response('old password does not match', { status: 400 })
   await assert.rejects(
     () => settingsRequest('password', 'token', 'PUT', {}),
-    /old password is incorrect/,
+    /current password is incorrect/,
   )
   globalThis.fetch = async () => new Response('', { status: 401 })
   await assert.rejects(() => settingsRequest('me', 'token'), /session has expired/)
