@@ -1131,11 +1131,6 @@
   border-radius: 16px;
   background: linear-gradient(135deg, var(--swatch-background) 50%, var(--swatch-accent) 50%);
 }
-.theme-swatch-die {
-  color: var(--swatch-accent);
-  font-size: 36px;
-  transform: translate(-14px, -14px);
-}
 .theme-option-heading {
   display: flex;
   justify-content: space-between;
@@ -1198,9 +1193,5 @@
     width: 64px;
     height: 64px;
     border-radius: 12px;
-  }
-  .theme-swatch-die {
-    font-size: 28px;
-    transform: translate(-10px, -10px);
   }
 }

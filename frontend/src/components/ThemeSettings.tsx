@@ -52,9 +52,7 @@ export function ThemeSettings() {
                     '--swatch-accent': theme.accent,
                   } as CSSProperties
                 }
-              >
-                <span className="theme-swatch-die">◇</span>
-              </span>
+              />
               <span className="theme-option-heading">
                 <span>{theme.name}</span>
                 <span className="theme-check" aria-hidden="true">
