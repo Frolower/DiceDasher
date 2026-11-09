@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router'
+import { ThemeSettings } from './ThemeSettings'
 import type { FormEvent } from 'react'
 import { DeleteAccount } from './DeleteAccount'
 import { passwordChecks, userErrorMessage } from '../lib/auth'
@@ -16,6 +18,8 @@ export function ProfileSettings({
   onBack: () => void
   onDeleted: () => void
 }) {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const section = searchParams.get('section') === 'themes' ? 'themes' : 'profile'
   const heading = useRef<HTMLHeadingElement>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loadError, setLoadError] = useState('')
@@ -31,11 +35,11 @@ export function ProfileSettings({
   const [showPassword, setShowPassword] = useState(false)
   useEffect(() => {
     heading.current?.focus()
-    document.title = 'Profile settings · DiceDasher'
+    document.title = `${section === 'themes' ? 'Themes' : 'Profile settings'} · DiceDasher`
     return () => {
       document.title = 'DiceDasher'
     }
-  }, [])
+  }, [section])
   useEffect(() => {
     const controller = new AbortController()
     settingsRequest('me', token, 'GET', undefined, controller.signal)
@@ -155,105 +159,137 @@ export function ProfileSettings({
         ← Rooms
       </button>
       <h1 ref={heading} tabIndex={-1}>
-        Profile settings
+        Settings
       </h1>
-      <p className="settings-intro">Keep your adventuring identity up to date.</p>
-      {loadError ? (
-        <div role="alert">
-          <p>{loadError}</p>
-          <button
-            className="button quiet"
-            onClick={() => {
-              setLoadError('')
-              setAttempt((value) => value + 1)
-            }}
-          >
-            Try again
-          </button>
-        </div>
-      ) : !profile ? (
-        <p role="status">Loading your profile…</p>
-      ) : (
-        <div className="settings-grid">
-          <section className="settings-panel" aria-labelledby="account-title">
-            <h2 id="account-title">Account details</h2>
-            <p>Your username is how your party knows you.</p>
-            <form
-              noValidate
-              onSubmit={(event) => save(event, 'account')}
-              aria-busy={pending === 'account'}
+      <p className="settings-intro">Make yourself at home before your next adventure.</p>
+      <div className="settings-layout">
+        <nav className="settings-nav" aria-label="Settings sections">
+          {(['profile', 'themes'] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              className="settings-nav-item"
+              aria-current={section === item ? 'page' : undefined}
+              onClick={() =>
+                setSearchParams((previous) => {
+                  const next = new URLSearchParams(previous)
+                  if (item === 'profile') next.delete('section')
+                  else next.set('section', item)
+                  return next
+                })
+              }
             >
-              <fieldset disabled={!!pending}>
-                {input(
-                  'username',
-                  'Username',
-                  profile.username,
-                  (username) => setProfile({ ...profile, username }),
-                  'text',
-                  'username',
-                )}
-                {input(
-                  'email',
-                  'Email',
-                  profile.email,
-                  (email) => setProfile({ ...profile, email }),
-                  'email',
-                  'email',
-                )}
-                {feedback('account')}
-                <button className="button primary" type="submit">
-                  {pending === 'account' ? 'Saving…' : 'Save account details'}
+              <span aria-hidden="true">{item === 'profile' ? '◇' : '◐'}</span>
+              {item === 'profile' ? 'Profile' : 'Themes'}
+            </button>
+          ))}
+        </nav>
+        <div className="settings-content">
+          {section === 'themes' && <ThemeSettings />}
+          <div hidden={section !== 'profile'}>
+            <h2 className="settings-section-title">Profile</h2>
+            <p className="settings-section-intro">Keep your adventuring identity up to date.</p>
+            {loadError ? (
+              <div role="alert">
+                <p>{loadError}</p>
+                <button
+                  className="button quiet"
+                  onClick={() => {
+                    setLoadError('')
+                    setAttempt((value) => value + 1)
+                  }}
+                >
+                  Try again
                 </button>
-              </fieldset>
-            </form>
-          </section>
-          <section className="settings-panel" aria-labelledby="password-title">
-            <h2 id="password-title">Change password</h2>
-            <p>Confirm your old password, then choose a new one.</p>
-            <form
-              noValidate
-              onSubmit={(event) => save(event, 'password')}
-              aria-busy={pending === 'password'}
-            >
-              <fieldset disabled={!!pending}>
-                {(['oldPassword', 'password', 'repeatPassword'] as const).map((name, index) => (
-                  <div key={name}>
-                    {input(
-                      name,
-                      ['Old password', 'New password', 'Repeat new password'][index],
-                      passwords[name],
-                      (value) => setPasswords({ ...passwords, [name]: value }),
-                      showPassword ? 'text' : 'password',
-                      index === 0 ? 'current-password' : 'new-password',
-                    )}
-                  </div>
-                ))}
-                <ul className="password-checks" id="settings-password-help">
-                  {passwordChecks(passwords.password).map((check) => (
-                    <li key={check.label} className={check.valid ? 'met' : ''}>
-                      <span aria-hidden="true">{check.valid ? '✓' : '○'}</span>
-                      {check.label}
-                    </li>
-                  ))}
-                </ul>
-                <label className="show-password">
-                  <input
-                    type="checkbox"
-                    checked={showPassword}
-                    onChange={(event) => setShowPassword(event.target.checked)}
-                  />
-                  Show passwords
-                </label>
-                {feedback('password')}
-                <button className="button primary" type="submit">
-                  {pending === 'password' ? 'Updating…' : 'Update password'}
-                </button>
-              </fieldset>
-            </form>
-          </section>
-          <DeleteAccount token={token} disabled={!!pending} onDeleted={onDeleted} />
+              </div>
+            ) : !profile ? (
+              <p role="status">Loading your profile…</p>
+            ) : (
+              <div className="settings-grid">
+                <section className="settings-panel" aria-labelledby="account-title">
+                  <h2 id="account-title">Account details</h2>
+                  <p>Your username is how your party knows you.</p>
+                  <form
+                    noValidate
+                    onSubmit={(event) => save(event, 'account')}
+                    aria-busy={pending === 'account'}
+                  >
+                    <fieldset disabled={!!pending}>
+                      {input(
+                        'username',
+                        'Username',
+                        profile.username,
+                        (username) => setProfile({ ...profile, username }),
+                        'text',
+                        'username',
+                      )}
+                      {input(
+                        'email',
+                        'Email',
+                        profile.email,
+                        (email) => setProfile({ ...profile, email }),
+                        'email',
+                        'email',
+                      )}
+                      {feedback('account')}
+                      <button className="button primary" type="submit">
+                        {pending === 'account' ? 'Saving…' : 'Save account details'}
+                      </button>
+                    </fieldset>
+                  </form>
+                </section>
+                <section className="settings-panel" aria-labelledby="password-title">
+                  <h2 id="password-title">Change password</h2>
+                  <p>Confirm your old password, then choose a new one.</p>
+                  <form
+                    noValidate
+                    onSubmit={(event) => save(event, 'password')}
+                    aria-busy={pending === 'password'}
+                  >
+                    <fieldset disabled={!!pending}>
+                      {(['oldPassword', 'password', 'repeatPassword'] as const).map(
+                        (name, index) => (
+                          <div key={name}>
+                            {input(
+                              name,
+                              ['Old password', 'New password', 'Repeat new password'][index],
+                              passwords[name],
+                              (value) => setPasswords({ ...passwords, [name]: value }),
+                              showPassword ? 'text' : 'password',
+                              index === 0 ? 'current-password' : 'new-password',
+                            )}
+                          </div>
+                        ),
+                      )}
+                      <ul className="password-checks" id="settings-password-help">
+                        {passwordChecks(passwords.password).map((check) => (
+                          <li key={check.label} className={check.valid ? 'met' : ''}>
+                            <span aria-hidden="true">{check.valid ? '✓' : '○'}</span>
+                            {check.label}
+                          </li>
+                        ))}
+                      </ul>
+                      <label className="show-password">
+                        <input
+                          type="checkbox"
+                          checked={showPassword}
+                          onChange={(event) => setShowPassword(event.target.checked)}
+                        />
+                        Show passwords
+                      </label>
+                      {feedback('password')}
+                      <button className="button primary" type="submit">
+                        {pending === 'password' ? 'Updating…' : 'Update password'}
+                      </button>
+                    </fieldset>
+                  </form>
+                </section>
+                <DeleteAccount token={token} disabled={!!pending} onDeleted={onDeleted} />
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </main>
   )
 }
