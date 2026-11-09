@@ -9,7 +9,24 @@
         try {
           theme = localStorage.getItem('dicedasher.theme')
         } catch {}
-        if (!['cobalt', 'midnight', 'parchment', 'forest'].includes(theme)) {
+        if (
+          ![
+            'cobalt',
+            'midnight',
+            'parchment',
+            'forest',
+            'cyberpunk-light',
+            'cyberpunk-dark',
+            'vampire',
+            'chthonic-horror',
+            'the-loop',
+            'the-flood',
+            'nuclear',
+            'cosmic-horror',
+            'field-manual',
+            'noir',
+          ].includes(theme)
+        ) {
           theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'midnight' : 'cobalt'
         }
         document.documentElement.dataset.theme = theme
