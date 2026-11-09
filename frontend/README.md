@@ -101,7 +101,8 @@ for frontend routes so direct links and refreshes work; `/api/` is proxied separ
 
 ## UI languages
 
-The UI supports English and Russian. The header selector is available before sign-in.
+The UI supports English and Russian. The text selector in the header is available before sign-in. After sign-in,
+interface language is available in Settings instead of the header.
 The saved `dicedasher.language` preference takes priority over the browser's primary
 language; unsupported languages fall back to English. Changes also sync between tabs.
 Language selection continues to work when browser storage is unavailable.

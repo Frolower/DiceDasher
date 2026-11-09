@@ -168,7 +168,7 @@ function App() {
           DiceDasher
         </Link>
         <div className="account-actions">
-          <LanguagePicker />
+          {!session && !restoring && <LanguagePicker />}
           {session ? (
             <Link
               className="button quiet"

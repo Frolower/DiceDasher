@@ -1,3 +1,4 @@
+import { LanguagePicker } from './LanguagePicker'
 import { t } from '../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
@@ -196,6 +197,12 @@ export function ProfileSettings({
           ))}
         </nav>
         <div className="settings-content">
+          <section className="settings-language" aria-labelledby="settings-language-title">
+            <h2 id="settings-language-title" className="settings-section-title">
+              {t('language.label')}
+            </h2>
+            <LanguagePicker />
+          </section>
           {section === 'themes' && <ThemeSettings />}
           <div hidden={section !== 'profile'}>
             <h2 className="settings-section-title">{t('text.profile')}</h2>
