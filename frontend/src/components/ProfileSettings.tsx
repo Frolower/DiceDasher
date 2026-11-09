@@ -164,7 +164,6 @@ export function ProfileSettings({
       <h1 ref={heading} tabIndex={-1}>
         {t('text.settings')}
       </h1>
-      <p className="settings-intro">{t('text.makeYourselfAtHomeBeforeYourNextAdventure')}</p>
       <div className="settings-layout">
         <nav className="settings-nav" aria-label={t('text.settingsSections')}>
           {(['profile', 'themes'] as const).map((item) => (
@@ -197,18 +196,17 @@ export function ProfileSettings({
           ))}
         </nav>
         <div className="settings-content">
-          <section className="settings-language" aria-labelledby="settings-language-title">
-            <h2 id="settings-language-title" className="settings-section-title">
-              {t('language.label')}
-            </h2>
-            <LanguagePicker />
-          </section>
+          {section === 'profile' && (
+            <section className="settings-language" aria-labelledby="settings-language-title">
+              <h2 id="settings-language-title" className="settings-section-title">
+                {t('language.label')}
+              </h2>
+              <LanguagePicker />
+            </section>
+          )}
           {section === 'themes' && <ThemeSettings />}
           <div hidden={section !== 'profile'}>
             <h2 className="settings-section-title">{t('text.profile')}</h2>
-            <p className="settings-section-intro">
-              {t('text.keepYourAdventuringIdentityUpToDate')}
-            </p>
             {loadError ? (
               <div role="alert">
                 <p>{t(loadError)}</p>
@@ -228,7 +226,6 @@ export function ProfileSettings({
               <div className="settings-grid">
                 <section className="settings-panel" aria-labelledby="account-title">
                   <h2 id="account-title">{t('text.accountDetails')}</h2>
-                  <p>{t('text.yourUsernameIsHowYourPartyKnowsYou')}</p>
                   <form
                     noValidate
                     onSubmit={(event) => save(event, 'account')}
