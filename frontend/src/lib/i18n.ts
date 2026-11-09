@@ -3,7 +3,7 @@ import ru from '../locales/ru.json'
 
 export type Language = 'en' | 'ru'
 export type TranslationKey = keyof typeof en
-const dictionaries: Record<Language, Record<TranslationKey, string>> = { en, ru }
+const dictionaries: Record<Language, Partial<Record<TranslationKey, string>>> = { en, ru }
 export const languageStorageKey = 'dicedasher.language'
 const listeners = new Set<() => void>()
 const isLanguage = (value: unknown): value is Language => value === 'en' || value === 'ru'
@@ -49,7 +49,8 @@ export function syncLanguage(event: StorageEvent) {
 }
 // Stored UI messages use keys. Unknown keys remain visible to aid diagnosis.
 export function t(key: string, params: Record<string, string | number> = {}): string {
-  const template = dictionaries[language][key as TranslationKey] ?? en[key as TranslationKey] ?? key
+  const translated = dictionaries[language][key as TranslationKey]
+  const template = translated?.trim() ? translated : (en[key as TranslationKey] ?? key)
   return template.replace(/\{(\w+)\}/g, (match, name: string) => String(params[name] ?? match))
 }
 export function plural(

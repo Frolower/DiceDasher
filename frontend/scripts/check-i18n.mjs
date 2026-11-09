@@ -5,23 +5,28 @@ import assert from 'node:assert/strict'
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8')
 const en = JSON.parse(read('../src/locales/en.json'))
 const ru = JSON.parse(read('../src/locales/ru.json'))
-assert.deepEqual(Object.keys(ru).sort(), Object.keys(en).sort())
+assert.ok(
+  Object.keys(ru).every((key) => Object.hasOwn(en, key)),
+  'Russian keys must exist in English',
+)
 for (const key of Object.keys(en)) {
-  assert.ok(en[key].trim() && ru[key].trim(), `Empty translation: ${key}`)
+  assert.ok(en[key].trim(), `Empty English translation: ${key}`)
+  if (!ru[key]?.trim()) continue
   const placeholders = (value) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort()
   assert.deepEqual(placeholders(en[key]), placeholders(ru[key]), `Parameters differ: ${key}`)
 }
-let source = read('../src/lib/i18n.ts')
-  .replace("import en from '../locales/en.json'", `const en = ${JSON.stringify(en)}`)
-  .replace("import ru from '../locales/ru.json'", `const ru = ${JSON.stringify(ru)}`)
-const code = ts.transpileModule(source, {
-  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
-}).outputText
 let instance = 0
-const load = () =>
-  import(
+const load = (translations = ru) => {
+  const source = read('../src/lib/i18n.ts')
+    .replace("import en from '../locales/en.json'", `const en = ${JSON.stringify(en)}`)
+    .replace("import ru from '../locales/ru.json'", `const ru = ${JSON.stringify(translations)}`)
+  const code = ts.transpileModule(source, {
+    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
+  }).outputText
+  return import(
     `data:text/javascript;base64,${Buffer.from(code + `\n// ${instance++}`).toString('base64')}`
   )
+}
 const storage = new Map()
 globalThis.localStorage = {
   getItem: (key) => storage.get(key) ?? null,
@@ -36,6 +41,14 @@ const i18n = await load()
 assert.equal(i18n.getLanguage(), 'ru')
 assert.equal(document.documentElement.lang, 'ru')
 assert.equal(i18n.t('text.logIn'), 'Войти')
+for (const value of [undefined, '', '   ']) {
+  const incomplete = { ...ru, 'text.logIn': value, 'themes.saved': value }
+  const fallback = await load(incomplete)
+  assert.equal(fallback.getLanguage(), 'ru')
+  assert.equal(fallback.t('text.logIn'), 'Log in', 'Missing or blank Russian text uses English')
+  assert.equal(fallback.t('themes.saved', { name: 'Cobalt' }), 'Cobalt applied and saved.')
+}
+
 let notifications = 0
 const unsubscribe = i18n.subscribeLanguage(() => notifications++)
 assert.equal(i18n.setLanguage('en'), true)
@@ -114,7 +127,10 @@ try {
     ]
     for (const [element, key] of screens) {
       const markup = render(element)
-      assert.ok(markup.includes(dictionary[key]), `Missing ${language} translation for ${key}`)
+      assert.ok(
+        markup.includes(dictionary[key]?.trim() ? dictionary[key] : en[key]),
+        `Missing ${language} translation for ${key}`,
+      )
       assert.doesNotMatch(
         markup,
         /(?:text|auth|themes|language)\.[A-Za-z]+/,

@@ -107,7 +107,9 @@ language; unsupported languages fall back to English. Changes also sync between 
 Language selection continues to work when browser storage is unavailable.
 
 Translations live in `src/locales/en.json` and `src/locales/ru.json`. Add the same
-key to both dictionaries and render it with `t(key)` from `src/lib/i18n.ts`.
+key to the English dictionary and render it with `t(key)` from `src/lib/i18n.ts`.
+Add the Russian translation under the same key when ready. Missing or blank
+Russian translations fall back to English, including placeholder substitution.
 Use `{name}` placeholders and `t(key, { name })` for dynamic values rather than
 joining translated fragments. `plural()` selects one/few/many/other keys using
 `Intl.PluralRules` for the current UI language.
