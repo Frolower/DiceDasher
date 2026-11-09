@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n'
 import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { ThemeSettings } from './ThemeSettings'
@@ -33,20 +34,21 @@ export function ProfileSettings({
   const [pending, setPending] = useState('')
   const [message, setMessage] = useState({ section: '', text: '', error: false })
   const [showPassword, setShowPassword] = useState(false)
+  const title = t(section === 'themes' ? 'text.themes' : 'text.profileSettings')
   useEffect(() => {
     heading.current?.focus()
-    document.title = `${section === 'themes' ? 'Themes' : 'Profile settings'} · DiceDasher`
+    document.title = `${title} · DiceDasher`
     return () => {
       document.title = 'DiceDasher'
     }
-  }, [section])
+  }, [title])
   useEffect(() => {
     const controller = new AbortController()
     settingsRequest('me', token, 'GET', undefined, controller.signal)
       .then((data: Profile) => setProfile(data))
       .catch((error: unknown) => {
         if (!controller.signal.aborted)
-          setLoadError(userErrorMessage(error, 'Unable to load your profile. Please try again.'))
+          setLoadError(userErrorMessage(error, 'text.unableToLoadYourProfilePleaseTryAgain'))
       })
     return () => controller.abort()
   }, [token, attempt])
@@ -81,7 +83,7 @@ export function ProfileSettings({
       }
       setMessage({
         section,
-        text: section === 'account' ? 'Profile updated.' : 'Password updated.',
+        text: section === 'account' ? 'text.profileUpdated' : 'text.passwordUpdated',
         error: false,
       })
     } catch (error) {
@@ -90,8 +92,8 @@ export function ProfileSettings({
         text: userErrorMessage(
           error,
           section === 'password'
-            ? 'Unable to change your password. Please try again.'
-            : 'Unable to save your profile. Please try again.',
+            ? 'text.unableToChangeYourPasswordPleaseTryAgain'
+            : 'text.unableToSaveYourProfilePleaseTryAgain',
         ),
         error: true,
       })
@@ -135,7 +137,7 @@ export function ProfileSettings({
         />
         {errors[name] && (
           <small className="field-error" id={`${name}-error`}>
-            {errors[name]}
+            {t(errors[name] ?? '')}
           </small>
         )}
       </div>
@@ -148,7 +150,7 @@ export function ProfileSettings({
           className={message.error ? 'form-message' : 'settings-success'}
           role={message.error ? 'alert' : 'status'}
         >
-          {message.text}
+          {t(message.text)}
         </p>
       )
     )
@@ -156,14 +158,14 @@ export function ProfileSettings({
   return (
     <main id="main" className="settings-page shell">
       <button className="button quiet settings-back" onClick={onBack}>
-        ← Rooms
+        {t('navigation.backToRooms')}
       </button>
       <h1 ref={heading} tabIndex={-1}>
-        Settings
+        {t('text.settings')}
       </h1>
-      <p className="settings-intro">Make yourself at home before your next adventure.</p>
+      <p className="settings-intro">{t('text.makeYourselfAtHomeBeforeYourNextAdventure')}</p>
       <div className="settings-layout">
-        <nav className="settings-nav" aria-label="Settings sections">
+        <nav className="settings-nav" aria-label={t('text.settingsSections')}>
           {(['profile', 'themes'] as const).map((item) => (
             <button
               key={item}
@@ -189,18 +191,20 @@ export function ProfileSettings({
                   '◐'
                 )}
               </span>
-              {item === 'profile' ? 'Profile' : 'Themes'}
+              {item === 'profile' ? t('text.profile') : t('text.themes')}
             </button>
           ))}
         </nav>
         <div className="settings-content">
           {section === 'themes' && <ThemeSettings />}
           <div hidden={section !== 'profile'}>
-            <h2 className="settings-section-title">Profile</h2>
-            <p className="settings-section-intro">Keep your adventuring identity up to date.</p>
+            <h2 className="settings-section-title">{t('text.profile')}</h2>
+            <p className="settings-section-intro">
+              {t('text.keepYourAdventuringIdentityUpToDate')}
+            </p>
             {loadError ? (
               <div role="alert">
-                <p>{loadError}</p>
+                <p>{t(loadError)}</p>
                 <button
                   className="button quiet"
                   onClick={() => {
@@ -208,16 +212,16 @@ export function ProfileSettings({
                     setAttempt((value) => value + 1)
                   }}
                 >
-                  Try again
+                  {t('text.tryAgain')}
                 </button>
               </div>
             ) : !profile ? (
-              <p role="status">Loading your profile…</p>
+              <p role="status">{t('text.loadingYourProfile')}</p>
             ) : (
               <div className="settings-grid">
                 <section className="settings-panel" aria-labelledby="account-title">
-                  <h2 id="account-title">Account details</h2>
-                  <p>Your username is how your party knows you.</p>
+                  <h2 id="account-title">{t('text.accountDetails')}</h2>
+                  <p>{t('text.yourUsernameIsHowYourPartyKnowsYou')}</p>
                   <form
                     noValidate
                     onSubmit={(event) => save(event, 'account')}
@@ -226,7 +230,7 @@ export function ProfileSettings({
                     <fieldset disabled={!!pending}>
                       {input(
                         'username',
-                        'Username',
+                        t('text.username'),
                         profile.username,
                         (username) => setProfile({ ...profile, username }),
                         'text',
@@ -234,7 +238,7 @@ export function ProfileSettings({
                       )}
                       {input(
                         'email',
-                        'Email',
+                        t('text.email'),
                         profile.email,
                         (email) => setProfile({ ...profile, email }),
                         'email',
@@ -242,14 +246,14 @@ export function ProfileSettings({
                       )}
                       {feedback('account')}
                       <button className="button primary" type="submit">
-                        {pending === 'account' ? 'Saving…' : 'Save account details'}
+                        {pending === 'account' ? t('text.saving') : t('text.saveAccountDetails')}
                       </button>
                     </fieldset>
                   </form>
                 </section>
                 <section className="settings-panel" aria-labelledby="password-title">
-                  <h2 id="password-title">Change password</h2>
-                  <p>Confirm your old password, then choose a new one.</p>
+                  <h2 id="password-title">{t('text.changePassword')}</h2>
+                  <p>{t('text.confirmYourOldPasswordThenChooseANewOne')}</p>
                   <form
                     noValidate
                     onSubmit={(event) => save(event, 'password')}
@@ -261,7 +265,11 @@ export function ProfileSettings({
                           <div key={name}>
                             {input(
                               name,
-                              ['Old password', 'New password', 'Repeat new password'][index],
+                              [
+                                t('text.oldPassword'),
+                                t('text.newPassword'),
+                                t('text.repeatNewPassword'),
+                              ][index],
                               passwords[name],
                               (value) => setPasswords({ ...passwords, [name]: value }),
                               showPassword ? 'text' : 'password',
@@ -274,7 +282,7 @@ export function ProfileSettings({
                         {passwordChecks(passwords.password).map((check) => (
                           <li key={check.label} className={check.valid ? 'met' : ''}>
                             <span aria-hidden="true">{check.valid ? '✓' : '○'}</span>
-                            {check.label}
+                            {t(check.label)}
                           </li>
                         ))}
                       </ul>
@@ -284,11 +292,11 @@ export function ProfileSettings({
                           checked={showPassword}
                           onChange={(event) => setShowPassword(event.target.checked)}
                         />
-                        Show passwords
+                        {t('text.showPasswords')}
                       </label>
                       {feedback('password')}
                       <button className="button primary" type="submit">
-                        {pending === 'password' ? 'Updating…' : 'Update password'}
+                        {pending === 'password' ? t('text.updating') : t('text.updatePassword')}
                       </button>
                     </fieldset>
                   </form>

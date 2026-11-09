@@ -21,11 +21,11 @@ export function validatePasswordChange(fields: PasswordFields) {
     }).password
   errors.oldPassword = check(fields.oldPassword)
   errors.password = check(fields.password)
-  if (!fields.repeatPassword) errors.repeatPassword = 'Repeat your new password.'
+  if (!fields.repeatPassword) errors.repeatPassword = 'text.repeatYourNewPassword'
   else if (fields.password !== fields.repeatPassword)
-    errors.repeatPassword = 'Your passwords do not match.'
+    errors.repeatPassword = 'text.yourPasswordsDoNotMatch'
   if (fields.oldPassword === fields.password && fields.password)
-    errors.password = 'Choose a password different from your old password.'
+    errors.password = 'text.chooseAPasswordDifferentFromYourOldPassword'
   return Object.fromEntries(Object.entries(errors).filter(([, value]) => value)) as typeof errors
 }
 export async function settingsRequest(
@@ -50,22 +50,22 @@ export async function settingsRequest(
     const detail = await response.text()
     throw new UserFacingError(
       response.status === 401
-        ? 'Your session has expired. Reload and log in again.'
+        ? 'text.yourSessionHasExpiredReloadAndLogInAgain'
         : response.status === 409
-          ? 'That username or email is already in use.'
+          ? 'text.thatUsernameOrEmailIsAlreadyInUse'
           : response.status === 400 &&
               path === 'password' &&
               detail.includes('old password does not match')
-            ? 'Your old password is incorrect.'
+            ? 'text.yourOldPasswordIsIncorrect'
             : response.status === 400
-              ? 'Check your details and try again.'
+              ? 'text.checkYourDetailsAndTryAgain'
               : method === 'DELETE'
-                ? 'Unable to delete your account. Please try again.'
+                ? 'text.unableToDeleteYourAccountPleaseTryAgain'
                 : method === 'GET'
-                  ? 'Unable to load your profile. Please try again.'
+                  ? 'text.unableToLoadYourProfilePleaseTryAgain'
                   : path === 'password'
-                    ? 'Unable to change your password. Please try again.'
-                    : 'Unable to save your profile. Please try again.',
+                    ? 'text.unableToChangeYourPasswordPleaseTryAgain'
+                    : 'text.unableToSaveYourProfilePleaseTryAgain',
     )
   }
   return response.json()

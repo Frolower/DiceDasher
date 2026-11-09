@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n'
 import { useEffect, useState } from 'react'
 import type { CSSProperties } from 'react'
 import { applyTheme, currentTheme, themes, themeStorageKey } from '../lib/themes'
@@ -5,12 +6,12 @@ import type { ThemeId } from '../lib/themes'
 
 export function ThemeSettings() {
   const [selected, setSelected] = useState(currentTheme)
-  const [message, setMessage] = useState('')
+  const [message, setMessage] = useState<{ key: string; name: string } | null>(null)
   useEffect(() => {
     function sync(event: StorageEvent) {
       if (event.key !== themeStorageKey && event.key !== null) return
       setSelected(currentTheme())
-      setMessage('')
+      setMessage(null)
     }
     window.addEventListener('storage', sync)
     return () => window.removeEventListener('storage', sync)
@@ -19,20 +20,16 @@ export function ThemeSettings() {
     const saved = applyTheme(theme)
     setSelected(theme)
     const name = themes.find((item) => item.id === theme)!.name
-    setMessage(
-      saved
-        ? `${name} applied and saved.`
-        : `${name} applied. Your browser couldn’t save it for next time.`,
-    )
+    setMessage({ key: saved ? 'themes.saved' : 'themes.unsaved', name })
   }
   return (
     <section aria-labelledby="themes-title">
       <h2 id="themes-title" className="settings-section-title">
-        Themes
+        {t('text.themes')}
       </h2>
-      <p className="settings-section-intro">Choose the atmosphere for your next chapter.</p>
+      <p className="settings-section-intro">{t('text.chooseTheAtmosphereForYourNextChapter')}</p>
       <fieldset className="theme-picker">
-        <legend className="sr-only">Interface theme</legend>
+        <legend className="sr-only">{t('text.interfaceTheme')}</legend>
         <div className="theme-options">
           {themes.map((theme) => (
             <label className="theme-option" key={theme.id}>
@@ -54,18 +51,18 @@ export function ThemeSettings() {
                 }
               />
               <span className="theme-option-heading">
-                <span>{theme.name}</span>
+                <span>{t(theme.name)}</span>
                 <span className="theme-check" aria-hidden="true">
                   {selected === theme.id ? '✓' : ''}
                 </span>
               </span>
-              <span className="theme-description">{theme.description}</span>
+              <span className="theme-description">{t(theme.description)}</span>
             </label>
           ))}
         </div>
       </fieldset>
       <p className="theme-feedback" role="status">
-        {message}
+        {message && t(message.key, { name: t(message.name) })}
       </p>
     </section>
   )

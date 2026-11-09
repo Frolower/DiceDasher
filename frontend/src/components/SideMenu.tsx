@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n'
 import { NavLink } from 'react-router'
 import { useEffect, useRef } from 'react'
 
@@ -39,12 +40,12 @@ export function SideMenu({
       }}
     >
       <div className="side-menu-heading">
-        <h2 id="menu-title">Your table</h2>
-        <button className="button quiet" onClick={onClose} aria-label="Close navigation">
+        <h2 id="menu-title">{t('text.yourTable')}</h2>
+        <button className="button quiet" onClick={onClose} aria-label={t('text.closeNavigation')}>
           ×
         </button>
       </div>
-      <nav aria-label="Main navigation">
+      <nav aria-label={t('text.mainNavigation')}>
         {(['characters', 'friends'] as const).map((item) => (
           <NavLink key={item} to={`/${item}`} className="side-menu-item" onClick={onNavigate}>
             <svg
@@ -74,16 +75,16 @@ export function SideMenu({
                 </>
               )}
             </svg>
-            {item === 'characters' ? 'Characters' : 'Friends'}
+            {item === 'characters' ? t('text.characters') : t('text.friends')}
             <span aria-hidden="true">→</span>
           </NavLink>
         ))}
       </nav>
-      <p className="side-menu-note">Every adventure starts with good company.</p>
+      <p className="side-menu-note">{t('text.everyAdventureStartsWithGoodCompany')}</p>
       <div className="side-menu-footer">
         {logoutError && (
           <p className="form-message" role="alert">
-            {logoutError}
+            {t(logoutError)}
           </p>
         )}
         <button
@@ -108,7 +109,7 @@ export function SideMenu({
           >
             <path d="M9 5H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4M17 8l4 4-4 4M8 12h13" />
           </svg>
-          <span role="status">{loggingOut ? 'Logging out…' : 'Log out'}</span>
+          <span role="status">{loggingOut ? t('text.loggingOut') : t('text.logOut')}</span>
         </button>
       </div>
     </dialog>

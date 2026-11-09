@@ -98,3 +98,25 @@ React Router handles navigation without reloading the document:
 Private routes wait for session restoration before redirecting to login. Unknown
 paths show a page-not-found view. Docker's Nginx configuration serves `index.html`
 for frontend routes so direct links and refreshes work; `/api/` is proxied separately.
+
+## UI languages
+
+The UI supports English and Russian. The header selector is available before sign-in.
+The saved `dicedasher.language` preference takes priority over the browser's primary
+language; unsupported languages fall back to English. Changes also sync between tabs.
+Language selection continues to work when browser storage is unavailable.
+
+Translations live in `src/locales/en.json` and `src/locales/ru.json`. Add the same
+key to both dictionaries and render it with `t(key)` from `src/lib/i18n.ts`.
+Use `{name}` placeholders and `t(key, { name })` for dynamic values rather than
+joining translated fragments. `plural()` selects one/few/many/other keys using
+`Intl.PluralRules` for the current UI language.
+
+Keep translation keys in state, validation errors and demo data; translate them
+when rendering, so existing messages update when the language changes. API errors
+use `UserFacingError` keys, while unexpected errors use safe fallback keys.
+Usernames and other user-provided content are not translated. UI language remains
+independent of any future generated-content language and does not change API requests.
+
+`npm test` checks dictionary coverage, interpolation, language detection, saved
+preferences, storage failures and cross-tab synchronization, alongside auth checks.

@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n'
 import { userErrorMessage } from '../lib/auth'
 import { useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
@@ -82,8 +83,8 @@ export function AuthDialog({
     } catch (error) {
       setMessage(
         controller.signal.aborted
-          ? 'The request timed out. Please try again.'
-          : userErrorMessage(error, 'Unable to connect. Check your connection and try again.'),
+          ? 'text.theRequestTimedOutPleaseTryAgain'
+          : userErrorMessage(error, 'text.unableToConnectCheckYourConnectionAndTryAgain'),
       )
     } finally {
       window.clearTimeout(timeout)
@@ -128,7 +129,7 @@ export function AuthDialog({
         />
         {errors[name] && (
           <small className="field-error" id={`${name}-error`}>
-            {errors[name]}
+            {t(errors[name] ?? '')}
           </small>
         )}
       </div>
@@ -153,16 +154,17 @@ export function AuthDialog({
         }
       }}
     >
-      <button className="close-button" aria-label="Close account form" onClick={onClose}>
+      <button className="close-button" aria-label={t('text.closeAccountForm')} onClick={onClose}>
         ×
       </button>
       {created ? (
         <div className="created-state">
           <span className="success-mark">✓</span>
-          <h2 id="auth-title">Your adventure starts here.</h2>
-          <p>Your account is ready. Log in to continue to DiceDasher.</p>
+          <h2 id="auth-title">{t('text.yourAdventureStartsHere')}</h2>
+          <p>{t('text.yourAccountIsReadyLogInToContinueToDiceDasher')}</p>
           <button className="button primary full" onClick={() => onSwitch('login')}>
-            Log in <span aria-hidden="true">↗</span>
+            {t('text.logIn')}
+            <span aria-hidden="true">↗</span>
           </button>
         </div>
       ) : (
@@ -171,23 +173,23 @@ export function AuthDialog({
             <span className="dialog-mark">
               <Die />
             </span>
-            <h2 id="auth-title">{signup ? 'Create an account' : 'Log in'}</h2>
+            <h2 id="auth-title">{signup ? t('text.createAnAccount') : t('text.logIn')}</h2>
           </div>
           <form noValidate onSubmit={submit} aria-busy={pending}>
             <fieldset disabled={pending}>
-              {signup && field('email', 'Email', 'you@example.com', 'email')}
-              {field('username', 'Username', 'Your adventuring alias')}
+              {signup && field('email', t('text.email'), 'you@example.com', 'email')}
+              {field('username', t('text.username'), t('text.yourAdventuringAlias'))}
               {field(
                 'password',
-                'Password',
-                signup ? 'Make it a strong one' : 'Enter your password',
+                t('text.password'),
+                signup ? t('text.makeItAStrongOne') : t('text.enterYourPassword'),
                 showPassword ? 'text' : 'password',
               )}
               {signup && (
                 <ul className="password-checks" id="password-help">
                   {passwordChecks(fields.password).map((check) => (
                     <li key={check.label} className={check.valid ? 'met' : ''}>
-                      <span aria-hidden="true">{check.valid ? '✓' : '○'}</span> {check.label}
+                      <span aria-hidden="true">{check.valid ? '✓' : '○'}</span> {t(check.label)}
                     </li>
                   ))}
                 </ul>
@@ -195,8 +197,8 @@ export function AuthDialog({
               {signup &&
                 field(
                   'repeatPassword',
-                  'Repeat password',
-                  'One more time',
+                  t('text.repeatPassword'),
+                  t('text.oneMoreTime'),
                   showPassword ? 'text' : 'password',
                 )}
               <label className="show-password">
@@ -205,23 +207,27 @@ export function AuthDialog({
                   checked={showPassword}
                   onChange={(event) => setShowPassword(event.target.checked)}
                 />{' '}
-                Show {signup ? 'passwords' : 'password'}
+                {t(signup ? 'auth.showPasswords' : 'auth.showPassword')}
               </label>
               {message && (
                 <p className="form-message" role="alert">
-                  {message}
+                  {t(message)}
                 </p>
               )}
               <button className="button primary full" type="submit">
-                {pending ? 'Please wait…' : signup ? 'Create an account' : 'Log in'}
+                {pending
+                  ? t('text.pleaseWait')
+                  : signup
+                    ? t('text.createAnAccount')
+                    : t('text.logIn')}
                 <span aria-hidden="true">↗</span>
               </button>
             </fieldset>
           </form>
           <p className="switch-auth">
-            {signup ? 'Already have an account?' : 'New around here?'}{' '}
+            {signup ? t('text.alreadyHaveAnAccount') : t('text.newAroundHere')}{' '}
             <button disabled={pending} onClick={() => onSwitch(signup ? 'login' : 'signup')}>
-              {signup ? 'Log in' : 'Create an account'}
+              {signup ? t('text.logIn') : t('text.createAnAccount')}
             </button>
           </p>
         </>

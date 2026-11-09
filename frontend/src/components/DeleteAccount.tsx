@@ -1,3 +1,4 @@
+import { t } from '../lib/i18n'
 import { userErrorMessage } from '../lib/auth'
 import { useEffect, useRef, useState } from 'react'
 import { settingsRequest } from '../lib/settings'
@@ -34,7 +35,7 @@ function DeleteConfirmation({
       await settingsRequest('user', token, 'DELETE')
       onDeleted()
     } catch (cause) {
-      setError(userErrorMessage(cause, 'Unable to delete your account. Please try again.'))
+      setError(userErrorMessage(cause, 'text.unableToDeleteYourAccountPleaseTryAgain'))
       inFlight.current = false
       setPending(false)
     }
@@ -50,23 +51,24 @@ function DeleteConfirmation({
         else onClose()
       }}
     >
-      <h2 id="delete-title">Delete your account?</h2>
+      <h2 id="delete-title">{t('text.deleteYourAccount')}</h2>
       <p id="delete-description">
-        Your account and all sign-in sessions will be permanently deleted. This cannot be undone.
-        Character data is retained separately.
+        {t(
+          'text.yourAccountAndAllSignInSessionsWillBePermanentlyDeletedThisCannotBeUndoneCharacterDataIsRetainedSeparately',
+        )}
       </p>
       {error && (
         <p className="form-message" role="alert">
-          {error}
+          {t(error)}
         </p>
       )}
-      {pending && <p role="status">Deleting your account…</p>}
+      {pending && <p role="status">{t('text.deletingYourAccount')}</p>}
       <div className="delete-dialog-actions">
         <button className="button quiet" disabled={pending} onClick={onClose}>
-          Cancel
+          {t('text.cancel')}
         </button>
         <button className="button destructive" disabled={pending} onClick={removeAccount}>
-          {pending ? 'Deleting…' : 'Delete account'}
+          {pending ? t('text.deleting') : t('text.deleteAccount')}
         </button>
       </div>
     </dialog>
@@ -86,15 +88,15 @@ export function DeleteAccount({
   return (
     <section className="settings-panel delete-account" aria-labelledby="delete-account-title">
       <div>
-        <h2 id="delete-account-title">Delete account</h2>
-        <p>Permanently remove your account and sign out on all devices. This cannot be undone.</p>
+        <h2 id="delete-account-title">{t('text.deleteAccount')}</h2>
+        <p>{t('text.permanentlyRemoveYourAccountAndSignOutOnAllDevicesThisCannotBeUndone')}</p>
       </div>
       <button
         className="button destructive-outline"
         disabled={disabled}
         onClick={() => setConfirming(true)}
       >
-        Delete account
+        {t('text.deleteAccount')}
       </button>
       {confirming && (
         <DeleteConfirmation

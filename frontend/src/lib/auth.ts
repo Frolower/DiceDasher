@@ -1,7 +1,15 @@
+import en from '../locales/en.json'
+import type { TranslationKey } from './i18n'
 // Only explicitly written messages are safe to display in the interface.
-export class UserFacingError extends Error {}
+export class UserFacingError extends Error {
+  readonly key: string
+  constructor(key: string) {
+    super(en[key as TranslationKey] ?? key)
+    this.key = key
+  }
+}
 export function userErrorMessage(error: unknown, fallback: string): string {
-  return error instanceof UserFacingError ? error.message : fallback
+  return error instanceof UserFacingError ? error.key : fallback
 }
 
 export type AuthMode = 'login' | 'signup'
@@ -42,10 +50,10 @@ export function refreshSession(): Promise<Session | null> {
       setSession(null)
       return null
     }
-    if (!response.ok) throw new UserFacingError('Unable to restore your session. Please try again.')
+    if (!response.ok) throw new UserFacingError('text.unableToRestoreYourSessionPleaseTryAgain')
     const tokens = (await response.json()) as AccessTokens
     if (!tokens.access_token || !Number.isFinite(Date.parse(tokens.expires_at)))
-      throw new UserFacingError('Unable to restore your session. Please try again.')
+      throw new UserFacingError('text.unableToRestoreYourSessionPleaseTryAgain')
     const profileResponse = await fetch('/api/me', {
       credentials: 'include',
       cache: 'no-store',
@@ -55,8 +63,7 @@ export function refreshSession(): Promise<Session | null> {
       setSession(null)
       return null
     }
-    if (!profileResponse.ok)
-      throw new UserFacingError('Unable to load your account. Please try again.')
+    if (!profileResponse.ok) throw new UserFacingError('text.unableToLoadYourAccountPleaseTryAgain')
     const profile = (await profileResponse.json()) as { username: string }
     const session = { ...tokens, username: profile.username }
     setSession(session)
@@ -90,48 +97,47 @@ const bytes = (value: string) => new TextEncoder().encode(value).length
 const emailPattern =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/
 export const passwordChecks = (password: string) => [
-  { label: '8–72 characters', valid: [...password].length >= 8 && bytes(password) <= 72 },
+  { label: 'auth.passwordLength', valid: [...password].length >= 8 && bytes(password) <= 72 },
   {
-    label: 'Upper & lowercase (A–Z, a–z)',
+    label: 'text.upperLowercaseAZAZ',
     valid: /[a-z]/.test(password) && /[A-Z]/.test(password),
   },
-  { label: 'A number (0–9)', valid: /[0-9]/.test(password) },
+  { label: 'text.aNumber09', valid: /[0-9]/.test(password) },
   {
-    label: 'A symbol (! @ # $ …)',
+    label: 'auth.passwordSymbol',
     valid: /[^a-zA-Z0-9]/.test(password) && /^[\x21-\x7e]+$/.test(password),
   },
 ]
 export function validateAuth(mode: AuthMode, fields: AuthFields): FieldErrors {
   const errors: FieldErrors = {}
-  if (!fields.username) errors.username = 'Enter your username.'
-  else if ([...fields.username].length > 64) errors.username = 'Use no more than 64 characters.'
+  if (!fields.username) errors.username = 'text.enterYourUsername'
+  else if ([...fields.username].length > 64) errors.username = 'text.useNoMoreThan64Characters'
   if (/[\p{White_Space}\uFEFF]/u.test(fields.username))
-    errors.username = 'Username cannot contain spaces.'
+    errors.username = 'text.usernameCannotContainSpaces'
   else if (/\p{Cc}/u.test(fields.username))
-    errors.username = 'Username contains an invalid character.'
+    errors.username = 'text.usernameContainsAnInvalidCharacter'
   else if (/[^\x21-\x7e]/.test(fields.username))
-    errors.username = 'Use English letters, numbers and symbols only.'
-  if (!fields.password) errors.password = 'Enter your password.'
+    errors.username = 'text.useEnglishLettersNumbersAndSymbolsOnly'
+  if (!fields.password) errors.password = 'errors.passwordRequired'
   else if (bytes(fields.password) > 72)
-    errors.password = 'This password is too long. Shorten it and try again.'
+    errors.password = 'text.thisPasswordIsTooLongShortenItAndTryAgain'
   if (mode === 'signup') {
     if (fields.username && [...fields.username].length < 5)
-      errors.username = 'Use at least 5 characters.'
+      errors.username = 'text.useAtLeast5Characters'
     if (bytes(fields.email) < 5 || bytes(fields.email) > 254 || !emailPattern.test(fields.email))
-      errors.email = 'Enter a valid email address, such as you@example.com.'
+      errors.email = 'text.enterAValidEmailAddressSuchAsYouExampleCom'
     if (
       passwordChecks(fields.password).some((check) => !check.valid) ||
       /[\p{White_Space}\uFEFF]/u.test(fields.password)
     )
-      errors.password = 'Meet the password requirements below.'
-    if (bytes(fields.password) > 72) errors.password = 'Use no more than 72 characters.'
-    if (!fields.repeatPassword) errors.repeatPassword = 'Repeat your password.'
+      errors.password = 'text.meetThePasswordRequirementsBelow'
+    if (bytes(fields.password) > 72) errors.password = 'text.useNoMoreThan72Characters'
+    if (!fields.repeatPassword) errors.repeatPassword = 'text.repeatYourPassword'
     else if (fields.password !== fields.repeatPassword)
-      errors.repeatPassword = 'Your passwords do not match.'
+      errors.repeatPassword = 'text.yourPasswordsDoNotMatch'
   }
   if (/[^\x21-\x7e]/.test(fields.password))
-    errors.password =
-      'Use only English letters, numbers and special characters. No spaces or emoji.'
+    errors.password = 'text.useOnlyEnglishLettersNumbersAndSpecialCharactersNoSpacesOrEmoji'
   return errors
 }
 export async function authenticate(mode: AuthMode, fields: AuthFields, signal: AbortSignal) {
@@ -149,22 +155,24 @@ export async function authenticate(mode: AuthMode, fields: AuthFields, signal: A
   if (!response.ok) {
     const message =
       response.status === 409
-        ? 'That username or email is already in use.'
+        ? 'text.thatUsernameOrEmailIsAlreadyInUse'
         : response.status === 401
-          ? 'Your username or password is incorrect.'
+          ? 'text.yourUsernameOrPasswordIsIncorrect'
           : response.status === 403
-            ? 'Unable to sign in right now. Please try again later.'
+            ? 'text.unableToSignInRightNowPleaseTryAgainLater'
             : response.status === 400
-              ? 'Check your details and try again.'
+              ? 'text.checkYourDetailsAndTryAgain'
               : response.status === 429
-                ? 'Too many attempts. Please try again in a moment.'
-                : `Unable to ${mode === 'login' ? 'sign in' : 'create your account'} right now. Please try again later.`
+                ? 'text.tooManyAttemptsPleaseTryAgainInAMoment'
+                : mode === 'login'
+                  ? 'text.unableToSignInRightNowPleaseTryAgainLater'
+                  : 'auth.unableToCreate'
     throw new UserFacingError(message)
   }
   if (mode === 'login') {
     const data = (await response.json()) as { access_token: string; expires_at: string }
     if (!data.access_token)
-      throw new UserFacingError('Unable to sign in right now. Please try again later.')
+      throw new UserFacingError('text.unableToSignInRightNowPleaseTryAgainLater')
     return data
   }
   return null
@@ -180,7 +188,7 @@ export function logout(): Promise<void> {
       cache: 'no-store',
     })
     if (!response.ok) {
-      throw new UserFacingError('Unable to log out. Please try again.')
+      throw new UserFacingError('text.unableToLogOutPleaseTryAgain')
     }
     setSession(null)
   })().finally(() => {
