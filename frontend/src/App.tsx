@@ -6,6 +6,7 @@ import { SideMenu } from './components/SideMenu'
 import type { ReactNode } from 'react'
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router'
 import { DemoPage } from './components/DemoPage'
+import { NotFoundPage } from './components/NotFoundPage'
 import { Die } from './components/Die'
 import { ProfileSettings } from './components/ProfileSettings'
 import { ProfilePage } from './components/ProfilePage'
@@ -231,18 +232,7 @@ function App() {
           element={protect(<DemoPage key="characters" kind="characters" />)}
         />
         <Route path="/friends" element={protect(<DemoPage key="friends" kind="friends" />)} />
-        <Route
-          path="*"
-          element={
-            <main id="main" className="settings-page shell">
-              <h1>{t('text.pageNotFound')}</h1>
-              <p className="settings-intro">{t('text.thisPageDoesnTExist')}</p>
-              <Link className="button primary" to={session ? '/profile' : '/'}>
-                {t('text.goHome')}
-              </Link>
-            </main>
-          }
-        />
+        <Route path="*" element={<NotFoundPage homePath={session ? '/profile' : '/'} />} />
       </Routes>
       {session && menuOpen && (
         <SideMenu

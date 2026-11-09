@@ -12,7 +12,7 @@
   "text.logIn": "Log in",
   "text.createAnAccount": "Create an account",
   "text.pageNotFound": "Page not found",
-  "text.thisPageDoesnTExist": "This page doesn’t exist.",
+  "text.thisPageDoesnTExist": "This path leads off the map. The page may have moved, or the address may be incorrect. Head home to continue your adventure.",
   "text.goHome": "Go home",
   "text.theRequestTimedOutPleaseTryAgain": "The request timed out. Please try again.",
   "text.unableToConnectCheckYourConnectionAndTryAgain": "Unable to connect. Check your connection and try again.",

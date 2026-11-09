@@ -12,7 +12,7 @@
   "text.logIn": "Войти",
   "text.createAnAccount": "Создать аккаунт",
   "text.pageNotFound": "Страница не найдена",
-  "text.thisPageDoesnTExist": "Такой страницы нет.",
+  "text.thisPageDoesnTExist": "Этот путь ведёт за край карты. Возможно, страница переехала или в адресе есть опечатка. Вернитесь на главную, чтобы продолжить приключение.",
   "text.goHome": "На главную",
   "text.theRequestTimedOutPleaseTryAgain": "Время ожидания истекло. Попробуйте ещё раз.",
   "text.unableToConnectCheckYourConnectionAndTryAgain": "Не удалось подключиться. Проверьте соединение и попробуйте ещё раз.",
