@@ -393,3 +393,33 @@
   --menu-shadow: #20202020;
   --die-shadow: #3333331a;
 }
+
+/* Neutral dark surfaces with a restrained monochrome accent. */
+:root[data-theme='classic-dark'] {
+  color-scheme: dark;
+  --page: #101010;
+  --panel: #181818;
+  --ink: #e6e6e6;
+  --muted: #a8a8a8;
+  --accent: #e6e6e6;
+  --accent-hover: #ffffff;
+  --on-accent: #101010;
+  --surface: #262626;
+  --line: #363636;
+  --input-line: #808080;
+  --selection: #454545;
+  --error: #ff9b95;
+  --error-hover: #ffb8b3;
+  --error-surface: #3b2025;
+  --error-active: #51272d;
+  --on-error: #300f14;
+  --success: #7ee787;
+  --success-surface: #173324;
+  --violet: #d2a8ff;
+  --violet-surface: #2c2341;
+  --backdrop: #000000b3;
+  --button-shadow: #00000020;
+  --dialog-shadow: #00000066;
+  --menu-shadow: #00000040;
+  --die-shadow: #00000033;
+}

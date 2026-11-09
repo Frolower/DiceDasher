@@ -12,7 +12,7 @@
   "text.logIn": "Войти",
   "text.createAnAccount": "Создать аккаунт",
   "text.pageNotFound": "Страница не найдена",
-  "text.thisPageDoesnTExist": "Такой страницы нет.",
+  "text.thisPageDoesnTExist": "Этот путь ведёт за край карты. Возможно, страница переехала или в адресе есть опечатка. Вернитесь на главную, чтобы продолжить приключение.",
   "text.goHome": "На главную",
   "text.theRequestTimedOutPleaseTryAgain": "Время ожидания истекло. Попробуйте ещё раз.",
   "text.unableToConnectCheckYourConnectionAndTryAgain": "Не удалось подключиться. Проверьте соединение и попробуйте ещё раз.",
@@ -172,5 +172,7 @@
   "themes.field_manual.name": "Полевое руководство",
   "themes.field_manual.description": "Серо-зелёная бумага, олива и воля к выживанию.",
   "themes.noir.name": "Нуар",
-  "themes.noir.description": "Чёрные чернила на белой бумаге. Истории без полутонов."
+  "themes.noir.description": "Чёрные чернила на белой бумаге. Истории без полутонов.",
+  "themes.classic_dark.name": "Классическая тёмная",
+  "themes.classic_dark.description": "Нейтральный угольный и мягкий серый для привычной рабочей среды."
 }

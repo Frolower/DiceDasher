@@ -12,7 +12,7 @@
   "text.logIn": "Log in",
   "text.createAnAccount": "Create an account",
   "text.pageNotFound": "Page not found",
-  "text.thisPageDoesnTExist": "This page doesn’t exist.",
+  "text.thisPageDoesnTExist": "This path leads off the map. The page may have moved, or the address may be incorrect. Head home to continue your adventure.",
   "text.goHome": "Go home",
   "text.theRequestTimedOutPleaseTryAgain": "The request timed out. Please try again.",
   "text.unableToConnectCheckYourConnectionAndTryAgain": "Unable to connect. Check your connection and try again.",
@@ -172,5 +172,7 @@
   "themes.field_manual.name": "Field Manual",
   "themes.field_manual.description": "Grey-green paper, olive ink, and the will to survive.",
   "themes.noir.name": "Noir",
-  "themes.noir.description": "Black ink on white paper. Stories in stark relief."
+  "themes.noir.description": "Black ink on white paper. Stories in stark relief.",
+  "themes.classic_dark.name": "Classic Dark",
+  "themes.classic_dark.description": "Neutral charcoal and soft grey for a familiar workspace."
 }
