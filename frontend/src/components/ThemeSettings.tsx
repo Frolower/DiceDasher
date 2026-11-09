@@ -31,7 +31,7 @@ export function ThemeSettings() {
         Themes
       </h2>
       <p className="settings-section-intro">Choose the atmosphere for your next chapter.</p>
-      <fieldset className="theme-picker" aria-describedby="theme-storage-note">
+      <fieldset className="theme-picker">
         <legend className="sr-only">Interface theme</legend>
         <div className="theme-options">
           {themes.map((theme) => (
@@ -66,9 +66,6 @@ export function ThemeSettings() {
           ))}
         </div>
       </fieldset>
-      <p className="theme-storage-note" id="theme-storage-note">
-        Changes apply immediately and are saved in this browser.
-      </p>
       <p className="theme-feedback" role="status">
         {message}
       </p>
