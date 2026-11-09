@@ -127,11 +127,11 @@ preferences, storage failures and cross-tab synchronization, alongside auth chec
 
 ## Color themes
 
-Signed-in users can choose a theme in Settings. The 14 palettes are:
+Signed-in users can choose a theme in Settings. The 15 palettes are:
 
 - Light: Cobalt, Parchment, Cyberpunk Light, Chthonic Horror, The Loop, The Flood,
   Nuclear (Атомная эра), Field Manual, and Noir.
-- Dark: Midnight, Forest, Cyberpunk Dark, Vampire, and Cosmic Horror.
+- Dark: Midnight, Forest, Cyberpunk Dark, Vampire, Cosmic Horror, and Classic Dark.
 
 The choice is stored in browser local storage as `dicedasher.theme`, independently
 of UI language and account data. It applies across the app and syncs between tabs.

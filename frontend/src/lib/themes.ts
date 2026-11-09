@@ -7,6 +7,13 @@ export const themes = [
     accent: '#1555d5',
   },
   {
+    id: 'classic-dark',
+    name: 'themes.classic_dark.name',
+    description: 'themes.classic_dark.description',
+    background: '#101010',
+    accent: '#e6e6e6',
+  },
+  {
     id: 'midnight',
     name: 'text.midnight',
     description: 'text.quietBluesForLateNightSessions',
