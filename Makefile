@@ -5,8 +5,8 @@ COMPOSE ?= docker compose $(COMPOSE_FILES)
 GO ?= go
 NPM ?= npm
 SERVICE ?=
-GO_PACKAGES := ./pkg/... ./services/backend/... ./services/character/... ./services/resolve/...
-GO_DIRS := pkg services/backend services/character services/resolve
+GO_PACKAGES := ./pkg/... ./services/backend/... ./services/character/... ./services/resolve/... ./services/room/...
+GO_DIRS := pkg services/backend services/character services/resolve services/room
 
 .PHONY: help build up down logs ps restart clean rebuild nuke fresh dev \
 	install frontend-dev frontend-build frontend-preview test test-go test-frontend \

@@ -26,6 +26,9 @@ type User interface {
 type Options struct {
 	CookieSecure   bool
 	AllowedOrigins []string
+	HealthChecker  interface {
+		Check(context.Context, string) error
+	}
 }
 type Handler struct {
 	authenticator Authenticator

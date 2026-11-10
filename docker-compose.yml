@@ -58,6 +58,13 @@ services:
       retries: 5
     restart: unless-stopped
 
+  room:
+    stop_grace_period: 15s
+    build:
+      context: .
+      dockerfile: services/room/Dockerfile
+    restart: unless-stopped
+
   backend:
     stop_grace_period: 20s
     build:
@@ -69,6 +76,7 @@ services:
       DATABASE_URL: postgres://user_service:user_password@postgres:5432/user_db?sslmode=disable
       HTTP_ADDR: ":8000"
       LOG_MODE: default
+      HEALTH_TARGETS: '{"room":"grpc://room:50051","character":"http://character:8082/health","resolve":"http://resolve:8081/health"}'
     depends_on:
       postgres:
         condition: service_healthy

@@ -3,6 +3,7 @@ package config
 import (
 	"diceDasher/pkg/httputil"
 	"encoding/base64"
+	"encoding/json/v2"
 	"errors"
 	"os"
 	"strconv"
@@ -17,6 +18,7 @@ type Config struct {
 	JWTAudience    string
 	CookieSecure   bool
 	AllowedOrigins []string
+	HealthTargets  map[string]string
 }
 
 func Load() (*Config, error) {
@@ -59,10 +61,23 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	targets := map[string]string{
+		"room":      "grpc://localhost:50051",
+		"character": "http://localhost:8082/health",
+		"resolve":   "http://localhost:8081/health",
+	}
+	if value := os.Getenv("HEALTH_TARGETS"); value != "" {
+		targets = nil
+		if err := json.Unmarshal([]byte(value), &targets); err != nil || targets == nil {
+			return nil, errors.New("HEALTH_TARGETS must be a JSON object mapping service names to URLs")
+		}
+	}
+
 	return &Config{
-		HTTPAddr:    addr,
-		DatabaseURL: databaseURL,
-		LogMode:     logMode,
-		JWTKey:      key, JWTIssuer: issuer, JWTAudience: audience, CookieSecure: secure, AllowedOrigins: origins,
+		HTTPAddr:      addr,
+		DatabaseURL:   databaseURL,
+		LogMode:       logMode,
+		HealthTargets: targets,
+		JWTKey:        key, JWTIssuer: issuer, JWTAudience: audience, CookieSecure: secure, AllowedOrigins: origins,
 	}, nil
 }

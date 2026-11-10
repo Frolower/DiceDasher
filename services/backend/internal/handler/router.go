@@ -18,7 +18,7 @@ func (h *Handler) RegisterRouters(r *httputil.Router) {
 	r.Handle("/password").PUT(h.RequreAuth(h.HandleUpdatePassword))
 
 	//health
-	r.Handle("/health").GET(Health)
+	r.Handle("/health").GET(h.Health)
 }
 
 func notImplemented(w http.ResponseWriter, r *http.Request) {

@@ -409,6 +409,18 @@ paths:
       tags: [Health]
       summary: Check service health
       operationId: health
+      description: |
+        Without a service parameter, checks the addressed HTTP server itself (plain OK).
+        On the backend (:8000), service selects a configured downstream service.
+        Defaults: room (gRPC), character and resolve (HTTP). Downstream checks have
+        a 2-second timeout; only gRPC SERVING or HTTP 200 counts as healthy.
+      parameters:
+        - in: query
+          name: service
+          description: Backend only. Omit or use backend for the backend itself.
+          schema:
+            type: string
+          example: room
       servers:
         - url: http://localhost:8081
           description: Resolve Service
@@ -425,6 +437,34 @@ paths:
                 type: string
                 const: OK
               example: OK
+            application/json:
+              schema:
+                type: object
+                required: [service, status]
+                properties:
+                  service: {type: string}
+                  status: {type: string, enum: [SERVING]}
+              example: {service: room, status: SERVING}
+        "404":
+          description: Unknown service name (backend only).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service: {type: string}
+                  status: {type: string, enum: [UNKNOWN_SERVICE]}
+              example: {service: missing, status: UNKNOWN_SERVICE}
+        "503":
+          description: Service is unhealthy, unreachable, or timed out (backend only).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  service: {type: string}
+                  status: {type: string, enum: [NOT_SERVING]}
+              example: {service: room, status: NOT_SERVING}
   /resolve:
     post:
       tags: [Resolve]

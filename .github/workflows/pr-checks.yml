@@ -124,6 +124,7 @@ jobs:
           - services/backend
           - services/character
           - services/resolve
+          - services/room
 
     steps:
       - uses: actions/checkout@v7
@@ -200,6 +201,7 @@ jobs:
           - backend
           - character
           - resolve
+          - room
 
     steps:
       - uses: actions/checkout@v7

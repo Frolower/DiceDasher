@@ -313,6 +313,35 @@ invalidates existing access JWTs. An empty or too-short key prevents startup.
 | COOKIE_SECURE | Defaults to true; false only for local HTTP |
 | ALLOWED_ORIGINS | `http://localhost:8888,http://localhost:5174`, without trailing slashes |
 | LOG_MODE | default |
+| HEALTH_TARGETS | Optional JSON object of service names to health URLs; replaces the defaults |
+
+`GET /health` (or `/health?service=backend`) returns `200 OK` for the backend itself.
+`GET /health?service=room` checks room via standard gRPC health checking and returns
+`200 {"service":"room","status":"SERVING"}` or
+`503 {"service":"room","status":"NOT_SERVING"}`. Unknown names return 404 with
+`UNKNOWN_SERVICE`. Each check has a 2-second timeout and respects request cancellation.
+Responses are not cached. No authentication is required.
+
+The default targets for running locally are:
+
+```json
+{"room":"grpc://localhost:50051","character":"http://localhost:8082/health","resolve":"http://localhost:8081/health"}
+```
+
+Set `HEALTH_TARGETS` to a JSON object to add services or change addresses. HTTP(S)
+targets include the health path and must return exactly HTTP 200. `grpc://` targets
+contain host and port, use plaintext gRPC, and must report `SERVING` for the empty
+service name (whole server). Names and addresses come from configuration, never
+from request URLs. `backend` is reserved for the local check. `{}` disables all
+downstream checks. Invalid target configuration prevents backend startup.
+Compose sets the targets to the internal `room`, `character`, and `resolve` hosts.
+The backend's own health does not depend on downstream availability.
+
+```sh
+curl -i 'http://localhost:8000/health?service=room'
+curl -i 'http://localhost:8000/health?service=character'
+curl -i 'http://localhost:8000/health?service=resolve'
+```
 
 Compose reads `services/backend/.env`, but overrides the database address with the
 internal `postgres:5432/user_db` address and the user_service role. It does not

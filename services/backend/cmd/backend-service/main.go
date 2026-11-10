@@ -4,6 +4,7 @@ import (
 	"backend/internal/auth"
 	"backend/internal/config"
 	"backend/internal/handler"
+	"backend/internal/healthcheck"
 	"backend/internal/repository"
 	"backend/internal/user"
 	"context"
@@ -46,11 +47,16 @@ func run() error {
 		return fmt.Errorf("create JWT manager: %w", err)
 	}
 	store := repository.New(repo.Pool())
+	health, err := healthcheck.New(cfg.HealthTargets)
+	if err != nil {
+		return fmt.Errorf("configure health checks: %w", err)
+	}
+	defer health.Close()
 	// A single repository implements both the user and session interfaces.
 	authentication := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), tokens)
 	users := user.NewServiceWithDependencies(store, user.NewBcryptHasher())
 	r := httputil.NewRouter()
-	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins}).RegisterRouters(r)
+	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins, HealthChecker: health}).RegisterRouters(r)
 
 	// Wrap with middlewares
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)
