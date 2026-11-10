@@ -14,7 +14,7 @@ and account settings. Signed-in users can edit their username and email, change
 their password and delete their account. Access tokens stay in memory;
 sessions are restored and renewed using an HttpOnly refresh cookie.
 
-The UI supports English and Russian and includes 15 selectable color themes.
+The UI supports English and Russian and includes 16 selectable color themes.
 Language and theme preferences are saved in the browser and sync between tabs.
 See the [frontend documentation](frontend/README.md) for localization and palette
 maintenance.
