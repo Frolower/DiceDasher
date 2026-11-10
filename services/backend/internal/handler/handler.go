@@ -24,6 +24,9 @@ type User interface {
 }
 
 type Options struct {
+	Rooms interface {
+		Create(context.Context, string, uuid.UUID) (string, error)
+	}
 	CookieSecure   bool
 	AllowedOrigins []string
 	HealthChecker  interface {

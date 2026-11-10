@@ -307,6 +307,7 @@ invalidates existing access JWTs. An empty or too-short key prevents startup.
 |---|---|
 | DATABASE_URL | Required URL for user_db |
 | HTTP_ADDR | Defaults to :8000 |
+| ROOM_GRPC_ADDR | Room gRPC address; defaults to localhost:50051; Compose uses room:50051 |
 | JWT_SECRET | Required base64 secret containing at least 32 random bytes |
 | JWT_ISSUER | dicedasher-backend |
 | JWT_AUDIENCE | dicedasher-api |

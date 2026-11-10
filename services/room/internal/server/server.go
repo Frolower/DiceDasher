@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	roomv1 "diceDasher/pkg/room/v1"
+	"diceDasher/services/room/internal/handler"
 	"net"
 
 	"google.golang.org/grpc"
@@ -19,7 +21,7 @@ func New() *Server {
 	s := &Server{grpc: grpc.NewServer(), health: health.NewServer()}
 	healthpb.RegisterHealthServer(s.grpc, s.health)
 	reflection.Register(s.grpc)
-	// Register future room RPC services here.
+	roomv1.RegisterRoomServiceServer(s.grpc, handler.New())
 	return s
 }
 

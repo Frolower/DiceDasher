@@ -1,6 +1,34 @@
 # Room service
 
-Minimal gRPC server. Room RPCs and persistence will be added when the API is defined.
+Minimal gRPC server with health checking and a CreateRoom RPC stub.
+
+## CreateRoom round trip
+
+Send an authenticated request to the backend:
+
+```sh
+curl -i http://localhost:8000/room \
+  -H "Authorization: Bearer $ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"system":"vtmv5"}'
+```
+
+The backend takes the user UUID from the verified access token and calls
+`dicedasher.room.v1.RoomService/CreateRoom` with `system` and `user_id`.
+The room handler logs both fields and returns `status: "ok"` and a random UUID v4
+in `room_id`; the backend forwards that UUID in its HTTP 200 response:
+`{"status":"ok","room_id":"9da3cc51-c9a2-4f98-a865-d4aa135c0e96"}`.
+Every call generates a new UUID. No room is created or persisted yet.
+The `system` must be nonblank; there is no list of allowed systems yet.
+The HTTP body accepts only `system`; a client-supplied `user_id` is rejected.
+
+Missing/invalid authorization returns 401, invalid input returns 400, oversized
+bodies return 413, unavailable room returns 503, a timeout returns 504, and other
+upstream errors return 502. Backend RPC calls have a 3-second timeout and inherit
+HTTP request cancellation. `ROOM_GRPC_ADDR` configures the backend's room address
+(default `localhost:50051`; Docker Compose uses `room:50051`).
+
+The shared contract and generated clients are in `pkg/room/v1`.
 
 ## Run
 

@@ -6,6 +6,7 @@ import (
 	"backend/internal/handler"
 	"backend/internal/healthcheck"
 	"backend/internal/repository"
+	"backend/internal/roomclient"
 	"backend/internal/user"
 	"context"
 	"diceDasher/pkg/dbutil"
@@ -52,11 +53,16 @@ func run() error {
 		return fmt.Errorf("configure health checks: %w", err)
 	}
 	defer health.Close()
+	rooms, err := roomclient.New(cfg.RoomGRPCAddr)
+	if err != nil {
+		return fmt.Errorf("create room client: %w", err)
+	}
+	defer rooms.Close()
 	// A single repository implements both the user and session interfaces.
 	authentication := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), tokens)
 	users := user.NewServiceWithDependencies(store, user.NewBcryptHasher())
 	r := httputil.NewRouter()
-	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins, HealthChecker: health}).RegisterRouters(r)
+	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins, HealthChecker: health, Rooms: rooms}).RegisterRouters(r)
 
 	// Wrap with middlewares
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)

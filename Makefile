@@ -10,10 +10,13 @@ GO_DIRS := pkg services/backend services/character services/resolve services/roo
 
 .PHONY: help build up down logs ps restart clean rebuild nuke fresh dev \
 	install frontend-dev frontend-build frontend-preview test test-go test-frontend \
-	lint lint-go lint-frontend fmt fmt-go fmt-frontend fmt-check
+	lint lint-go lint-frontend fmt fmt-go fmt-frontend fmt-check proto
 
 help: ## Show available commands
 	@awk 'BEGIN {FS = ":.*## "; print "Usage: make <target> [SERVICE=backend]"; print ""} /^[a-zA-Z_-]+:.*## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+proto: ## Regenerate the shared room protobuf and gRPC code (requires protoc and Go plugins)
+	protoc --go_out=. --go_opt=paths=source_relative --go-grpc_out=. --go-grpc_opt=paths=source_relative pkg/room/v1/room.proto
 
 build: ## Build Docker images (optionally SERVICE=...)
 	$(COMPOSE) build $(SERVICE)

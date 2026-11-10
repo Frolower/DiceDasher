@@ -19,6 +19,7 @@ type Config struct {
 	CookieSecure   bool
 	AllowedOrigins []string
 	HealthTargets  map[string]string
+	RoomGRPCAddr   string
 }
 
 func Load() (*Config, error) {
@@ -73,7 +74,12 @@ func Load() (*Config, error) {
 		}
 	}
 
+	roomAddr := os.Getenv("ROOM_GRPC_ADDR")
+	if roomAddr == "" {
+		roomAddr = "localhost:50051"
+	}
 	return &Config{
+		RoomGRPCAddr:  roomAddr,
 		HTTPAddr:      addr,
 		DatabaseURL:   databaseURL,
 		LogMode:       logMode,
