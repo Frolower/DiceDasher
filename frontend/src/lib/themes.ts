@@ -35,6 +35,13 @@ export const themes = [
     accent: '#91c7ac',
   },
   {
+    id: 'blossom',
+    name: 'themes.blossom.name',
+    description: 'themes.blossom.description',
+    background: '#fff2f6',
+    accent: '#a52d62',
+  },
+  {
     id: 'cyberpunk-light',
     name: 'themes.cyberpunk_light.name',
     description: 'themes.cyberpunk_light.description',
