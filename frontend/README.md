@@ -127,9 +127,9 @@ preferences, storage failures and cross-tab synchronization, alongside auth chec
 
 ## Color themes
 
-Signed-in users can choose a theme in Settings. The 15 palettes are:
+Signed-in users can choose a theme in Settings. The 16 palettes are:
 
-- Light: Cobalt, Parchment, Cyberpunk Light, Chthonic Horror, The Loop, The Flood,
+- Light: Cobalt, Parchment, Blossom (Цветение), Cyberpunk Light, Chthonic Horror, The Loop, The Flood,
   Nuclear (Атомная эра), Field Manual, and Noir.
 - Dark: Midnight, Forest, Cyberpunk Dark, Vampire, Cosmic Horror, and Classic Dark.
 

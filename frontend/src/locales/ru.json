@@ -174,5 +174,7 @@
   "themes.noir.name": "Нуар",
   "themes.noir.description": "Чёрные чернила на белой бумаге. Истории без полутонов.",
   "themes.classic_dark.name": "Классическая тёмная",
-  "themes.classic_dark.description": "Нейтральный угольный и мягкий серый для привычной рабочей среды."
+  "themes.classic_dark.description": "Нейтральный угольный и мягкий серый для привычной рабочей среды.",
+  "themes.blossom.name": "Цветение",
+  "themes.blossom.description": "Нежные розовые тона для новой главы вашего приключения."
 }

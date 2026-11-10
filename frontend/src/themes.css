@@ -112,6 +112,36 @@
   --die-shadow: #00000033;
 }
 
+/* Petal surfaces and a deep rose accent keep the dice and actions distinct. */
+:root[data-theme='blossom'] {
+  color-scheme: light;
+  --page: #fff2f6;
+  --panel: #fffafb;
+  --ink: #3d2433;
+  --muted: #765465;
+  --accent: #a52d62;
+  --accent-hover: #84214d;
+  --on-accent: #ffffff;
+  --surface: #f9e0eb;
+  --line: #e7c6d5;
+  --input-line: #a4778c;
+  --selection: #efbed3;
+  --error: #a12b36;
+  --error-hover: #82212a;
+  --error-surface: #fbe9e7;
+  --error-active: #f4d4d1;
+  --on-error: #ffffff;
+  --success: #316342;
+  --success-surface: #e8eddb;
+  --violet: #71507b;
+  --violet-surface: #f0e7ed;
+  --backdrop: #3d243366;
+  --button-shadow: #a52d6210;
+  --dialog-shadow: #3d243330;
+  --menu-shadow: #3d243320;
+  --die-shadow: #a52d621a;
+}
+
 /* Genre palettes: independent semantic tokens for every appearance. */
 :root[data-theme='cyberpunk-light'] {
   color-scheme: light;
