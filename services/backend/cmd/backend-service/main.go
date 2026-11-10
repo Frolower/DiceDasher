@@ -62,7 +62,10 @@ func run() error {
 	authentication := auth.NewServiceWithDependencies(store, store, auth.NewBcryptHasher(), tokens)
 	users := user.NewServiceWithDependencies(store, user.NewBcryptHasher())
 	r := httputil.NewRouter()
-	handler.NewWithOptions(authentication, users, handler.Options{CookieSecure: cfg.CookieSecure, AllowedOrigins: cfg.AllowedOrigins, HealthChecker: health, Rooms: rooms}).RegisterRouters(r)
+	handler.NewWithOptions(authentication, users, rooms, health, handler.Options{
+		CookieSecure:   cfg.CookieSecure,
+		AllowedOrigins: cfg.AllowedOrigins,
+	}).RegisterRouters(r)
 
 	// Wrap with middlewares
 	wrapped := httputil.RequestLoggerWithMode(r, cfg.LogMode)

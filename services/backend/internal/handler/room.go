@@ -33,11 +33,11 @@ func (h *Handler) HandleCreateRoom(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "system is required", http.StatusBadRequest)
 		return
 	}
-	if h.options.Rooms == nil {
+	if h.rooms == nil {
 		http.Error(w, "room service unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	roomID, err := h.options.Rooms.Create(r.Context(), request.System, claims.UserID)
+	roomID, err := h.rooms.Create(r.Context(), request.System, claims.UserID)
 	if err != nil {
 		logger.LogErrorf(r.Context(), "creating room: %v", err)
 		switch status.Code(err) {

@@ -23,28 +23,39 @@ type User interface {
 	UpdatePassword(ctx context.Context, record user.PasswordUpdateRecord) error
 }
 
+type Rooms interface {
+	Create(context.Context, string, uuid.UUID) (string, error)
+}
+
+type HealthChecker interface {
+	Check(context.Context, string) error
+}
+
 type Options struct {
-	Rooms interface {
-		Create(context.Context, string, uuid.UUID) (string, error)
-	}
 	CookieSecure   bool
 	AllowedOrigins []string
-	HealthChecker  interface {
-		Check(context.Context, string) error
-	}
 }
+
 type Handler struct {
 	authenticator Authenticator
 	user          User
+	rooms         Rooms
+	healthChecker HealthChecker
 	options       Options
 }
 
 // By default, cookies are always secure, for local purposes it could be reconfigured in main
 
 func New(authenticator Authenticator, users User) *Handler {
-	return NewWithOptions(authenticator, users, Options{CookieSecure: true})
+	return NewWithOptions(authenticator, users, nil, nil, Options{CookieSecure: true})
 }
 
-func NewWithOptions(authenticator Authenticator, user User, options Options) *Handler {
-	return &Handler{authenticator: authenticator, user: user, options: options}
+func NewWithOptions(authenticator Authenticator, user User, rooms Rooms, healthChecker HealthChecker, options Options) *Handler {
+	return &Handler{
+		authenticator: authenticator,
+		user:          user,
+		rooms:         rooms,
+		healthChecker: healthChecker,
+		options:       options,
+	}
 }

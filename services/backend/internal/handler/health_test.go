@@ -32,7 +32,7 @@ func TestHealthHTTPToGRPC(t *testing.T) {
 	}
 	defer checker.Close()
 	router := httputil.NewRouter()
-	NewWithOptions(nil, nil, Options{HealthChecker: checker}).RegisterRouters(router)
+	NewWithOptions(nil, nil, nil, checker, Options{}).RegisterRouters(router)
 
 	for _, tc := range []struct {
 		name, query, status string

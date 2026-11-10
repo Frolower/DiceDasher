@@ -19,8 +19,8 @@ func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
 	}
 	code, status := http.StatusOK, "SERVING"
 	err := healthcheck.ErrUnknownService
-	if h.options.HealthChecker != nil {
-		err = h.options.HealthChecker.Check(r.Context(), service)
+	if h.healthChecker != nil {
+		err = h.healthChecker.Check(r.Context(), service)
 	}
 	if errors.Is(err, healthcheck.ErrUnknownService) {
 		code, status = http.StatusNotFound, "UNKNOWN_SERVICE"

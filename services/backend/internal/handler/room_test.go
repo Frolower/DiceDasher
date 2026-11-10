@@ -66,7 +66,7 @@ func TestCreateRoomHTTPToGRPC(t *testing.T) {
 		return auth.AccessClaims{UserID: userID}, nil
 	}}
 	router := httputil.NewRouter()
-	NewWithOptions(authenticator, nil, Options{Rooms: client}).RegisterRouters(router)
+	NewWithOptions(authenticator, nil, client, nil, Options{}).RegisterRouters(router)
 	for _, tc := range []struct {
 		name, token, body, system string
 		code                      int
