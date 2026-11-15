@@ -4,7 +4,9 @@ set -euo pipefail
 
 : "${POSTGRES_CONTAINER:?Set POSTGRES_CONTAINER to an isolated test container name}"
 
-docker build -t dicedasher-postgres:ci database
+if [[ "${POSTGRES_IMAGE_PREBUILT:-0}" != "1" ]]; then
+  docker build -t dicedasher-postgres:ci database
+fi
 docker run -d --name "$POSTGRES_CONTAINER" \
   -e POSTGRES_PASSWORD=postgres \
   -p 127.0.0.1:5432:5432 \
