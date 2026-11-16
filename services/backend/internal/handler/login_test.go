@@ -54,7 +54,7 @@ func TestLoginHTTP(t *testing.T) {
 					t.Fatal("lost credentials")
 				}
 				return auth.Tokens{AccessToken: "access", RefreshToken: "secret-refresh", AccessExpiresAt: now.Add(time.Minute), RefreshExpiresAt: now.Add(time.Hour)}, tc.err
-			}}, nil, Options{CookieSecure: true, AllowedOrigins: []string{"https://app.example", "https://swagger.example"}})
+			}}, nil, nil, nil, Options{CookieSecure: true, AllowedOrigins: []string{"https://app.example", "https://swagger.example"}})
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(tc.body))
@@ -103,7 +103,7 @@ func TestLoginHTTP(t *testing.T) {
 }
 
 func TestLoginLocalCookie(t *testing.T) {
-	h := NewWithOptions(nil, nil, Options{CookieSecure: false})
+	h := NewWithOptions(nil, nil, nil, nil, Options{CookieSecure: false})
 	w := httptest.NewRecorder()
 	h.setRefreshCookie(w, auth.Tokens{RefreshToken: "refresh", RefreshExpiresAt: time.Now().Add(time.Hour)})
 	c := w.Result().Cookies()[0]

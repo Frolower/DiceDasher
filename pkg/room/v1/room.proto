@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package dicedasher.room.v1;
+
+option go_package = "diceDasher/pkg/room/v1;roomv1";
+
+service RoomService {
+  rpc CreateRoom(CreateRoomRequest) returns (CreateRoomResponse);
+}
+
+message CreateRoomRequest {
+  string system = 1;
+  string user_id = 2;
+}
+
+message CreateRoomResponse {
+  string status = 1;
+  string room_id = 2;
+}

@@ -50,7 +50,7 @@ func TestLogoutHTTP(t *testing.T) {
 					t.Fatalf("wrong refresh token: %q", token)
 				}
 				return tc.err
-			}}, nil, Options{CookieSecure: tc.secure, AllowedOrigins: []string{tc.allowedOrigin, "https://swagger.example"}})
+			}}, nil, nil, nil, Options{CookieSecure: tc.secure, AllowedOrigins: []string{tc.allowedOrigin, "https://swagger.example"}})
 			router := httputil.NewRouter()
 			h.RegisterRouters(router)
 			req := httptest.NewRequest(http.MethodPost, "/logout", nil)

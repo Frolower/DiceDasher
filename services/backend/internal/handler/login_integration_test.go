@@ -52,7 +52,7 @@ func TestLoginPostgres(t *testing.T) {
 		}
 	}()
 	router := httputil.NewRouter()
-	NewWithOptions(service, nil, Options{CookieSecure: false, AllowedOrigins: []string{"http://localhost:8888"}}).RegisterRouters(router)
+	NewWithOptions(service, nil, nil, nil, Options{CookieSecure: false, AllowedOrigins: []string{"http://localhost:8888"}}).RegisterRouters(router)
 	request := func(username, password string) *httptest.ResponseRecorder {
 		raw, _ := json.Marshal(loginRequest{Username: username, Password: password})
 		req := httptest.NewRequest(http.MethodPost, "/login", strings.NewReader(string(raw)))

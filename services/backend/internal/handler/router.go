@@ -16,9 +16,10 @@ func (h *Handler) RegisterRouters(r *httputil.Router) {
 	// user specific routes
 	r.Handle("/user").PATCH(h.RequreAuth(h.HandleUpdateUser)).DELETE(h.RequreAuth(h.HandleDeleteUser))
 	r.Handle("/password").PUT(h.RequreAuth(h.HandleUpdatePassword))
+	r.Handle("/room").POST(h.RequreAuth(h.HandleCreateRoom))
 
 	//health
-	r.Handle("/health").GET(Health)
+	r.Handle("/health").GET(h.Health)
 }
 
 func notImplemented(w http.ResponseWriter, r *http.Request) {
