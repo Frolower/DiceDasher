@@ -1,0 +1,123 @@
+.characters-page {
+  padding-block: 32px 64px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.characters-page h1 {
+  font:
+    800 clamp(1.8rem, 4vw, 2.6rem)/1.2 Manrope,
+    sans-serif;
+  letter-spacing: -0.035em;
+}
+.characters-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  padding: 56px 24px;
+  margin-block: 40px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+}
+.characters-empty h2 {
+  font-size: 1.4rem;
+}
+.characters-empty p {
+  max-width: 48ch;
+  color: var(--muted);
+}
+.character-icon {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.characters-empty > .character-icon {
+  width: 56px;
+  height: 56px;
+  margin-bottom: 8px;
+}
+.character-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+}
+.character-list button {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 20px;
+  width: 100%;
+  padding: 24px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.character-list button:hover {
+  background: var(--surface);
+  border-color: var(--accent);
+}
+.character-list button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.character-list strong {
+  display: block;
+  font-size: 1.1rem;
+}
+.character-list small {
+  display: block;
+  color: var(--muted);
+  margin-top: 6px;
+}
+.characters-page .vtm-setup .vtm-check {
+  color: var(--ink);
+}
+@media (max-width: 520px) {
+  .characters-page.shell {
+    width: calc(100% - 32px);
+  }
+}
+.character-list {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+}
+.character-list button {
+  position: relative;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  aspect-ratio: 1;
+  height: 100%;
+  padding: 28px;
+}
+.character-list strong {
+  font-size: 1.4rem;
+  line-height: 1.3;
+}
+.character-card-system {
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+}
+.character-card-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.character-card-description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+.character-card-open {
+  margin-top: auto;
+  align-self: flex-end;
+  color: var(--accent);
+}
+.character-card-chronicle {
+  font-size: 0.85rem;
+  color: var(--muted);
+}

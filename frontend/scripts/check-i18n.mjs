@@ -1,25 +1,67 @@
+import { loadLocaleRegistry } from './locale-registry.mjs'
 import ts from 'typescript'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 
 const read = (path) => fs.readFileSync(new URL(path, import.meta.url), 'utf8')
-const en = JSON.parse(read('../src/locales/en.json'))
-const ru = JSON.parse(read('../src/locales/ru.json'))
-assert.ok(
-  Object.keys(ru).every((key) => Object.hasOwn(en, key)),
-  'Russian keys must exist in English',
-)
-for (const key of Object.keys(en)) {
-  assert.ok(en[key].trim(), `Empty English translation: ${key}`)
-  if (!ru[key]?.trim()) continue
-  const placeholders = (value) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort()
-  assert.deepEqual(placeholders(en[key]), placeholders(ru[key]), `Parameters differ: ${key}`)
+const { en, ru, localeModules, mergeDictionaries } = await loadLocaleRegistry()
+const localeRoot = new URL('../src/locales/', import.meta.url)
+const registeredFiles = []
+const parameters = (value) => [...value.matchAll(/\{(\w+)\}/g)].map((match) => match[1]).sort()
+for (const [namespace, translations] of Object.entries(localeModules)) {
+  assert.deepEqual(
+    Object.keys(translations.en).sort(),
+    Object.keys(translations.ru).sort(),
+    `Language keys differ: ${namespace}`,
+  )
+  for (const language of ['en', 'ru']) {
+    const relative = `${namespace}/${language}.json`
+    registeredFiles.push(relative)
+    const source = fs.readFileSync(new URL(relative, localeRoot), 'utf8')
+    const parsed = JSON.parse(source)
+    assert.deepEqual(parsed, translations[language], `Registry differs from ${relative}`)
+    const properties = ts.parseJsonText(relative, source).statements[0].expression.properties
+    const keys = properties.map((property) => property.name.text)
+    assert.equal(new Set(keys).size, keys.length, `Repeated key within ${relative}`)
+    for (const [key, value] of Object.entries(parsed)) {
+      assert.equal(typeof value, 'string', `Non-string translation: ${relative}: ${key}`)
+      assert.ok(value.trim(), `Empty translation: ${relative}: ${key}`)
+      assert.deepEqual(
+        parameters(value),
+        parameters(translations.en[key]),
+        `Parameters differ: ${relative}: ${key}`,
+      )
+    }
+  }
 }
+const actualFiles = fs
+  .readdirSync(localeRoot, { recursive: true })
+  .filter((file) => file.endsWith('.json'))
+assert.deepEqual(
+  actualFiles.sort(),
+  registeredFiles.sort(),
+  'Every dictionary file must be registered',
+)
+for (const language of ['en', 'ru']) {
+  assert.throws(
+    () =>
+      mergeDictionaries(
+        {
+          first: { en: { 'test.same': 'One' }, ru: { 'test.same': 'Один' } },
+          second: { en: { 'test.same': 'Two' }, ru: { 'test.same': 'Два' } },
+        },
+        language,
+      ),
+    /Duplicate translation "test.same".*first and second/,
+  )
+}
+assert.deepEqual(Object.keys(en).sort(), Object.keys(ru).sort())
 let instance = 0
 const load = (translations = ru) => {
-  const source = read('../src/lib/i18n.ts')
-    .replace("import en from '../locales/en.json'", `const en = ${JSON.stringify(en)}`)
-    .replace("import ru from '../locales/ru.json'", `const ru = ${JSON.stringify(translations)}`)
+  const source = read('../src/lib/i18n.ts').replace(
+    "import { en, ru } from '../locales'",
+    `const en = ${JSON.stringify(en)}; const ru = ${JSON.stringify(translations)}`,
+  )
   const code = ts.transpileModule(source, {
     compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
   }).outputText
@@ -104,6 +146,9 @@ try {
   const { ThemeSettings } = await server.ssrLoadModule('/src/components/ThemeSettings.tsx')
   const { ProfilePage } = await server.ssrLoadModule('/src/components/ProfilePage.tsx')
   const { DemoPage } = await server.ssrLoadModule('/src/components/DemoPage.tsx')
+  const { CharactersPage } = await server.ssrLoadModule(
+    '/src/features/characters/CharactersPage.tsx',
+  )
   const { ProfileSettings } = await server.ssrLoadModule('/src/components/ProfileSettings.tsx')
   const { SideMenu } = await server.ssrLoadModule('/src/components/SideMenu.tsx')
   const { LanguagePicker } = await server.ssrLoadModule('/src/components/LanguagePicker.tsx')
@@ -118,6 +163,7 @@ try {
       [h(ProfilePage, { username: 'Алиса' }), 'text.rooms'],
       [h(DemoPage, { kind: 'characters' }), 'text.aNocturnalStorytellerWithADangerousSecret'],
       [h(DemoPage, { kind: 'friends' }), 'text.friends'],
+      [h(CharactersPage), 'characters.emptyTitle'],
       [h(ProfileSettings, { token: 'test' }), 'text.settings'],
       [
         h(SideMenu, { logoutError: 'text.unableToLogOutPleaseTryAgain' }),
@@ -138,6 +184,18 @@ try {
       )
     }
     assert.ok(render(h(ProfilePage, { username: 'Алиса' })).includes('Алиса'))
+    const characterList = render(h(CharactersPage))
+    assert.doesNotMatch(
+      characterList,
+      /Сородич|Vampire|Masquerade|V5|ноч[ьи]/,
+      'The empty character collection must stay system neutral',
+    )
+    if (language === 'en')
+      assert.doesNotMatch(
+        characterList,
+        /[А-Яа-яЁё]/,
+        'The English character list must not contain hardcoded Russian',
+      )
   }
 } finally {
   await server.close()

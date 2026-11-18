@@ -1,11 +1,12 @@
+import { loadLocaleRegistry } from './locale-registry.mjs'
 import ts from 'typescript'
 import fs from 'node:fs'
 import assert from 'node:assert/strict'
 
-const en = JSON.parse(fs.readFileSync(new URL('../src/locales/en.json', import.meta.url), 'utf8'))
+const { en } = await loadLocaleRegistry()
 const source = fs
   .readFileSync(new URL('../src/lib/auth.ts', import.meta.url), 'utf8')
-  .replace("import en from '../locales/en.json'", `const en = ${JSON.stringify(en)}`)
+  .replace("import { en } from '../locales'", `const en = ${JSON.stringify(en)}`)
 const { outputText } = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2023 },
 })

@@ -1,6 +1,6 @@
 import { LanguagePicker } from './components/LanguagePicker'
 import { getLanguage, subscribeLanguage, t } from './lib/i18n'
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, lazy, Suspense } from 'react'
 import { AuthDialog } from './components/AuthDialog'
 import { SideMenu } from './components/SideMenu'
 import type { ReactNode } from 'react'
@@ -13,6 +13,11 @@ import { ProfilePage } from './components/ProfilePage'
 import { type AuthMode, logout, userErrorMessage } from './lib/auth'
 import { getSession, refreshSession, setSession, subscribeSession } from './lib/auth'
 import './App.css'
+const CharactersPage = lazy(() =>
+  import('./features/characters/CharactersPage').then((module) => ({
+    default: module.CharactersPage,
+  })),
+)
 
 function App() {
   const language = useSyncExternalStore(subscribeLanguage, getLanguage, getLanguage)
@@ -229,7 +234,17 @@ function App() {
         />
         <Route
           path="/characters"
-          element={protect(<DemoPage key="characters" kind="characters" />)}
+          element={protect(
+            <Suspense
+              fallback={
+                <main id="main" className="shell">
+                  <p role="status">{t('characters.loading')}</p>
+                </main>
+              }
+            >
+              <CharactersPage key={session?.username} owner={session?.username ?? ''} />
+            </Suspense>,
+          )}
         />
         <Route path="/friends" element={protect(<DemoPage key="friends" kind="friends" />)} />
         <Route path="*" element={<NotFoundPage homePath={session ? '/profile' : '/'} />} />
