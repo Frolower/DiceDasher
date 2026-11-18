@@ -55,7 +55,7 @@ terminate HTTPS at your ingress, and set `COOKIE_SECURE=true` in the backend env
 - Validation follows the current Go registration rules, including 8–72 ASCII characters, English uppercase/lowercase letters, a digit, and a printable special character. Spaces, Cyrillic, accented letters, and emoji are rejected. Login applies the same ASCII character restrictions, but does not apply the registration password complexity checks.
 - Access tokens are kept in memory only. On page load, the app restores the session using the HttpOnly refresh cookie (`POST /api/refresh`, then `GET /api/me`). It also refreshes tokens before expiry and retries authenticated requests once after a `401`.
 - Signed-in users can log out using the red **Log out** button at the bottom of the left navigation menu. It sends `POST /api/logout` with credentials included. On success, the app clears its in-memory session, closes the menu, and returns to `/`.
-- During logout, the button is disabled and shows **Logging out…**. Failed requests leave the session in place and display an error beside the button so the user can retry. HTTP errors use messages defined in `src/lib/auth.ts`; network errors currently display the browser's error message.
+- During logout, the button is disabled and shows **Logging out…**. Failed requests leave the session in place and display an error beside the button so the user can retry. HTTP errors use safe message keys defined in `src/lib/auth.ts`; network failures use a safe localized fallback.
 - Logout waits for any active refresh to finish before revoking the session. Concurrent logout calls share one request, and new refresh calls wait for logout to settle.
 - The central d20 rotates slowly; click it or press Enter/Space to pause or resume. Rotation pauses while an account dialog is open and respects the system reduced-motion preference.
 
@@ -75,6 +75,11 @@ npm test
 npm run lint
 ```
 
+The test command runs auth, localization and V5 logic/render checks. V5 coverage includes the seven
+creation stages and the sheet in both languages. UI checks render static HTML; they do not click
+through a browser. There is currently no automated browser E2E suite. See
+[frontend verification](../docs/frontend/testing.md) for coverage and manual-check boundaries.
+
 ## Formatting
 
 ```sh
@@ -93,7 +98,8 @@ React Router handles navigation without reloading the document:
 - `/`: public landing page; signed-in users continue to `/profile`.
 - `/profile`: profile and Rooms (`/rooms` redirects here).
 - `/settings`: account settings.
-- `/characters` and `/friends`: demo pages.
+- `/characters`: character collection, V5 creation and character sheets.
+- `/friends`: demo page.
 - `/login`: login dialog; successful login returns to the requested private page.
 
 Private routes wait for session restoration before redirecting to login. Unknown
@@ -168,7 +174,8 @@ in both languages, but does not measure palette contrast or verify visual layout
 
 ## Vampire: The Masquerade V5
 
-The authenticated character page includes guided V5 creation and a free-form two-page sheet.
+The authenticated character page includes guided V5 creation, two character-sheet pages and a
+separate, unnumbered Description view. View/edit modes are separate from zoom; damage, Humanity
+and Hunger trackers remain interactive outside editing.
 Characters currently stay in tab memory only; no character backend writes occur. JSON export is
-available. See [V5 implementation notes](../docs/frontend/vtm-v5.md) for rules, source assumptions,
-UI behavior, and verification.
+available. See [V5 implementation notes](../docs/frontend/vtm-v5.md) for rules, UI behavior, and verification.

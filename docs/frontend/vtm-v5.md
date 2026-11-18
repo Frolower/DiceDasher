@@ -1,159 +1,133 @@
 # Vampire: The Masquerade V5 — frontend
 
-Entry point: authenticated `/characters`. Character creation now replaces the example cards.
-Only V5 is offered; other systems have no frontend creator yet.
+The authenticated `/characters` page provides a system-neutral collection and system-selection
+dialog. V5 is currently the only implemented creator. The collection lives in
+`frontend/src/features/characters`; the V5 catalog, rules, wizard and sheet live in
+`frontend/src/features/vtm`.
 
-## State and boundaries
+## State and persistence
 
-Characters stay in memory for the current tab, partitioned by account username. Navigating within
-DiceDasher retains completed sheets; reloading the tab clears them. No character API or database
-writes are made. JSON export includes the full current sheet and experience history. There is
-currently no JSON import. The existing login/session handling remains in place. The shared collection is implemented in `features/characters`; V5 rules and sheets remain in `features/vtm`.
+Completed characters stay in tab memory, partitioned by account username. In-app navigation retains
+them; reloading the tab clears them. There are no character API calls or database writes. JSON
+export includes the current character and experience history; JSON import is not implemented.
 
-The system-neutral character collection and system-selection dialog follow the app language (English/Russian). The entire V5 wizard, both sheet pages, catalog, validation, tooltips and XP advancement follow the same English/Russian setting. Original English catalog names remain searchable. The PDF is a visual
-reference, not an embedded form or a runtime dependency.
+Cards show the system, character name, clan, generation, Chronicle and description. The collection
+and creation dialog are system-neutral; V5 terminology appears inside its creator and sheet.
 
-## Creation and editing
+## Guided creation
 
-Seven stages cover identity, attributes, one of three skill distributions and specialties, clan
-disciplines, 18 predator types, advantages/flaws, and 1–3 conviction/touchstone pairs. Step navigation
-retains form values. Attribute, skill and discipline quotas block invalid clicks immediately. Attributes begin unassigned (0) in the wizard, and every rating can be cleared. Changing skill distribution retains feasible values and clears values exceeding the new quotas. Completing validates every stage again, including choices changed on earlier
-stages. Ancilla budgets are 9/4 and XP 35; neonates start with XP 15.
+The setup dialog offers creation with rules or a blank sheet. Guided creation always uses rules
+and has seven stages:
 
-Predator gifts are separate from the 7/2 (or 9/4) player budget, with locked floors and editable
-additional dots. A Siren can upgrade Beautiful to Stunning by paying only the extra two dots.
-Thin-blood traits use counts (1–3 merits and the same number of flaws, maximum six combined).
-Discipline Affinity and Thin-blood Alchemist supply their starting dots; the latter also provides
-one formula slot. Thin-bloods may choose or skip a predator type as requested.
+1. Identity, clan, age category, generation and optional description.
+2. Attributes: one at 4, three at 3, four at 2 and one at 1.
+3. Skills: Jack of All Trades, Balanced or Specialist, plus specialties.
+4. Starting disciplines: two dots in one discipline and one in another.
+5. Predator type and its grants, discipline and specialty choices.
+6. Merits, backgrounds and flaws, including prerequisites and exclusions.
+7. One to three Conviction/Touchstone pairs, displayed as two cards per pair without numbering.
 
-Catalog data is a local snapshot from <https://vtm.paradoxwikis.com/Advantages_and_Flaws>, checked
-2026-11-18. It retains names, categories, fixed values, discrete alternatives, and open-ended values.
-Descriptions are omitted. Cult sections, ghouls, loresheets and coterie management are excluded.
-Unpriced Ingrained Discipline Flaws are separate, require their discipline and never pay the normal
-flaw-dot budget. Domain is included only as the Tithe Collector grant/selection.
+Attributes begin unassigned at 0. Attribute, skill and discipline quotas prevent invalid clicks;
+ratings can be cleared. Changing the skill distribution retains feasible values and clears excess
+assignments. Jack of All Trades and Balanced cap starting skills at 3; Specialist has one skill at 4.
+There is no extra Specialist/max-rating hint beside the distribution choices.
 
-The source does not state the Roadside Killer's Prey Exclusion (locals) cost. This implementation
-uses the catalog's standard one-dot Prey Exclusion. Blood Leech's explicit two-dot variant and Grim
-Reaper's one-dot Allies grant are preserved as predator exceptions. They aren't silently rewritten
-to the catalog's standard values. Salubri uses Auspex, Dominate, Fortitude.
+Returning to an earlier step retains values. Completion validates all seven stages again, including
+choices affected by earlier changes. Age category is creation metadata and is not shown on the sheet.
 
-Rules can be disabled at any point to move to unrestricted sheet editing. Re-enabling checks
-**only** `Health = Stamina + 3` and `Willpower = Composure + Resolve`, with exact equality. It
-never attempts to reconstruct creation or retroactively validate the remainder of a free-form sheet.
-Advancement charges each next level separately, checks available XP and mechanical restrictions,
-and applies the purchase atomically. Players award their own XP. Ritual/formula names and discipline
-powers are free text; the system doesn't infer narrative eligibility from those names.
+Player trait budgets are 7 advantage dots and 2 flaw dots, or 9/4 for Ancillae. Predator gifts have
+separate mandatory floors and do not spend that budget; additional player dots do. The guided trait
+picker supports search in either language, category filters, discrete value steppers, collapsed
+details and quick removal. Removing an upgraded predator trait resets it to its mandatory floor;
+a mandatory grant itself cannot be removed in the wizard. Siren's Beautiful can upgrade to Stunning
+for the two additional dots.
 
-Trait compatibility checks cover explicit exclusions, clan/age access, skill limits, discipline
-requirements, Mask/Fame/Haven/mobile-haven prerequisites, and the configured thin-blood clan curse.
-Narrative assertions are player supplied. The diablerie prerequisite is shown only with a selected diablerie-dependent flaw, not as a general creation question. The technical catalog source/exclusion note is not displayed in the flow.
+Thin-bloods choose one to three merits and the same number of flaws, at most six combined.
+Discipline Affinity and Thin-blood Alchemist supply starting dots; the latter supplies one formula
+slot. Thin-bloods may choose a predator type or skip it.
 
-## Design
+## Finished sheet: viewing, editing and play
 
-The existing React app's semantic colors and controls surround a V5 sheet, with red section rules,
-dot ratings and three attribute/skill columns drawn from the supplied two-page reference. The
-whole-page view scales the natural page to available height and width. Editing uses readable
-controls and reflows to one column on narrow screens. Long text is edited at the readable scale.
-The sheet can grow if the character has many traits or disciplines.
+The sheet opens in view mode. Zoom is separate from editing: whole-page view fits the natural sheet
+to available width and height, while close-up view uses readable controls and responsive layout.
+**Edit** enables character changes and opens the close-up view; **Done** returns to view mode.
+Selected dropdown values display as plain text outside editing. The rule switch is available only
+while editing the completed sheet, not inside the guided wizard.
 
-Tokens reuse `--panel`, `--ink`, `--muted`, `--line`, and `--accent` across existing themes. The
-sheet's red is `#991f36` in light appearances and `#f3a4b5` in dark appearances. Body/control text is
-16px; display title 29–42px; labels 13px; controls at least 44px tall except the dot targets (32px
-on regular desktop, 40px on narrower wizard layouts). Static paper overview is deliberately scaled;
-a clearly labelled action returns to the readable editor. No decorative animation or blur is added.
+The page switcher has **1 · Character**, **2 · Background** and **Description**. Description has no
+page number and occupies its own view; it is not a sidebar or dialog. Its text is editable only in
+edit mode and also appears on the collection card.
 
-Applied apple-design references (web foundations rather than native macOS navigation conventions):
+Attributes, skills and selected disciplines use five dots; Blood Potency uses ten. Increasing them
+with rules enabled purchases each intervening level for XP atomically. Free mode changes them
+directly. Ratings do not show a duplicate numeric value beside their dots. Merits, backgrounds and
+flaws also use individually spaced dots in view mode, matching the skill ratings.
 
-- `entering-data.md › Best practices`: “Dynamically validate field values.” Validation appears
-  inline; fields and budgets retain their values when corrected.
-- `buttons.md › Style`: “Keep the number of prominent buttons to one or two per view.” Each
-  stage has one prominent next/completion action.
-- `buttons.md › Content`: “Ensure that each button clearly communicates its purpose.” Rule toggle,
-  page switching, fit/edit, export, and XP purchases use text labels.
+The following play controls remain interactive outside editing, in either zoom mode:
 
-Additional reviewed references: accessibility, layout, typography, color, designing-for-macos,
-text-fields, toggles and cross-platform. Keyboard focus, native dialog focus containment,
-checkbox/radio semantics and number inputs are preserved. All option pickers share the system-neutral `SelectField` component: labelled combobox/listbox, portalled popup, selected/disabled states, arrow keys, Home/End, typeahead, Enter, Escape and focus restoration. The popup stays inside a modal dialog when opened there. Existing reduced-motion
-rules cover the new controls. Existing light/dark theme tokens are reused rather than introducing
-a separate appearance preference.
+- Health and Willpower damage: click a box to cycle empty → superficial → aggravated → empty.
+  Superficial damage is one corner-to-corner diagonal; aggravated damage is a cross.
+- Humanity: ten squares representing 0–10.
+- Hunger: five squares representing 0–5. Selected Humanity and Hunger squares use crosses.
+
+Squares measure 20 × 20 px at close-up scale and 16 × 16 px on the natural whole-page sheet,
+before page scaling. Groups have a gap after every five marks; Blood Potency dots have the same
+five-mark grouping. Humanity and Willpower are centered against a ten-slot track, Health against
+thirteen slots. Health/Willpower slots beyond the current maximum reserve invisible space without
+creating interactive or accessible controls. Hunger stays aligned to the right edge of its row.
+Visible values are represented by the marks; accessible labels retain the values and damage states.
+Health and Willpower maximum number inputs appear only when editing a free-mode sheet.
+
+In free editing, Merits, Backgrounds and Flaws each support adding and deleting rows with a name and
+rating, capped at five dots. The additional catalog editor remains available below the background
+page. Rules mode keeps mechanical advancement in the XP workflow. Numeric editors allow clearing
+the field while typing; an empty field commits its fallback on blur (10 for generation, otherwise
+the field minimum).
+
+Resonance is a compact preset selector on the left: Choleric, Melancholic, Phlegmatic, Sanguine and
+Animal, plus an unset state. It follows the same view/edit behavior as other dropdowns. Existing custom resonance text is preserved until replaced.
+
+On the background page, Notes grows as text is entered, pushing rituals downward while reserving
+space for rituals, other powers and the footer. Once that space is exhausted, Notes scrolls
+internally instead of extending the page. The cap also accounts for a taller left column; adding
+rituals reduces the available Notes space.
+
+## Rules and advancement boundaries
+
+Disabling rules on the completed sheet enables free editing. Re-enabling checks only exact equality
+for `Health = Stamina + 3` and `Willpower = Composure + Resolve`. It does not reconstruct creation or
+retroactively validate the rest of a freely edited sheet.
+
+Neonates start with 15 XP and Humanity 7; Ancillae start with 35 XP and Humanity 6, before predator
+modifiers. Players award their own XP. Purchases check the next-level cost, available XP, generation
+limits and configured restrictions, then apply atomically. A failed purchase leaves the character
+and XP unchanged. Ritual/formula names and discipline powers are player text; narrative eligibility
+is not inferred from their names.
+
+Trait compatibility checks include explicit opposing traits, clan/age access, skill and discipline
+requirements, Mask/Fame/Haven/mobile-haven prerequisites and the selected thin-blood clan curse.
+Narrative assertions are player supplied. The diablerie prerequisite is asked only when relevant to
+a selected flaw, not as a general identity question.
+
+## Localization and shared controls
+
+Every screen supports English and Russian through the single application language setting. V5
+strings live in `frontend/src/locales/systems/vtm/{en,ru}.json`; the shared character collection has
+its own `characters` dictionaries. See the [dictionary guide](../../frontend/src/locales/README.md)
+for registration and validation. `labelKeys` maps built-in catalog labels to stable translation keys.
+
+Rule errors and XP history store keys and parameters, including nested label references, and
+translate when rendered. IDs, category values and selections are language-independent. Switching
+language preserves character data. Predator-generated default details/specialties carry provenance
+flags; only those defaults are translated. Player names, descriptions, specialties, notes, powers
+and custom trait text are never translated, even when they match built-in terms.
+
+All dropdowns use the shared `SelectField`: labelled combobox/listbox, selected/disabled states,
+arrow keys, Home/End, typeahead, Enter, Escape and focus restoration. Popups remain inside a modal
+when opened there. The sheet reuses existing semantic light/dark theme tokens and focus styles.
 
 ## Verification
 
-Run `npm test`, `npm run build`, and `npm run lint` in `frontend`.
-`check-vtm.mjs` exercises complete creation, all predator data, budgets, locked gift exceptions,
-discrete values, unpriced flaws, compatibility/prerequisites, thin-blood balance and grants,
-re-enabling rules, XP costs, health/willpower updates, upgrades and immutable failed purchases.
-
-Browser checks cover the full guided flow, extending predator Resources 1 to 5 within the 7-dot
-player budget, an XP purchase with derived Willpower, rejection of Health 99 on re-enabling rules,
-two-page switching and narrative editing. Responsive/appearance checks use a temporary local
-fixture with the same production CharacterSheet component; no preview route or auth bypass is shipped.
-
-## Terminology and interface revision
-
-Russian attribute/skill names follow the supplied `Charsheet V5 custom rus.pdf`, including
-Исполнение, Воровство, Фехтование, Уличное чутьё, Гуманитарные науки, Естественные науки,
-Наблюдательность, Техника, Обаяние, Манипуляция, Смекалка and Упорство. Discipline names follow
-<https://wta5.ru/vampire/disciplines>, checked 2026-11-18: Сокрытие, Величие, Метаморфозы,
-Алхимия Тонкой Крови and the remaining listed disciplines. The age-category label is
-«Возрастная категория».
-
-The trait stage has budget summaries, a searchable category-filtered catalog, explicit add buttons
-and a separate chosen list with compact discrete steppers. Details are collapsed by default. The
-chosen list moves above the catalog at narrow widths. No control forces a label to share a flex row
-with a 100%-width select. Budgets and mandatory predator floors are enforced while editing.
-
-Browser regression checks cover English collection/setup, custom pickers inside dialogs, Escape
-without dismissing the dialog, arrow/Enter selection, quota-disabled ratings, predator Resources
-upgrades, Haven/No Haven rejection, and the trait layout at 390px in dark appearance.
-
-## Complete localization
-
-Both languages are mandatory across the entire frontend. V5 copy and built-in labels live in the
-`frontend/src/locales/systems/vtm/{en,ru}.json`; `labelKeys` maps only built-in Russian data labels to stable keys.
-Rule errors and XP history store message keys and parameters, with nested label references, rather
-than translated strings. They update when the app language changes. IDs, trait categories and
-selected option values remain independent of display language.
-
-Predator-generated specialty text and gift details carry provenance flags. Only these built-in
-defaults are localized; player-authored names, specialties, background details, powers, notes and
-biography remain exactly as entered, even when they happen to match a built-in term.
-
-`check-vtm-i18n.mjs` renders all seven wizard steps and both sheet pages in overview/editor and
-rule/free modes in both languages. It checks the full catalog, every predator's defaults,
-prerequisites, errors and XP history, rejects Russian service text in English screens and verifies
-that changing language does not mutate character data. Character UI code loads on demand.
-
-## Character editing refinements
-
-Guided creation always uses rules; the mode switch is available in setup and on the finished sheet.
-Jack of All Trades and Balanced cap initial Skills at 3, while Specialist includes one Skill at 4.
-The wizard explains this beside the distribution choices. Description is optional on the identity
-step and remains editable on the sheet. Collection cards show system, name, clan, generation and
-description. Conviction/Touchstone pairs use two responsive cards without numbered labels.
-
-All sheet Attributes, Skills and selected Disciplines use five clickable dots. Free editing permits
-changes directly; rule-mode increases purchase each intervening level for XP atomically. Failed
-purchases leave all values and XP unchanged. Overview mode remains read-only. Age category is
-retained as creation metadata without displaying it on the sheet.
-
-Numeric editors keep a temporary empty string during editing and commit a field-specific fallback
-on blur (10 for generation, the field minimum elsewhere). Trait removal resets predator-derived
-traits to their mandatory floor and removes ordinary selections. Mandatory grants cannot be removed.
-Browser checks verify all seven English steps, language switching with authored text preserved,
-trait removal, numeric clearing and fallback, free dot editing, and the collection card fields.
-
-## Playing from the sheet
-
-View and edit modes are independent of zoom. Outside editing, selected dropdown values render as
-plain text. Health and Willpower damage boxes remain interactive, and Hunger has five interactive
-squares (0–5), in both page-fit and close-up views. Other character fields stay locked.
-
-On the background page, Notes grows with its text while reserving space for rituals, other powers
-and the footer. Its height is capped by the page boundary or the taller left column; further text
-scrolls inside Notes. Adding rituals reduces the available Notes space. The collection card also
-shows the authored Chronicle name.
-
-Browser checks cover superficial/aggravated damage and Hunger changes while editing is closed,
-plain Clan/Predator values, and Notes with 8, 100 and 200 lines. The latter two keep the same field
-and page heights with internal scrolling, and the browser reports no console errors.
+Run `npm test`, `npm run build`, `npm run lint` and `npm run format:check` from `frontend/`.
+The [frontend testing guide](testing.md) separates automated coverage from manual browser checks.
+There is currently no committed automated browser scenario that clicks through the entire wizard.
