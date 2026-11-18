@@ -1,0 +1,1444 @@
+/* The sheet borrows V5's red rules and dot notation; controls follow app themes. */
+.vtm-page {
+  --vtm-red: light-dark(#991f36, #f3a4b5);
+  padding-block: 32px 64px;
+  font-size: 16px;
+  line-height: 1.5;
+}
+.vtm-page h1 {
+  font-family: Manrope, sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  line-height: 1.2;
+  letter-spacing: -0.035em;
+}
+.vtm-page h2 {
+  font-size: 1.2rem;
+  margin-block: 20px 12px;
+}
+.vtm-page h3 {
+  font-size: 1rem;
+  margin-block: 16px 8px;
+}
+.vtm-page :is(h1, h2):focus:not(:focus-visible) {
+  outline: none;
+}
+.vtm-page :is(select, textarea) {
+  font: inherit;
+  color: var(--ink);
+}
+.vtm-page :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+  width: 100%;
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--input-line);
+  border-radius: 7px;
+  padding: 10px 12px;
+  min-height: 44px;
+  min-width: 0;
+}
+.vtm-page textarea {
+  min-height: 90px;
+  resize: vertical;
+  line-height: 1.5;
+}
+.vtm-page :is(input, select, textarea, button):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+.vtm-page button:disabled {
+  cursor: default;
+}
+.vtm-page button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.vtm-page .vtm-hint,
+.vtm-local-notice {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin-block: 12px;
+}
+.vtm-local-notice {
+  padding: 12px 16px;
+  border-left: 3px solid var(--input-line);
+  background: var(--surface);
+}
+.vtm-hint a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.vtm-intro {
+  color: var(--muted);
+  margin-block: 12px 28px;
+  max-width: 65ch;
+}
+.vtm-eyebrow {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  margin-block: 0 12px;
+}
+.vtm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.vtm-grid > * {
+  min-width: 0;
+}
+.vtm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  margin-block: 8px;
+}
+.vtm-field > span {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.vtm-number input {
+  font-variant-numeric: tabular-nums;
+}
+.vtm-check {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+}
+.vtm-check input {
+  accent-color: var(--accent);
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+}
+.vtm-check small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+.vtm-setup .vtm-eyebrow {
+  margin-top: 16px;
+}
+.vtm-rules-option {
+  padding: 16px;
+  margin-block: 20px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  align-items: start;
+}
+.vtm-topline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-block: 0 16px;
+}
+.vtm-topline > .vtm-check {
+  margin-left: auto;
+}
+.vtm-workspace,
+.vtm-sheet-view {
+  width: min(1450px, calc(100% - 64px));
+  margin-inline: auto;
+}
+.vtm-wizard-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+.vtm-wizard-content {
+  background: var(--panel);
+  padding: clamp(20px, 3vw, 40px);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  min-width: 0;
+}
+.vtm-steps {
+  position: sticky;
+  top: 24px;
+}
+.vtm-steps ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.vtm-steps button {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  width: 100%;
+  border-radius: 8px;
+  padding: 10px 8px;
+  font-size: 0.875rem;
+  margin-block: 3px;
+}
+.vtm-steps button span {
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--input-line);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.vtm-steps button[aria-current='step'] {
+  background: var(--surface);
+  font-weight: 700;
+}
+.vtm-steps button[aria-current='step'] span {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.vtm-steps button:hover:not(:disabled) {
+  background: var(--surface);
+}
+.vtm-character-summary {
+  display: grid;
+  gap: 6px;
+  padding: 20px 8px;
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.vtm-character-summary span {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+.vtm-wizard-actions,
+.vtm-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.vtm-wizard-actions {
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+  margin-top: 32px;
+}
+.vtm-budget {
+  display: flex;
+  gap: 12px 28px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  padding: 14px 18px;
+  border-radius: 10px;
+  margin-block: 20px;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.vtm-budget strong {
+  margin-left: 8px;
+}
+.vtm-stat-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+}
+.vtm-stat-columns > section {
+  min-width: 0;
+}
+.vtm-stat-columns h3 {
+  color: var(--muted);
+  font-size: 0.8125rem;
+}
+.vtm-rating {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 42px;
+  font-size: 0.8125rem;
+}
+.vtm-dots {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.vtm-dots button {
+  min-height: 32px;
+  width: 24px;
+  padding: 3px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+}
+.vtm-dots button:hover:not(:disabled) {
+  background: var(--surface);
+}
+.vtm-dots button:disabled {
+  opacity: 1;
+}
+.vtm-dots span {
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+}
+.vtm-dots .filled {
+  background: currentColor;
+}
+.vtm-dots output {
+  width: 16px;
+  text-align: right;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+.vtm-distribution {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.vtm-distribution label {
+  cursor: pointer;
+  padding: 16px;
+  border: 1px solid var(--input-line);
+  border-radius: 10px;
+  font-size: 0.875rem;
+}
+.vtm-distribution input {
+  min-height: 20px;
+  accent-color: var(--accent);
+}
+.vtm-distribution strong,
+.vtm-distribution small {
+  display: block;
+}
+.vtm-distribution small {
+  color: var(--muted);
+  margin-top: 8px;
+}
+.vtm-distribution .chosen {
+  border: 2px solid var(--accent);
+  padding: 15px;
+  background: var(--surface);
+}
+.vtm-note {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 16px;
+  margin-block: 20px;
+  font-size: 0.875rem;
+}
+.vtm-errors {
+  color: var(--error);
+  background: var(--error-surface);
+  padding: 16px 20px;
+  border: 1px solid var(--error);
+  border-radius: 8px;
+  margin-block: 20px;
+  font-size: 0.875rem;
+}
+.vtm-errors ul {
+  padding-left: 20px;
+  margin-block: 8px 0;
+}
+.vtm-errors li + li {
+  margin-top: 6px;
+}
+.vtm-catalog {
+  margin-block: 20px;
+  border-top: 1px solid var(--line);
+}
+.vtm-trait-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+}
+.vtm-trait-line > div:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.vtm-trait-line strong {
+  font-size: 0.9375rem;
+}
+.vtm-trait-line small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.vtm-trait-line > select,
+.vtm-trait-line > .vtm-number {
+  width: 132px;
+  flex-shrink: 0;
+}
+.vtm-trait-line .vtm-number > span {
+  display: none;
+}
+.vtm-trait-selected {
+  padding: 0 16px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin-block: 10px;
+}
+.vtm-selection .vtm-trait-line {
+  border: 0;
+}
+.vtm-conviction {
+  padding-block: 8px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.vtm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+  margin-block: 48px;
+  padding: 48px 24px;
+  border: 1px dashed var(--input-line);
+  border-radius: 16px;
+}
+.vtm-empty p {
+  max-width: 45ch;
+  color: var(--muted);
+}
+.vtm-empty-seal {
+  font:
+    80px/1 Georgia,
+    serif;
+  color: var(--vtm-red);
+}
+.vtm-character-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+}
+.vtm-character-list button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  text-align: left;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+}
+.vtm-character-list button:hover {
+  border-color: var(--accent);
+  background: var(--surface);
+}
+.vtm-character-list strong {
+  font-size: 1.1rem;
+  display: block;
+  overflow-wrap: anywhere;
+}
+.vtm-character-list small {
+  display: block;
+  color: var(--muted);
+  margin-block: 6px;
+}
+.vtm-character-seal {
+  color: var(--vtm-red);
+  font:
+    48px/1 Georgia,
+    serif;
+}
+.vtm-sheet-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.vtm-segment {
+  display: inline-flex;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 3px;
+}
+.vtm-segment .button {
+  background: transparent;
+  color: var(--muted);
+}
+.vtm-segment [aria-pressed='true'] {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 1px 4px var(--button-shadow);
+}
+.vtm-sheet-viewport {
+  width: 100%;
+}
+.vtm-sheet {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  padding: clamp(16px, 3vw, 36px);
+  border-radius: 4px;
+  max-width: 1100px;
+  margin-inline: auto;
+  overflow-wrap: anywhere;
+}
+.vtm-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 3px double var(--vtm-red);
+  padding-top: 18px;
+  margin-bottom: 24px;
+}
+.vtm-sheet-header > span {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.vtm-sheet-brand {
+  font:
+    32px/1 Georgia,
+    serif;
+  letter-spacing: 0.02em;
+}
+.vtm-sheet-brand small {
+  display: block;
+  font:
+    9px/2 -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  letter-spacing: 0.3em;
+  text-align: center;
+}
+.vtm-sheet-block > h2 {
+  color: var(--vtm-red);
+  font-family: Georgia, serif;
+  text-transform: uppercase;
+  font-size: 1rem;
+  letter-spacing: 0.045em;
+  text-align: center;
+  border-bottom: 2px solid var(--vtm-red);
+  padding-block: 8px;
+  margin-block: 12px;
+}
+.vtm-sheet .vtm-identity {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.vtm-sheet .vtm-field > span {
+  color: var(--muted);
+}
+.vtm-sheet :is(input[readonly], textarea[readonly], select:disabled) {
+  border-color: transparent;
+  border-bottom-color: var(--line);
+  border-radius: 0;
+  padding-inline: 0;
+  opacity: 1;
+  background: transparent;
+}
+.vtm-sheet input:read-only {
+  cursor: default;
+}
+.vtm-sheet .vtm-grid.vtm-trackers,
+.vtm-sheet .vtm-narrative {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.vtm-tracker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-block: 10px;
+}
+.vtm-tracker button {
+  min-height: 28px;
+  width: 26px;
+  border: 1px solid var(--input-line);
+  background: transparent;
+  color: var(--ink);
+  font-size: 1.25rem;
+}
+.vtm-tracker button:disabled {
+  opacity: 1;
+}
+.vtm-specialty {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+.vtm-specialties-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-block: 10px;
+}
+.vtm-discipline-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.vtm-sheet-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 26px;
+}
+.vtm-sheet-columns > div {
+  min-width: 0;
+}
+.vtm-sheet-trait {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8125rem;
+}
+.vtm-sheet-trait small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.vtm-sheet-trait > span {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.vtm-sheet-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 12px;
+  border-bottom: 3px double var(--vtm-red);
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+.vtm-experience,
+.vtm-editor-panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 24px;
+  margin: 28px auto;
+  background: var(--panel);
+  max-width: 1100px;
+}
+.vtm-experience details {
+  margin-top: 16px;
+  font-size: 0.875rem;
+}
+.vtm-experience summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 10px;
+}
+.vtm-free-trait {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 100px auto;
+  gap: 16px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  padding-block: 12px;
+}
+.vtm-sheet-viewport.is-fit {
+  display: flex;
+  justify-content: center;
+  overflow: hidden;
+}
+.is-fit .vtm-sheet {
+  width: 900px;
+  min-width: 900px;
+  min-height: 1272px;
+  transform-origin: top center;
+  padding: 28px;
+  font-size: 13px;
+}
+.is-fit .vtm-sheet :is(input, textarea, select) {
+  min-height: 26px;
+  padding: 2px 0;
+  font-size: 12px;
+}
+.is-fit .vtm-sheet textarea {
+  min-height: 60px;
+  resize: none;
+  overflow: hidden;
+}
+.is-fit .vtm-sheet :is(.vtm-field, .vtm-grid) {
+  gap: 4px 12px;
+}
+.is-fit .vtm-sheet .vtm-field {
+  margin-block: 4px;
+}
+.is-fit .vtm-rating {
+  min-height: 30px;
+}
+.is-fit .vtm-dots button {
+  width: 20px;
+  min-height: 24px;
+}
+.is-fit .vtm-dots span {
+  width: 11px;
+  height: 11px;
+}
+.is-fit .vtm-narrative textarea {
+  min-height: 54px;
+}
+.is-fit .vtm-sheet-columns textarea {
+  min-height: 130px;
+}
+.is-fit .vtm-sheet-columns textarea[readonly] {
+  white-space: pre-wrap;
+}
+.is-fit .vtm-tracker button {
+  min-height: 20px;
+  width: 20px;
+  font-size: 16px;
+}
+.is-fit .vtm-sheet-header {
+  margin-bottom: 12px;
+}
+.is-fit .vtm-sheet-trait {
+  padding-block: 7px;
+}
+@media (max-width: 1150px) {
+  .vtm-wizard-content .vtm-stat-columns {
+    grid-template-columns: 1fr;
+  }
+  .vtm-wizard-content .vtm-rating {
+    font-size: 0.9375rem;
+  }
+  .vtm-wizard-content .vtm-dots button {
+    width: 34px;
+    min-height: 40px;
+  }
+}
+@media (max-width: 800px) {
+  .vtm-workspace,
+  .vtm-sheet-view {
+    width: calc(100% - 32px);
+  }
+  .vtm-wizard-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .vtm-steps {
+    position: static;
+  }
+  .vtm-steps ol {
+    display: flex;
+    overflow-x: auto;
+    gap: 6px;
+    padding: 4px;
+  }
+  .vtm-steps button {
+    width: auto;
+    white-space: nowrap;
+  }
+  .vtm-character-summary {
+    display: none;
+  }
+  .vtm-distribution {
+    grid-template-columns: 1fr;
+  }
+  .vtm-distribution label {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    gap: 0 10px;
+  }
+  .vtm-distribution small {
+    grid-column: 2;
+  }
+  .vtm-sheet-viewport:not(.is-fit)
+    :is(
+      .vtm-stat-columns,
+      .vtm-narrative,
+      .vtm-trackers,
+      .vtm-discipline-grid,
+      .vtm-sheet-columns
+    ) {
+    grid-template-columns: 1fr;
+  }
+  .vtm-sheet-viewport:not(.is-fit) .vtm-identity {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .vtm-sheet-viewport:not(.is-fit) .vtm-rating {
+    font-size: 1rem;
+  }
+}
+@media (max-width: 520px) {
+  .vtm-grid {
+    grid-template-columns: 1fr;
+  }
+  .vtm-page.shell {
+    width: calc(100% - 32px);
+  }
+  .vtm-topline {
+    gap: 4px;
+  }
+  .vtm-topline > .vtm-check {
+    margin-left: 0;
+  }
+  .vtm-trait-line {
+    align-items: start;
+    gap: 8px;
+  }
+  .vtm-trait-line > select,
+  .vtm-trait-line > .vtm-number {
+    width: 104px;
+  }
+  .vtm-trait-selected {
+    padding-inline: 10px;
+  }
+  .vtm-sheet-header {
+    align-items: start;
+    flex-direction: column;
+  }
+  .is-fit .vtm-sheet-header {
+    flex-direction: row;
+  }
+  .is-fit .vtm-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .is-fit .vtm-grid.vtm-identity,
+  .is-fit .vtm-grid.vtm-trackers,
+  .is-fit .vtm-narrative {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .vtm-specialty {
+    grid-template-columns: 1fr;
+  }
+  .vtm-free-trait {
+    grid-template-columns: minmax(0, 1fr) 70px;
+    gap: 8px;
+  }
+  .vtm-free-trait > button {
+    grid-column: 2;
+  }
+}
+@media (forced-colors: active) {
+  .vtm-dots .filled {
+    background: ButtonText;
+  }
+  .vtm-segment [aria-pressed='true'],
+  .vtm-distribution .chosen {
+    outline: 2px solid Highlight;
+  }
+}
+.vtm-catalog {
+  max-height: 560px;
+  overflow-y: auto;
+  padding-inline: 4px 12px;
+  scrollbar-gutter: stable;
+}
+.vtm-catalog:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+/* A scaled page keeps its natural height; scaling must never stretch its flex box. */
+.vtm-sheet-viewport.is-fit {
+  align-items: flex-start;
+}
+.vtm-page .vtm-sheet :is(input[readonly], textarea[readonly], select:disabled) {
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding-inline: 0;
+  background: transparent;
+}
+.vtm-page .is-fit .vtm-sheet :is(input, textarea, select) {
+  min-height: 26px;
+  padding: 2px 0;
+  font-size: 12px;
+}
+.vtm-page .is-fit .vtm-sheet .vtm-trackers input {
+  width: 52px;
+}
+/* Overview is a paper layout; the editing mode retains 16px text and full hit targets. */
+.is-fit .vtm-sheet .vtm-sheet-header {
+  padding-top: 12px;
+  margin-bottom: 10px;
+}
+.is-fit .vtm-sheet .vtm-sheet-brand {
+  font-size: 30px;
+}
+.is-fit .vtm-sheet .vtm-field > span {
+  font-size: 11px;
+  line-height: 1.2;
+}
+.vtm-page .is-fit .vtm-sheet :is(input, select) {
+  min-height: 20px;
+  height: 22px;
+  font-size: 12px;
+}
+.is-fit .vtm-sheet .vtm-sheet-block > h2 {
+  padding-block: 4px;
+  margin-block: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.is-fit .vtm-sheet .vtm-stat-columns h3 {
+  font-size: 11px;
+  margin-block: 4px;
+}
+.is-fit .vtm-sheet .vtm-rating {
+  min-height: 24px;
+  line-height: 1.2;
+  font-size: 12px;
+}
+.is-fit .vtm-sheet .vtm-specialties-preview {
+  font-size: 10px;
+  line-height: 1.4;
+  margin-block: 6px;
+}
+.is-fit .vtm-sheet .vtm-trackers .vtm-field > span {
+  display: none;
+}
+.is-fit .vtm-sheet .vtm-narrative textarea {
+  min-height: 44px;
+}
+.is-fit .vtm-sheet .vtm-narrative .vtm-field {
+  margin-block: 3px;
+}
+.is-fit .vtm-sheet .vtm-discipline-grid textarea {
+  min-height: 68px;
+}
+.is-fit .vtm-sheet .vtm-sheet-footer {
+  margin-top: 16px;
+}
+.is-fit .vtm-sheet {
+  display: flex;
+  flex-direction: column;
+}
+.is-fit .vtm-sheet > * {
+  flex-shrink: 0;
+}
+.is-fit .vtm-sheet .vtm-sheet-footer {
+  margin-top: auto;
+  padding-top: 16px;
+}
+.vtm-rating > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+/* Creation catalogue: browse on the left, keep the chosen traits beside it. */
+.trait-picker {
+  min-width: 0;
+}
+.trait-budgets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 20px 24px;
+}
+.trait-budgets > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 4px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  background: var(--surface);
+}
+.trait-budgets > div > span {
+  font-size: 0.8125rem;
+}
+.trait-budgets > div > span:last-child {
+  grid-column: 1/-1;
+  color: var(--muted);
+}
+.trait-budgets strong {
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.trait-budgets strong small {
+  font-size: 0.875rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+.trait-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.8fr);
+  gap: 24px;
+  align-items: start;
+}
+.trait-layout > * {
+  min-width: 0;
+}
+.trait-browser {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.trait-type-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  flex-wrap: wrap;
+}
+.trait-type-tabs button {
+  font: inherit;
+  font-size: 0.8125rem;
+  padding: 8px 12px;
+  min-height: 44px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+}
+.trait-type-tabs button[aria-pressed='true'] {
+  background: var(--panel);
+  border-color: var(--input-line);
+  font-weight: 650;
+}
+.trait-filters {
+  padding: 8px 16px 12px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 4px;
+}
+.trait-results {
+  max-height: 520px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-inline: 16px;
+}
+.trait-results:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+.trait-result {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--line);
+}
+.trait-result > div {
+  min-width: 0;
+}
+.trait-result strong,
+.trait-chosen-title strong {
+  font-size: 0.875rem;
+  display: block;
+  overflow-wrap: break-word;
+}
+.trait-result span,
+.trait-result small,
+.trait-chosen-title small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  margin-top: 3px;
+}
+.trait-result > button {
+  gap: 6px;
+  padding-inline: 10px;
+  border: 1px solid var(--line);
+  font-size: 0.75rem;
+}
+.trait-chosen {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.vtm-page .trait-chosen h3 {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.trait-chosen h3 > span {
+  font-size: 0.75rem;
+  border: 1px solid var(--input-line);
+  border-radius: 50%;
+  min-width: 24px;
+  text-align: center;
+}
+.trait-chosen-item {
+  background: var(--panel);
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 12px;
+  min-width: 0;
+}
+.trait-chosen-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.trait-chosen-title > div:first-child {
+  flex: 1 1 120px;
+  min-width: 0;
+}
+.trait-stepper {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--input-line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+.trait-stepper button {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  min-height: 40px;
+  width: 32px;
+  padding: 0;
+  font-size: 20px;
+}
+.trait-stepper button:hover:not(:disabled) {
+  background: var(--surface);
+}
+.trait-stepper output {
+  width: 30px;
+  text-align: center;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+.trait-stepper button:disabled {
+  opacity: 0.35;
+}
+.trait-chosen-item details {
+  margin-top: 8px;
+}
+.trait-chosen-item summary {
+  cursor: pointer;
+  font-size: 0.75rem;
+  color: var(--muted);
+  min-height: 32px;
+  padding-block: 6px;
+}
+.trait-requirement {
+  display: flex;
+  align-items: start;
+  gap: 8px;
+  font-size: 0.75rem;
+  padding-block: 10px;
+}
+.trait-requirement input {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.trait-no-results {
+  font-size: 0.875rem;
+  color: var(--muted);
+  padding: 20px 0;
+}
+.vtm-dots button:disabled:not([aria-pressed='true']) {
+  opacity: 0.3;
+}
+.vtm-dots .vtm-clear-rating {
+  font-size: 18px;
+  color: var(--muted);
+  margin-left: 4px;
+}
+@media (max-width: 1200px) {
+  .trait-layout {
+    grid-template-columns: 1fr;
+  }
+  .trait-chosen {
+    grid-row: 1;
+  }
+  .trait-results {
+    max-height: 440px;
+  }
+}
+@media (max-width: 520px) {
+  .trait-budgets {
+    grid-template-columns: 1fr;
+  }
+  .trait-result {
+    gap: 8px;
+  }
+  .trait-chosen-title {
+    gap: 8px;
+  }
+}
+/* Static overview does not expose interactive listboxes. */
+.is-fit .select-field {
+  gap: 4px;
+  margin-block: 4px;
+}
+.is-fit .select-field-label {
+  font-size: 11px;
+  line-height: 1.2;
+}
+.is-fit .select-field-trigger {
+  min-height: 22px;
+  padding: 2px 0;
+  font-size: 12px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+}
+.is-fit .select-field-trigger > svg {
+  display: none;
+}
+.vtm-conviction-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.vtm-pair-card {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.vtm-pair-card > .vtm-field {
+  margin: 0;
+}
+.vtm-pair-card:first-child > .vtm-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.vtm-pair-card:first-child textarea {
+  flex: 1;
+  min-height: 180px;
+}
+.trait-remove {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font-size: 24px;
+}
+.trait-remove:hover:enabled {
+  background: var(--surface);
+  color: var(--ink);
+}
+.trait-remove:disabled {
+  opacity: 0.35;
+}
+@media (max-width: 700px) {
+  .vtm-conviction-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.vtm-description-page {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--panel);
+}
+.vtm-description-page .vtm-field {
+  margin: 0;
+}
+.vtm-page .vtm-description-page .vtm-field textarea {
+  min-height: 50vh;
+}
+.vtm-trait-edit-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px 40px;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.vtm-trait-edit-row .vtm-field {
+  min-width: 0;
+  margin: 0;
+}
+.vtm-trait-edit-row > button {
+  min-width: 0;
+  padding-inline: 8px;
+}
+.vtm-static-value {
+  min-height: 44px;
+  padding-block: 10px;
+  border-bottom: 1px solid var(--line);
+  overflow-wrap: anywhere;
+}
+.vtm-hunger {
+  align-items: center;
+}
+.vtm-hunger button[aria-pressed='true'] {
+  color: var(--vtm-red);
+}
+.vtm-hunger output {
+  margin-left: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.vtm-sheet-background {
+  min-height: 1556px;
+  display: flex;
+  flex-direction: column;
+}
+.vtm-sheet-background > .vtm-sheet-columns {
+  flex: 1;
+  align-items: start;
+}
+.vtm-sheet-background > .vtm-sheet-footer {
+  margin-top: auto;
+}
+.vtm-page .vtm-sheet .vtm-notes-block textarea {
+  min-height: 0;
+  resize: none;
+}
+.is-fit .vtm-static-value {
+  min-height: 22px;
+  padding-block: 2px;
+  font-size: 12px;
+}
+@media (max-width: 760px) {
+  .vtm-sheet-viewport:not(.is-fit) .vtm-sheet-background {
+    min-height: 1272px;
+  }
+}
+.vtm-page .vtm-hunger button {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  padding: 0;
+  line-height: 1;
+}
+.vtm-page .is-fit .vtm-hunger button {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  font-size: 16px;
+}
+.vtm-feeding-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+}
+.vtm-resonance {
+  width: 250px;
+  max-width: 100%;
+  min-width: 0;
+}
+.vtm-hunger-field {
+  margin-left: auto;
+  align-items: flex-end;
+}
+.vtm-hunger-field > span {
+  text-align: right;
+}
+.vtm-hunger-field .vtm-hunger {
+  justify-content: flex-end;
+}
+@media (max-width: 520px) {
+  .vtm-sheet-viewport:not(.is-fit) .vtm-feeding-row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+}
+.vtm-box-group {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 3px;
+}
+.vtm-tracker {
+  gap: 12px;
+  align-items: center;
+}
+.vtm-page .vtm-tracker button {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  border-radius: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.vtm-page .is-fit .vtm-tracker button {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+}
+.vtm-box-mark {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5px;
+}
+.vtm-box-mark path {
+  vector-effect: non-scaling-stroke;
+}
+.vtm-dots .vtm-five-gap {
+  margin-inline-start: 8px;
+}
+.vtm-tracker-centered {
+  width: max-content;
+  max-width: 100%;
+  margin-inline: auto;
+  justify-content: center;
+}
+.vtm-box-placeholder {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.is-fit .vtm-box-placeholder {
+  width: 16px;
+  height: 16px;
+}
+.vtm-trait-dots {
+  display: flex;
+  align-items: center;
+}
+.vtm-trait-dot-slot {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  flex-shrink: 0;
+}
+.vtm-trait-dot-slot::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.vtm-trait-dot-slot:nth-child(5n + 6) {
+  margin-inline-start: 8px;
+}
+.is-fit .vtm-trait-dot-slot {
+  width: 20px;
+}
+.is-fit .vtm-trait-dot-slot::before {
+  width: 11px;
+  height: 11px;
+}

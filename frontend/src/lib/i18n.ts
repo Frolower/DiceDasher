@@ -1,5 +1,4 @@
-import en from '../locales/en.json'
-import ru from '../locales/ru.json'
+import { en, ru } from '../locales'
 
 export type Language = 'en' | 'ru'
 export type TranslationKey = keyof typeof en

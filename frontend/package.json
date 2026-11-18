@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "node scripts/check-auth.mjs && node scripts/check-i18n.mjs",
+    "test": "node scripts/check-auth.mjs && node scripts/check-i18n.mjs && node scripts/check-vtm.mjs && node scripts/check-vtm-i18n.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

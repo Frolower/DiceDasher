@@ -55,7 +55,7 @@ terminate HTTPS at your ingress, and set `COOKIE_SECURE=true` in the backend env
 - Validation follows the current Go registration rules, including 8–72 ASCII characters, English uppercase/lowercase letters, a digit, and a printable special character. Spaces, Cyrillic, accented letters, and emoji are rejected. Login applies the same ASCII character restrictions, but does not apply the registration password complexity checks.
 - Access tokens are kept in memory only. On page load, the app restores the session using the HttpOnly refresh cookie (`POST /api/refresh`, then `GET /api/me`). It also refreshes tokens before expiry and retries authenticated requests once after a `401`.
 - Signed-in users can log out using the red **Log out** button at the bottom of the left navigation menu. It sends `POST /api/logout` with credentials included. On success, the app clears its in-memory session, closes the menu, and returns to `/`.
-- During logout, the button is disabled and shows **Logging out…**. Failed requests leave the session in place and display an error beside the button so the user can retry. HTTP errors use messages defined in `src/lib/auth.ts`; network errors currently display the browser's error message.
+- During logout, the button is disabled and shows **Logging out…**. Failed requests leave the session in place and display an error beside the button so the user can retry. HTTP errors use safe message keys defined in `src/lib/auth.ts`; network failures use a safe localized fallback.
 - Logout waits for any active refresh to finish before revoking the session. Concurrent logout calls share one request, and new refresh calls wait for logout to settle.
 - The central d20 rotates slowly; click it or press Enter/Space to pause or resume. Rotation pauses while an account dialog is open and respects the system reduced-motion preference.
 
@@ -75,6 +75,11 @@ npm test
 npm run lint
 ```
 
+The test command runs auth, localization and V5 logic/render checks. V5 coverage includes the seven
+creation stages and the sheet in both languages. UI checks render static HTML; they do not click
+through a browser. There is currently no automated browser E2E suite. See
+[frontend verification](../docs/frontend/testing.md) for coverage and manual-check boundaries.
+
 ## Formatting
 
 ```sh
@@ -93,7 +98,8 @@ React Router handles navigation without reloading the document:
 - `/`: public landing page; signed-in users continue to `/profile`.
 - `/profile`: profile and Rooms (`/rooms` redirects here).
 - `/settings`: account settings.
-- `/characters` and `/friends`: demo pages.
+- `/characters`: character collection, V5 creation and character sheets.
+- `/friends`: demo page.
 - `/login`: login dialog; successful login returns to the requested private page.
 
 Private routes wait for session restoration before redirecting to login. Unknown
@@ -108,10 +114,13 @@ The saved `dicedasher.language` preference takes priority over the browser's pri
 language; unsupported languages fall back to English. Changes also sync between tabs.
 Language selection continues to work when browser storage is unavailable.
 
-Translations live in `src/locales/en.json` and `src/locales/ru.json`. Add the same
-key to the English dictionary and render it with `t(key)` from `src/lib/i18n.ts`.
-Add the Russian translation under the same key when ready. Missing or blank
-Russian translations fall back to English, including placeholder substitution.
+Translations live in feature folders under `src/locales/`, each containing `en.json` and
+`ru.json`. Common UI, auth, profile, themes, demos, the character collection and VTM have separate
+modules. Register new modules in `src/locales/index.ts`; the language switch applies to every module.
+See [the dictionary guide](src/locales/README.md) for the structure and how to add a system.
+Add each key to both languages and render it with `t(key)` from `src/lib/i18n.ts`.
+Checks reject missing/blank translations, duplicate keys, mismatched parameters and unregistered
+files. Runtime English fallback remains available if a translation is missing.
 Use `{name}` placeholders and `t(key, { name })` for dynamic values rather than
 joining translated fragments. `plural()` selects one/few/many/other keys using
 `Intl.PluralRules` for the current UI language.
@@ -150,7 +159,7 @@ current page, and Settings reports that it could not be saved.
 3. Keep preview colors in `themes.ts` consistent with `--page` and `--accent`.
 4. Add the ID to the startup allowlist in `index.html`, so a saved palette applies
    before the first paint and survives direct navigation or reloads.
-5. Add its name and description to both locale dictionaries. Translate theme
+5. Add its name and description to `src/locales/themes/en.json` and `ru.json`. Translate theme
    metadata when rendering, just like other UI text.
 
 Check text contrast against every surface where it appears, including button
@@ -162,3 +171,11 @@ and the monochrome Noir theme.
 Run the frontend checks listed above and inspect the palette on real screens at
 compact and wide widths. The current automated suite renders the theme selector
 in both languages, but does not measure palette contrast or verify visual layout.
+
+## Vampire: The Masquerade V5
+
+The authenticated character page includes guided V5 creation, two character-sheet pages and a
+separate, unnumbered Description view. View/edit modes are separate from zoom; damage, Humanity
+and Hunger trackers remain interactive outside editing.
+Characters currently stay in tab memory only; no character backend writes occur. JSON export is
+available. See [V5 implementation notes](../docs/frontend/vtm-v5.md) for rules, UI behavior, and verification.

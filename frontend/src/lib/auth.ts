@@ -1,4 +1,4 @@
-import en from '../locales/en.json'
+import { en } from '../locales'
 import type { TranslationKey } from './i18n'
 // Only explicitly written messages are safe to display in the interface.
 export class UserFacingError extends Error {
